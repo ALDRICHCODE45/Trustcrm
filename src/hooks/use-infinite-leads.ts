@@ -77,6 +77,14 @@ export function useInfiniteLeads(
   // Usar ref para almacenar los filtros actuales
   const currentFiltersRef = useRef<FilterState | undefined>(undefined);
 
+  // Controladores para abortar fetch por estado y de refresco
+  const loadControllersRef = useRef<
+    Partial<Record<LeadStatus, AbortController>>
+  >({});
+  const refreshControllersRef = useRef<
+    Partial<Record<LeadStatus, AbortController>>
+  >({});
+
   const buildQueryParams = useCallback(
     (status: LeadStatus, page: number, filters?: FilterState) => {
       const params = new URLSearchParams({
@@ -116,6 +124,14 @@ export function useInfiniteLeads(
 
       setLoadingStates((prev) => ({ ...prev, [status]: true }));
 
+      // Abortar cualquier solicitud previa de este status
+      try {
+        loadControllersRef.current[status]?.abort();
+      } catch {}
+
+      const controller = new AbortController();
+      loadControllersRef.current[status] = controller;
+
       try {
         const nextPage = currentPagination.page + 1;
         const params = buildQueryParams(
@@ -124,7 +140,9 @@ export function useInfiniteLeads(
           currentFiltersRef.current
         );
 
-        const response = await fetch(`/api/leads/kanban?${params}`);
+        const response = await fetch(`/api/leads/kanban?${params}`, {
+          signal: controller.signal,
+        });
         if (!response.ok) {
           throw new Error("Error loading more leads");
         }
@@ -140,10 +158,14 @@ export function useInfiniteLeads(
           ...prev,
           [status]: data.pagination,
         }));
-      } catch (error) {
-        console.error("Error loading more leads:", error);
+      } catch (error: any) {
+        if (error?.name !== "AbortError") {
+          console.error("Error loading more leads:", error);
+        }
       } finally {
         setLoadingStates((prev) => ({ ...prev, [status]: false }));
+        // Limpiar controller
+        delete loadControllersRef.current[status];
       }
     },
     [paginationInfo, loadingStates, buildQueryParams]
@@ -171,27 +193,52 @@ export function useInfiniteLeads(
           return loadingState;
         });
 
+        // Abortar cualquier solicitud de refresco previa
+        Object.values(LeadStatus).forEach((status) => {
+          try {
+            refreshControllersRef.current[status]?.abort();
+          } catch {}
+        });
+
         try {
-          // Cargar datos para cada estado en paralelo
+          // Cargar datos para cada estado en paralelo con cancelación
           const promises = Object.values(LeadStatus).map(async (status) => {
+            const controller = new AbortController();
+            refreshControllersRef.current[status] = controller;
             const params = buildQueryParams(status, 1, filters);
-            const response = await fetch(`/api/leads/kanban?${params}`);
+            const response = await fetch(`/api/leads/kanban?${params}`, {
+              signal: controller.signal,
+            });
             if (!response.ok) {
               throw new Error(`Error loading leads for status ${status}`);
             }
             return { status, data: await response.json() };
           });
 
-          const results = await Promise.all(promises);
+          const results = await Promise.allSettled(promises);
 
           const newLeadsData: Record<LeadStatus, LeadWithRelations[]> =
             {} as any;
           const newPaginationInfo: Record<LeadStatus, PaginationInfo> =
             {} as any;
 
-          results.forEach(({ status, data }) => {
-            newLeadsData[status] = data.leads;
-            newPaginationInfo[status] = data.pagination;
+          results.forEach((result, idx) => {
+            const status = Object.values(LeadStatus)[idx];
+            if (result.status === "fulfilled") {
+              const data = result.value.data;
+              newLeadsData[status] = data.leads;
+              newPaginationInfo[status] = data.pagination;
+            } else {
+              // Si falló (o se abortó), mantener los existentes
+              newLeadsData[status] = [] as any;
+              newPaginationInfo[status] = {
+                page: 1,
+                limit: 50,
+                totalCount: 0,
+                totalPages: 0,
+                hasMore: false,
+              };
+            }
           });
 
           setLeadsData(newLeadsData);
@@ -206,6 +253,8 @@ export function useInfiniteLeads(
             });
             return loadingState;
           });
+          // Limpiar controllers
+          refreshControllersRef.current = {};
         }
       } else {
         // Sin filtros, usar datos iniciales

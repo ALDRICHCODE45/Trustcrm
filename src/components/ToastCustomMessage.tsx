@@ -56,7 +56,7 @@ export const ToastCustomMessage = ({
   };
 
   return (
-    <div className="bg-background z-[9999] max-w-[400px] rounded-md border p-4 shadow-lg">
+    <div className="bg-background max-w-[400px] rounded-md border p-4 shadow-lg">
       <div className="flex gap-2">
         <div className="flex grow gap-3">
           {getIcon()}

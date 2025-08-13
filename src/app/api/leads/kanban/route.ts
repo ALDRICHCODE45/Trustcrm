@@ -78,30 +78,37 @@ export async function GET(request: NextRequest) {
     // Calcular offset
     const offset = (page - 1) * limit;
 
-    // Obtener leads con paginación
+    // Obtener leads con paginación (payload para Kanban + Sheet)
     const [leads, totalCount] = await Promise.all([
       prisma.lead.findMany({
         where: whereClause,
         include: {
-          sector: true,
-          origen: true,
-          generadorLeads: true,
-          SubSector: true,
+          // Mínimos para tarjeta
+          sector: { select: { nombre: true, id: true } },
+          origen: { select: { nombre: true, id: true } },
+          generadorLeads: { select: { id: true, name: true } },
+          SubSector: { select: { id: true, nombre: true } },
+          _count: { select: { contactos: true } },
+          // Contactos sin interactions (se cargan dentro del sheet si se requiere editar)
           contactos: {
-            include: {
-              interactions: {
-                include: {
-                  contacto: true,
-                  autor: true,
-                  linkedTasks: true,
-                },
-              },
+            select: {
+              id: true,
+              name: true,
+              position: true,
+              email: true,
+              phone: true,
+              linkedin: true,
+              etiqueta: true,
+              leadId: true,
             },
+            orderBy: { name: "asc" },
           },
+          // Historial para pestaña de historial
           statusHistory: {
             include: {
-              changedBy: true,
+              changedBy: { select: { id: true, name: true } },
             },
+            orderBy: { changedAt: "desc" },
           },
         },
         orderBy: {

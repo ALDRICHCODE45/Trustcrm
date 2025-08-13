@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { getDiffDays } from "@/app/helpers/getDiffDays";
 
 type LeadCardProps = {
-  lead: LeadWithRelations;
+  lead: LeadWithRelations & { _count?: { contactos: number } };
   setSelectedTask: (task: Lead | null) => void;
 };
 
@@ -25,6 +25,8 @@ export const DraggableLeadCard = ({ lead, setSelectedTask }: LeadCardProps) => {
   });
 
   const days = getDiffDays(lead.createdAt);
+  const contactosCount =
+    (lead as any)?._count?.contactos ?? lead.contactos?.length ?? 0;
 
   return (
     <Sheet>
@@ -55,37 +57,35 @@ export const DraggableLeadCard = ({ lead, setSelectedTask }: LeadCardProps) => {
             <div className="pt-1 pb-1">
               <Separator orientation="horizontal" />
             </div>
+          </div>
 
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center  border-t border-slate-50">
-                <div className="flex items-center space-x-1">
-                  <Avatar className="size-5">
-                    <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                      {lead.generadorLeads?.name
-                        ? lead.generadorLeads.name[0].toUpperCase()
-                        : "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs capitalize text-slate-500">
-                    {lead.generadorLeads?.name?.split(" ")[0] || "Usuario"}
-                  </span>
-                </div>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center  border-t border-slate-50">
+              <div className="flex items-center space-x-1">
+                <Avatar className="size-5">
+                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                    {lead.generadorLeads?.name
+                      ? lead.generadorLeads.name[0].toUpperCase()
+                      : "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs capitalize text-slate-500">
+                  {lead.generadorLeads?.name?.split(" ")[0] || "Usuario"}
+                </span>
               </div>
-              <div className="flex gap-3">
-                <div className="flex items-center gap-2">
-                  <Users size={14} className="text-gray-500" />
-                  <Badge variant="outline">
-                    <p className="text-black text-xs">
-                      {lead.contactos.length}
-                    </p>
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock3 size={14} className="text-gray-500" />
-                  <Badge variant="outline">
-                    <p className="text-black text-xs">{days}</p>
-                  </Badge>
-                </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex items-center gap-2">
+                <Users size={14} className="text-gray-500" />
+                <Badge variant="outline">
+                  <p className="text-black text-xs">{contactosCount}</p>
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock3 size={14} className="text-gray-500" />
+                <Badge variant="outline">
+                  <p className="text-black text-xs">{days}</p>
+                </Badge>
               </div>
             </div>
           </div>

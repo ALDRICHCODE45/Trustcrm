@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -47,11 +47,30 @@ export function KanbanFilters({
     searchTerm: "",
   });
 
+  // Estado separado para el input de búsqueda con debounce
+  const [searchInput, setSearchInput] = useState<string>("");
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (filters.searchTerm !== searchInput) {
+        const newFilters = { ...filters, searchTerm: searchInput };
+        setFilters(newFilters);
+        onFilterChange(newFilters);
+      }
+    }, 350);
+
+    return () => clearTimeout(timeout);
+  }, [searchInput]);
+
   const uniqueOffices = Array.from(
-    new Set(generadores.map((gen) => gen.Oficina)),
+    new Set(generadores.map((gen) => gen.Oficina))
   );
 
   const handleFilterChange = (key: keyof FilterState, value: any) => {
+    if (key === "searchTerm") {
+      setSearchInput(value as string);
+      return;
+    }
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     onFilterChange(newFilters);
@@ -66,6 +85,7 @@ export function KanbanFilters({
     };
 
     setFilters(resetFilters);
+    setSearchInput("");
     onFilterChange(resetFilters);
   };
 
@@ -77,8 +97,13 @@ export function KanbanFilters({
       };
       setFilters(newFilters);
       onFilterChange(newFilters);
+    } else if (filterKey === "searchTerm") {
+      const newFilters = { ...filters, searchTerm: "" };
+      setFilters(newFilters);
+      setSearchInput("");
+      onFilterChange(newFilters);
     } else {
-      const newFilters = { ...filters, [filterKey]: null };
+      const newFilters = { ...filters, [filterKey]: null } as FilterState;
       setFilters(newFilters);
       onFilterChange(newFilters);
     }
@@ -103,7 +128,7 @@ export function KanbanFilters({
           <Input
             type="text"
             placeholder="Sector, Empresa..."
-            value={filters.searchTerm}
+            value={searchInput}
             onChange={(e) => handleFilterChange("searchTerm", e.target.value)}
             className="pl-8 h-9 w-[200px]"
           />
@@ -131,11 +156,11 @@ export function KanbanFilters({
 
         {/* Office filter */}
         <Select
-          value={filters.oficina === null ? "all" : filters.oficina}
+          value={filters.oficina === null ? "all" : (filters.oficina as any)}
           onValueChange={(value) =>
             handleFilterChange(
               "oficina",
-              value === "all" ? null : (value as Oficina),
+              value === "all" ? null : (value as Oficina)
             )
           }
         >
@@ -145,7 +170,7 @@ export function KanbanFilters({
           <SelectContent>
             <SelectItem value="all">Todas las oficinas</SelectItem>
             {uniqueOffices.map((oficina) => (
-              <SelectItem key={oficina} value={oficina}>
+              <SelectItem key={oficina} value={oficina as any}>
                 {oficina}
               </SelectItem>
             ))}
@@ -161,7 +186,7 @@ export function KanbanFilters({
                 "w-[240px] justify-start text-left font-normal h-9",
                 !filters.fechaCreacion.from &&
                   !filters.fechaCreacion.to &&
-                  "text-muted-foreground",
+                  "text-muted-foreground"
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />

@@ -43,25 +43,28 @@ const getInitialLeadsByStatus = async () => {
         prisma.lead.findMany({
           where: { status: status as any },
           include: {
-            generadorLeads: true,
+            // Solo lo necesario para la vista inicial
+            sector: { select: { id: true, nombre: true } },
+            origen: { select: { id: true, nombre: true } },
+            generadorLeads: { select: { id: true, name: true } },
+            SubSector: { select: { id: true, nombre: true } },
+            _count: { select: { contactos: true } },
             contactos: {
-              include: {
-                interactions: {
-                  include: {
-                    autor: true,
-                    contacto: true,
-                    linkedTasks: true,
-                  },
-                },
+              select: {
+                id: true,
+                name: true,
+                position: true,
+                email: true,
+                phone: true,
+                linkedin: true,
+                etiqueta: true,
+                leadId: true,
               },
+              orderBy: { name: "asc" },
             },
-            sector: true,
-            origen: true,
-            SubSector: true,
             statusHistory: {
-              include: {
-                changedBy: true,
-              },
+              include: { changedBy: { select: { id: true, name: true } } },
+              orderBy: { changedAt: "desc" },
             },
           },
           orderBy: {
