@@ -10,6 +10,28 @@ interface AddFileToVacancyArgs {
   vacancyId: string;
 }
 
+export const getVacancyFiles = async (vacancyId: string) => {
+  try {
+    const files = await prisma.vacancyFile.findMany({
+      where: { vacancyId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return {
+      ok: true,
+      message: "Archivos obtenidos correctamente",
+      files,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      ok: false,
+      message: "Error al obtener los archivos",
+      files: [],
+    };
+  }
+};
+
 export const addFileToVacancy = async ({
   authorId,
   file,
@@ -74,6 +96,8 @@ export const deleteFileFromVacancy = async (fileId: string) => {
 
     await deleteAnyFile(file.url);
     revalidatePath(`/reclutador`);
+    revalidatePath(`/reclutador/kanban`);
+    revalidatePath(`/list/reclutamiento`);
     return {
       ok: true,
       message: "Archivo eliminado correctamente",

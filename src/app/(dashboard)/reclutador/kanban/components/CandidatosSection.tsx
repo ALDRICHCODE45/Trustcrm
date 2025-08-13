@@ -68,7 +68,6 @@ export const CandidatesSectionReclutador = ({
     error,
     isSelecting,
     addCandidate,
-    updateCandidateAction,
     deleteCandidateAction,
     selectCandidate,
     deselectCandidate,

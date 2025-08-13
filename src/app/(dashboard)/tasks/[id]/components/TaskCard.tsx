@@ -1,8 +1,6 @@
 "use client";
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,17 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogTitle,
-  AlertDialogCancel,
-  AlertDialogAction,
-  AlertDialogFooter,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogDescription,
-} from "@/components/ui/alert-dialog";
+
 import {
   Dialog,
   DialogContent,
@@ -42,15 +30,12 @@ import { es } from "date-fns/locale";
 import {
   AlertTriangle,
   CalendarIcon,
-  CheckCircle,
-  Edit,
   MoreVertical,
   Trash2,
   XCircle,
   MessageSquareReply,
   FolderCheck,
   Building2,
-  UserIcon,
 } from "lucide-react";
 import { TaskStatus } from "@prisma/client";
 import Link from "next/link";
@@ -97,49 +82,13 @@ const FormattedDate = ({ dateString }: { dateString: string }) => {
   );
 };
 
-// Componente para el diálogo de eliminación
-const DeleteTaskDialog = ({
-  taskId,
-  onDelete,
-}: {
-  taskId: string;
-  onDelete: (id: string) => void;
-}) => {
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <DropdownMenuItem
-          onSelect={(e) => e.preventDefault()}
-          className="cursor-pointer text-destructive"
-        >
-          <Trash2 size={15} className="opacity-60 mr-2" />
-          Eliminar
-        </DropdownMenuItem>
-      </AlertDialogTrigger>
-      <AlertDialogContent className="z-[999]">
-        <AlertDialogHeader>
-          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Esta acción no se puede deshacer. Se eliminará permanentemente.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={() => onDelete(taskId)}>
-            Sí, eliminar
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-};
-
 // Componente para las acciones de la tarea
 const TaskActions = ({ activity, onToggleStatus, onDelete, onEdit }: Props) => {
   const isTaskDone = activity.status === "Done";
   const [alertOpen, setAlertOpen] = useState(false);
   const [interactionDialogOpen, setInteractionDialogOpen] = useState(false);
   const [vacancyDialogOpen, setVacancyDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleToggleStatus = () => {
     setAlertOpen(false);
@@ -307,6 +256,14 @@ const TaskActions = ({ activity, onToggleStatus, onDelete, onEdit }: Props) => {
                 </>
               )}
             </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => setDeleteDialogOpen(true)}
+              className="cursor-pointer text-destructive"
+            >
+              <Trash2 size={15} className="opacity-60 mr-2" />
+              Eliminar
+            </DropdownMenuItem>
           </DropdownMenuGroup>
 
           {/* Opción para editar */}
@@ -315,9 +272,6 @@ const TaskActions = ({ activity, onToggleStatus, onDelete, onEdit }: Props) => {
             onEdit={onEdit}
             activity={activity}
           />
-
-          {/* Opción para eliminar */}
-          <DeleteTaskDialog taskId={activity.id} onDelete={onDelete} />
 
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
@@ -352,27 +306,67 @@ const TaskActions = ({ activity, onToggleStatus, onDelete, onEdit }: Props) => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* AlertDialog para confirmar cambio de estado */}
-      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
+      {/* Dialog para confirmar cambio de estado */}
+      <Dialog open={alertOpen} onOpenChange={setAlertOpen}>
+        <DialogContent className="sm:max-w-[425px] z-[9999]">
+          <DialogHeader>
+            <DialogTitle>
               {isTaskDone ? "¿Marcar como pendiente?" : "¿Completar tarea?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {isTaskDone
-                ? "¿Estás seguro de que quieres marcar esta tarea como pendiente? Podrás volver a completarla más tarde."
-                : "¿Estás seguro de que quieres marcar esta tarea como completada?"}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleToggleStatus}>
+            </DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            {isTaskDone
+              ? "¿Estás seguro de que quieres marcar esta tarea como pendiente? Podrás volver a completarla más tarde."
+              : "¿Estás seguro de que quieres marcar esta tarea como completada?"}
+          </DialogDescription>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAlertOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                handleToggleStatus();
+                setAlertOpen(false);
+              }}
+            >
               {isTaskDone ? "Marcar pendiente" : "Completar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para confirmar eliminación */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] z-[9999]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
+              <AlertTriangle className="h-5 w-5" />
+              Confirmar eliminación
+            </DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            ¿Estás seguro de que deseas eliminar esta tarea? Esta acción no se
+            puede deshacer.
+          </DialogDescription>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                onDelete(activity.id);
+                setDeleteDialogOpen(false);
+              }}
+            >
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

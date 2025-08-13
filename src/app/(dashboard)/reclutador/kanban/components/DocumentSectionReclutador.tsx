@@ -1,14 +1,10 @@
 "use client";
 import { useState } from "react";
 import { VacancyWithRelations } from "../../components/ReclutadorColumns";
-import { VacancyFile } from "@prisma/client";
 import { useFileUpload } from "@/hooks/use-file-upload";
+import { useDocuments } from "@/hooks/documents/use-documents";
 import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
-import {
-  addFileToVacancy,
-  deleteFileFromVacancy,
-} from "@/actions/vacantes/files/actions";
 import {
   Dialog,
   DialogContent,
@@ -63,15 +59,24 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
   vacante,
 }) => {
   const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [documentTitle, setDocumentTitle] = useState("");
-
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [files, setFiles] = useState<VacancyFile[]>(vacante.files || []);
+
+  // Hook personalizado para manejar documentos
+  const {
+    documents,
+    isLoading,
+    error,
+    isUploading,
+    isDeleting,
+    addDocument,
+    deleteDocument,
+    downloadDocument,
+  } = useDocuments(vacante.id);
 
   const [fileUploadState, fileUploadActions] = useFileUpload({
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 20 * 1024 * 1024, // 20MB
     accept: ".pdf,.docx,.doc,.txt,.xlsx,.xls,.pptx,.ppt",
     multiple: false,
   });
@@ -112,38 +117,23 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
       return;
     }
 
-    setIsSubmitting(true);
-
     try {
       const documentFile = fileUploadState.files[0]?.file as File;
-      const documentData = {
+
+      await addDocument({
         title: documentTitle,
         file: documentFile,
-        vacancyId: vacante.id,
-        authorId: vacante.reclutador.id,
-      };
-      const response = await addFileToVacancy({
-        ...documentData,
-        name: documentData.title,
+        authorId: vacante.reclutador?.id || "",
       });
-
-      if (!response?.ok || !response.file) {
-        toast.error(response?.message || "Error al subir el documento");
-        console.error("error", response);
-        return;
-      }
 
       toast.custom((t) => (
         <ToastCustomMessage
-          title={response.message || "Documento subido exitosamente"}
+          title="Documento subido exitosamente"
           type="success"
-          message={
-            response.message || "El documento ha sido subido exitosamente"
-          }
+          message="El documento ha sido subido exitosamente"
           onClick={() => toast.dismiss(t)}
         />
       ));
-      setFiles([...files, response.file!]);
 
       // Limpiar formulario
       setDocumentTitle("");
@@ -151,39 +141,44 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
       setOpen(false);
     } catch (error) {
       console.error("Error al subir documento:", error);
-      toast.error("Error al subir el documento");
-    } finally {
-      setIsSubmitting(false);
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error"
+          type="error"
+          message={
+            error instanceof Error
+              ? error.message
+              : "Error al subir el documento"
+          }
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
     }
-  };
-
-  const handleDownloadDocument = (fileUrl: string, fileName: string) => {
-    window.open(fileUrl, "_blank");
   };
 
   const handleDeleteDocument = async (fileId: string) => {
     try {
-      const response = await deleteFileFromVacancy(fileId);
-      if (!response?.ok) {
-        toast.error(response?.message || "Error al eliminar el archivo");
-        return;
-      }
+      await deleteDocument(fileId);
       toast.custom((t) => (
         <ToastCustomMessage
-          title={response.message}
+          title="Archivo eliminado correctamente"
           type="success"
-          message={response.message}
+          message="El documento ha sido eliminado exitosamente"
           onClick={() => toast.dismiss(t)}
         />
       ));
-      setFiles(files.filter((file) => file.id !== fileId));
+      setOpenDeleteDialog(false);
     } catch (error) {
       console.error(error);
       toast.custom((t) => (
         <ToastCustomMessage
           title="Error"
           type="error"
-          message="Error al eliminar el archivo"
+          message={
+            error instanceof Error
+              ? error.message
+              : "Error al eliminar el archivo"
+          }
           onClick={() => toast.dismiss(t)}
         />
       ));
@@ -219,6 +214,32 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
       year: "numeric",
     }).format(new Date(date));
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 mt-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-semibold">Documentos</h3>
+        </div>
+        <div className="flex justify-center items-center py-8">
+          <div className="text-muted-foreground">Cargando documentos...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 mt-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-semibold">Documentos</h3>
+        </div>
+        <div className="flex justify-center items-center py-8">
+          <div className="text-destructive">Error: {error}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 mt-4">
@@ -336,7 +357,7 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
               <Button
                 type="button"
                 variant="outline"
-                disabled={isSubmitting}
+                disabled={isUploading}
                 onClick={() => setOpen(false)}
               >
                 Cancelar
@@ -344,9 +365,9 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
               <Button
                 type="button"
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                disabled={isUploading}
               >
-                {isSubmitting ? "Subiendo..." : "Subir documento"}
+                {isUploading ? "Subiendo..." : "Subir documento"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -355,8 +376,8 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
 
       {/* Documentos existentes */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {files && files.length > 0 ? (
-          files.map((file) => (
+        {documents && documents.length > 0 ? (
+          documents.map((file) => (
             <Card
               key={file.id}
               className="group hover:shadow-md transition-all duration-200"
@@ -376,9 +397,7 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
                       <DropdownMenuContent align="end" className="z-[9999]">
                         <DropdownMenuItem
                           className="cursor-pointer"
-                          onClick={() =>
-                            handleDownloadDocument(file.url, file.name)
-                          }
+                          onClick={() => downloadDocument(file.url, file.name)}
                         >
                           <FileSymlink className="mr-2" />
                           <span>Ver</span>
@@ -410,8 +429,9 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDeleteDocument(file.id)}
+                                disabled={isDeleting}
                               >
-                                Eliminar
+                                {isDeleting ? "Eliminando..." : "Eliminar"}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -451,7 +471,7 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDownloadDocument(file.url, file.name)}
+                    onClick={() => downloadDocument(file.url, file.name)}
                   >
                     <Download className="h-4 w-4 mr-2" />
                     <span>Descargar</span>

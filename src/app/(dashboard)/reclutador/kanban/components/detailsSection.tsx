@@ -31,6 +31,9 @@ import {
 } from "@/components/ui/sheet";
 import { VacancyDetailsChecklist } from "./VacancyDetailsChecklist";
 import { DrawerVacancyDetails } from "./DrawerVacancyDetails";
+import { useCandidates } from "@/hooks/candidates/use-candidates";
+import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
+import { useEffect } from "react";
 
 interface DetailsSectionProps {
   vacante: VacancyWithRelations;
@@ -46,6 +49,39 @@ export const DetailsSectionReclutador = ({
   vacante,
   user_logged,
 }: DetailsSectionProps) => {
+  const { vacancyDetails, fetchVacancyDetails, error, isLoading } =
+    useVacancyDetails(vacante.id);
+
+  useEffect(() => {
+    fetchVacancyDetails();
+  }, [fetchVacancyDetails]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-muted-foreground">Cargando detalles...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-destructive">Error: {error}</div>
+      </div>
+    );
+  }
+
+  if (!vacancyDetails) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-muted-foreground">
+          No se encontraron detalles de la vacante
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 mt-4 z-[999]">
       <div className="bg-muted/30 p-4 rounded-lg border border-border">
@@ -53,12 +89,12 @@ export const DetailsSectionReclutador = ({
           <div className="flex items-center gap-2">
             <Avatar className="h-10 w-10">
               <AvatarImage
-                src={vacante.reclutador?.image || ""}
-                alt={vacante.reclutador?.name || "Reclutador"}
+                src={vacancyDetails.reclutador?.image || ""}
+                alt={vacancyDetails.reclutador?.name || "Reclutador"}
                 className="w-full h-full object-cover"
               />
               <AvatarFallback>
-                {vacante.reclutador?.name?.charAt(0) || "R"}
+                {vacancyDetails.reclutador?.name?.charAt(0) || "R"}
               </AvatarFallback>
             </Avatar>
             <div>
@@ -66,23 +102,26 @@ export const DetailsSectionReclutador = ({
                 Reclutador asignado
               </p>
               <p className="font-normal text-md text-gray-700 dark:text-muted-foreground">
-                {vacante.reclutador?.name || "Sin reclutador"}
+                {vacancyDetails.reclutador?.name || "Sin reclutador"}
               </p>
             </div>
           </div>
           <div className="flex gap-2">
-            <Badge variant="outline" className={getTipoColor(vacante.tipo)}>
-              {vacante.tipo}
+            <Badge
+              variant="outline"
+              className={getTipoColor(vacancyDetails.tipo)}
+            >
+              {vacancyDetails.tipo}
             </Badge>
             <Badge
               variant="outline"
-              className={`${getEstadoColor(vacante.estado)}`}
+              className={`${getEstadoColor(vacancyDetails.estado)}`}
             >
-              {vacante.estado}
+              {vacancyDetails.estado}
             </Badge>
 
             <Badge variant="outline" className="bg-muted">
-              {vacante.cliente?.cuenta || "Sin cliente"}
+              {vacancyDetails.cliente?.cuenta || "Sin cliente"}
             </Badge>
           </div>
         </div>
@@ -93,7 +132,7 @@ export const DetailsSectionReclutador = ({
               <Building className="h-4 w-4 mr-2 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Cliente:</span>
               <span className="ml-2 font-normal text-md text-gray-700 dark:text-muted-foreground">
-                {vacante.cliente?.cuenta || "Sin cliente"}
+                {vacancyDetails.cliente?.cuenta || "Sin cliente"}
               </span>
             </div>
             <div className="flex items-center">
@@ -102,8 +141,8 @@ export const DetailsSectionReclutador = ({
                 Fecha asignación:
               </span>
               <span className="ml-2 font-normal text-md text-gray-700 dark:text-muted-foreground">
-                {vacante.fechaAsignacion
-                  ? format(vacante.fechaAsignacion, "EE, dd MMMM yyyy", {
+                {vacancyDetails.fechaAsignacion
+                  ? format(vacancyDetails.fechaAsignacion, "EE, dd MMMM yyyy", {
                       locale: es,
                     })
                   : "Sin fecha"}
@@ -115,8 +154,8 @@ export const DetailsSectionReclutador = ({
                 Fecha entrega:
               </span>
               <span className="ml-2 font-normal text-md text-gray-700 dark:text-muted-foreground ">
-                {vacante?.fechaEntrega
-                  ? format(vacante.fechaEntrega, "EE, dd MMMM yyyy", {
+                {vacancyDetails.fechaEntrega
+                  ? format(vacancyDetails.fechaEntrega, "EE, dd MMMM yyyy", {
                       locale: es,
                     })
                   : "Sin fecha"}
@@ -138,32 +177,46 @@ export const DetailsSectionReclutador = ({
               </div>
               <Button variant="outline" size="sm" className="h-6 px-2">
                 <span className="font-normal text-md text-gray-700 dark:text-muted-foreground">
-                  {calculateDaysFromAssignment(vacante.fechaAsignacion)} días
+                  {vacancyDetails.fechaAsignacion
+                    ? `${calculateDaysFromAssignment(
+                        vacancyDetails.fechaAsignacion
+                      )} días`
+                    : "Sin fecha"}
                 </span>
               </Button>
             </div>
             <div className="pt-2">
               <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
                 <div
-                  className={`h-full ${getProgressColor(
-                    calculateDaysToDelivery(vacante.fechaEntrega)
-                  )}`}
+                  className={`h-full ${
+                    vacancyDetails.fechaEntrega
+                      ? getProgressColor(
+                          calculateDaysToDelivery(vacancyDetails.fechaEntrega)
+                        )
+                      : "bg-gray-400"
+                  }`}
                   style={{
-                    width: `${getProgressPercentage(
-                      vacante.fechaAsignacion,
-                      vacante.fechaEntrega
-                    )}%`,
+                    width: `${
+                      vacancyDetails.fechaAsignacion &&
+                      vacancyDetails.fechaEntrega
+                        ? getProgressPercentage(
+                            vacancyDetails.fechaAsignacion,
+                            vacancyDetails.fechaEntrega
+                          )
+                        : 0
+                    }%`,
                   }}
                 ></div>
               </div>
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>0</span>
                 <span>
-                  {getDaysDifference(
-                    vacante.fechaAsignacion,
-                    vacante.fechaEntrega
-                  )}
-                  d
+                  {vacancyDetails.fechaAsignacion && vacancyDetails.fechaEntrega
+                    ? `${getDaysDifference(
+                        vacancyDetails.fechaAsignacion,
+                        vacancyDetails.fechaEntrega
+                      )}d`
+                    : "N/A"}
                 </span>
               </div>
             </div>
@@ -178,7 +231,7 @@ export const DetailsSectionReclutador = ({
             Información financiera
           </h4>
           <div className="mb-2">
-            <DrawerVacancyDetails vacante={vacante} />
+            <DrawerVacancyDetails vacante={vacancyDetails} />
           </div>
         </div>
         <div className="grid grid-cols-3 gap-4">
@@ -188,7 +241,7 @@ export const DetailsSectionReclutador = ({
               <div className="text-sm text-muted-foreground">Salario</div>
               <div className="text-2xl font-semibold mt-1">
                 $
-                {vacante.salario?.toLocaleString() || (
+                {vacancyDetails.salario?.toLocaleString() || (
                   <span className="">N/A</span>
                 )}
               </div>
@@ -201,7 +254,7 @@ export const DetailsSectionReclutador = ({
                 <CardContent className="pt-4">
                   <div className="text-sm text-muted-foreground">Fee</div>
                   <div className="text-2xl font-semibold mt-1">
-                    {vacante.fee || "N/A"}%
+                    {vacancyDetails.fee || "N/A"}%
                   </div>
                 </CardContent>
               </Card>
@@ -212,7 +265,7 @@ export const DetailsSectionReclutador = ({
                     Valor factura
                   </div>
                   <div className="text-2xl font-semibold mt-1">
-                    ${vacante.valorFactura?.toLocaleString() || "N/A"}
+                    ${vacancyDetails.valorFactura?.toLocaleString() || "N/A"}
                   </div>
                 </CardContent>
               </Card>
@@ -230,12 +283,12 @@ export const DetailsSectionReclutador = ({
           </SheetTrigger>
           <SheetPortal>
             <SheetOverlay className="z-[9999]" />
-            <VacancyDetailsChecklist vacante={vacante} />
+            <VacancyDetailsChecklist vacante={vacancyDetails} />
           </SheetPortal>
         </Sheet>
       </div>
       {/* Candidato contratado (condicional) */}
-      {vacante.candidatoContratado && (
+      {vacancyDetails.candidatoContratado && (
         <Card className="overflow-hidden border-green-200 dark:border-green-800">
           <div className="h-1 bg-green-500"></div>
           <CardContent className="p-4">
@@ -247,13 +300,13 @@ export const DetailsSectionReclutador = ({
                 <div>
                   <h4 className="font-medium">Candidato contratado</h4>
                   <p className="text-muted-foreground text-sm flex justify-center gap-2 items-center">
-                    {vacante.candidatoContratado.name} -{" "}
-                    {vacante.candidatoContratado.email}
+                    {vacancyDetails.candidatoContratado.name} -{" "}
+                    {vacancyDetails.candidatoContratado.email}
                   </p>
                 </div>
               </div>
               <a
-                href={vacante.candidatoContratado.cv?.url || ""}
+                href={vacancyDetails.candidatoContratado.cv?.url || ""}
                 target="_blank"
               >
                 <Button variant="outline" size="sm">

@@ -1,5 +1,10 @@
-import { useState, useEffect } from "react";
-import { CommentWithRelations, CreateCommentData } from "@/types/comment";
+import { useState, useEffect, useCallback } from "react";
+import {
+  CommentWithRelations,
+  CreateCommentData,
+  EditCommentData,
+} from "@/types/comment";
+import { editComment } from "@/actions/vacantes/comments/actions";
 
 export const useComments = (vacancyId?: string) => {
   const [comments, setComments] = useState<CommentWithRelations[]>([]);
@@ -90,6 +95,33 @@ export const useComments = (vacancyId?: string) => {
     }
   };
 
+  const editCommentById = useCallback(
+    async (commentId: string, commentData: EditCommentData) => {
+      try {
+        const response = await editComment(commentId, commentData);
+
+        if (response.ok) {
+          // Actualizar el comentario en la lista local
+          setComments((prev) =>
+            prev.map((comment) =>
+              comment.id === commentId
+                ? { ...comment, content: commentData.content }
+                : comment
+            )
+          );
+        }
+
+        return response;
+      } catch (err) {
+        return {
+          ok: false,
+          message: "Error al editar el comentario",
+        };
+      }
+    },
+    []
+  );
+
   useEffect(() => {
     fetchComments();
   }, [vacancyId]);
@@ -98,8 +130,10 @@ export const useComments = (vacancyId?: string) => {
     comments,
     isLoading,
     error,
+    //Actions
     fetchComments,
     addComment,
     deleteComment,
+    editCommentById,
   };
 };

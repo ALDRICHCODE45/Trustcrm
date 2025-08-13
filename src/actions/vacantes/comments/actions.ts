@@ -1,7 +1,11 @@
 "use server";
 
 import prisma from "@/lib/db";
-import { CreateCommentData, CreateTaskData } from "@/types/comment";
+import {
+  CreateCommentData,
+  CreateTaskData,
+  EditCommentData,
+} from "@/types/comment";
 
 export async function CreateTask(
   args: CreateTaskData & { vacancyId?: string }
@@ -266,6 +270,30 @@ export async function DeleteComment(commentId: string) {
     return {
       ok: false,
       message: "Error al eliminar el comentario",
+    };
+  }
+}
+
+export async function editComment(
+  commentId: string,
+  commentData: EditCommentData
+) {
+  try {
+    const { content } = commentData;
+
+    await prisma.comment.update({
+      where: { id: commentId },
+      data: { content },
+    });
+
+    return {
+      ok: true,
+      message: "Comentario editado exitosamente",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Error al editar el comentario",
     };
   }
 }

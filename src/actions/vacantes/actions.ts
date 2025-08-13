@@ -427,3 +427,92 @@ export const getCandidates = async ({ vacancyId }: { vacancyId: string }) => {
     };
   }
 };
+
+export const getVacancyDetails = async (vacancyId: string) => {
+  try {
+    const vacancy = await prisma.vacancy.findUnique({
+      where: { id: vacancyId },
+      include: {
+        reclutador: true,
+        cliente: true,
+        candidatoContratado: {
+          include: {
+            cv: true,
+            vacanciesContratado: true,
+          },
+        },
+        ternaFinal: {
+          include: {
+            cv: true,
+            vacanciesContratado: true,
+          },
+        },
+        files: true,
+        Comments: {
+          include: {
+            author: true,
+          },
+        },
+      },
+    });
+    if (!vacancy) {
+      return {
+        ok: false,
+        message: "La vacante no existe",
+        vacancy: null,
+      };
+    }
+    return {
+      ok: true,
+      message: "Vacante obtenida correctamente",
+      vacancy,
+    };
+  } catch (error) {
+    console.log(error);
+    return {
+      ok: false,
+      message: "Error al obtener la vacante",
+      vacancy: null,
+    };
+  }
+};
+
+export const getVacancies = async () => {
+  try {
+    const vacancies = await prisma.vacancy.findMany({
+      include: {
+        reclutador: true,
+        cliente: true,
+        candidatoContratado: {
+          include: {
+            cv: true,
+            vacanciesContratado: true,
+          },
+        },
+        ternaFinal: {
+          include: {
+            cv: true,
+            vacanciesContratado: true,
+          },
+        },
+        files: true,
+        Comments: {
+          include: {
+            author: true,
+          },
+        },
+      },
+    });
+    return {
+      ok: true,
+      message: "Vacantes obtenidas correctamente",
+      vacancies,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: "Error al obtener las vacantes",
+      vacancies: null,
+    };
+  }
+};

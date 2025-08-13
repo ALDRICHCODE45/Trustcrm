@@ -270,6 +270,7 @@ export const deleteTask = async (userId: string, taskId: string) => {
     });
 
     revalidatePath(`/profile/${userId}`);
+    revalidatePath(`/tasks/${userId}`);
     return {
       ok: true,
       message: "Tarea eliminada exitosamente",

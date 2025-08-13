@@ -14,6 +14,7 @@ import {
   MoreVertical,
   Trash2,
   MessageSquareOff,
+  Pencil,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import CustomToast from "@/components/Custom-toast";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
+import { EditCommentDialog } from "./EditCommentDialog";
 
 interface CommentsSectionProps {
   vacante: VacancyWithRelations;
@@ -60,13 +64,22 @@ interface CommentsSectionProps {
 export const CommentsSectionReclutador: React.FC<CommentsSectionProps> = ({
   vacante,
 }) => {
-  const { comments, isLoading, error, addComment, deleteComment } = useComments(
-    vacante.id
-  );
+  const {
+    comments,
+    isLoading,
+    error,
+    addComment,
+    deleteComment,
+    editCommentById,
+    fetchComments,
+  } = useComments(vacante.id);
   const [commentToDelete, setCommentToDelete] =
     useState<CommentWithRelations | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [commentToEdit, setCommentToEdit] =
+    useState<CommentWithRelations | null>(null);
 
   const [filters, setFilters] = useState({
     dateRange: null as { from: Date; to: Date } | null,
@@ -96,17 +109,79 @@ export const CommentsSectionReclutador: React.FC<CommentsSectionProps> = ({
     setIsDeleteDialogOpen(true);
   };
 
+  const confirmEdit = async (commentId: string, content: string) => {
+    try {
+      const response = await editCommentById(commentId, {
+        content,
+      });
+      if (response.ok) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Comentario editado exitosamente"
+            message="El comentario ha sido editado exitosamente"
+            type="success"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        ));
+        setIsEditDialogOpen(false);
+        return;
+      }
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error al editar el comentario"
+          message="Por favor, intenta nuevamente"
+          type="error"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
+    } catch (error) {
+      console.error("Error editing comment:", error);
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error al editar el comentario"
+          message="Por favor, intenta nuevamente"
+          type="error"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
+    }
+  };
+
   const confirmDelete = async () => {
     if (!commentToDelete) return;
 
     try {
       await deleteComment(commentToDelete.id);
-      toast.success("Comentario eliminado exitosamente");
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Comentario eliminado exitosamente"
+          message="El comentario ha sido eliminado exitosamente"
+          type="success"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
       setIsDeleteDialogOpen(false);
       setCommentToDelete(null);
     } catch (error) {
       console.error("Error deleting comment:", error);
-      toast.error("Error al eliminar el comentario");
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error al eliminar el comentario"
+          message="Por favor, intenta nuevamente"
+          type="error"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
     }
   };
 
@@ -392,16 +467,34 @@ export const CommentsSectionReclutador: React.FC<CommentsSectionProps> = ({
                             >
                               <DropdownMenuItem
                                 onClick={() => handleDelete(comentario)}
-                                className="cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+                                className="cursor-pointer"
+                                variant="destructive"
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 <span>Eliminar</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setIsEditDialogOpen(true);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                <span>Editar</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
                       </div>
                     </CardHeader>
+                    {isEditDialogOpen && (
+                      <EditCommentDialog
+                        open={isEditDialogOpen}
+                        setOpen={setIsEditDialogOpen}
+                        onConfirm={confirmEdit}
+                        comment={comentario}
+                      />
+                    )}
                     <CardContent className="p-4 pt-2">
                       <p className="text-sm">{comentario.content}</p>
                       {/* Mostrar información adicional si es una tarea */}

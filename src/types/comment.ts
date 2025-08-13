@@ -13,6 +13,10 @@ export type CommentWithRelations = Prisma.CommentGetPayload<{
   };
 }>;
 
+export interface EditCommentData {
+  content: string;
+}
+
 export interface CreateCommentData {
   content: string;
   authorId: string;
