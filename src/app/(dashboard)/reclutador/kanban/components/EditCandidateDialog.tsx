@@ -393,11 +393,7 @@ export const EditCandidateDialog = ({
                     <FormItem>
                       <FormLabel>Sueldo actual o último</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Ej. 20000"
-                          type="number"
-                          {...field}
-                        />
+                        <Input placeholder="Ej. 20000" type="text" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -412,11 +408,7 @@ export const EditCandidateDialog = ({
                     <FormItem>
                       <FormLabel>Expectativa económica</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Ej. 25000"
-                          type="number"
-                          {...field}
-                        />
+                        <Input placeholder="Ej. 25000" type="text" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

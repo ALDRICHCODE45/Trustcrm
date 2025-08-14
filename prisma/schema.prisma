@@ -142,6 +142,10 @@ model Lead {
 
 //modelo de contacto para todos los modulos
 model Person {
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+
+  //Datos principales
   id       String       @id @default(cuid())
   name     String
   email    String?

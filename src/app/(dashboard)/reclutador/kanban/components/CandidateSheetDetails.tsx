@@ -1,5 +1,7 @@
 import { PersonWithRelations } from "@/app/(dashboard)/list/reclutamiento/components/FinalTernaSheet";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetTrigger,
@@ -24,50 +26,67 @@ export const CandidateSheetDetails = ({
         </Button>
       </SheetTrigger>
 
-      <SheetContent>
+      <SheetContent className="min-w-[25vw] z-[9999]">
         <SheetHeader>
-          <SheetTitle>Detalles del candidato</SheetTitle>
-          <SheetDescription>
-            Campos de información adicionales del candidato.
-          </SheetDescription>
+          <SheetTitle>{candidate.name}</SheetTitle>
+          <SheetDescription>Detalles del candidate</SheetDescription>
+          <Separator orientation="horizontal" className="my-4" />
           <div className="flex flex-col gap-4">
             <div className="flex  justify-between w-full">
-              <p>¿Actualmente empleado?</p>
-              <p>{candidate.esta_empleado ? "Sí" : "No"}</p>
+              <p className="font-bold text-sm">¿Actualmente empleado?</p>
+              <Badge variant="outline" className="text-sm font-normal">
+                {candidate.esta_empleado ? "Sí" : "No"}
+              </Badge>
             </div>
             <div className="flex  justify-between w-full">
-              <p>Sueldo actual o último</p>
-              <p>{candidate.sueldo_actual_o_ultimo || "No Especificado"}</p>
+              <p className="font-bold text-sm">Sueldo actual o último</p>
+              <Badge variant="outline" className="text-sm font-normal">
+                {candidate.sueldo_actual_o_ultimo || "No Especificado"}
+              </Badge>
             </div>
             <div className="flex  justify-between w-full">
-              <p>Prestaciones actuales o últimas</p>
-              <p>
-                {candidate.prestaciones_actuales_o_ultimas || "No Especificado"}
+              <p className="font-bold text-sm">
+                Prestaciones actuales o últimas
               </p>
+              <Badge variant="outline" className="text-sm font-normal">
+                {candidate.prestaciones_actuales_o_ultimas || "No Especificado"}
+              </Badge>
             </div>
             <div className="flex  justify-between w-full">
-              <p>Bonos y comisiones</p>
-              <p>{candidate.bonos_comisiones || "No Especificado"}</p>
+              <p className="font-bold text-sm">Bonos y comisiones</p>
+              <Badge variant="outline" className="text-sm font-normal">
+                {candidate.bonos_comisiones || "No Especificado"}
+              </Badge>
             </div>
             <div className="flex  justify-between w-full">
-              <p>Otros beneficios</p>
-              <p>{candidate.otros_beneficios || "No Especificado"}</p>
+              <p className="font-bold text-sm">Otros beneficios</p>
+              <Badge variant="outline" className="text-sm font-normal">
+                {candidate.otros_beneficios || "No Especificado"}
+              </Badge>
             </div>
             <div className="flex  justify-between w-full">
-              <p>Expectativa económica</p>
-              <p>{candidate.expectativa_económica || "No Especificado"}</p>
+              <p className="font-bold text-sm">Expectativa económica</p>
+              <Badge variant="outline" className="text-sm font-normal">
+                {candidate.expectativa_económica || "No Especificado"}
+              </Badge>
             </div>
             <div className="flex  justify-between w-full">
-              <p>Dirección actual</p>
-              <p>{candidate.direccion_actual || "No Especificado"}</p>
+              <p className="font-bold text-sm">Dirección actual</p>
+              <Badge variant="outline" className="text-sm font-normal">
+                {candidate.direccion_actual || "No Especificado"}
+              </Badge>
             </div>
             <div className="flex  justify-between w-full">
-              <p>Modalidad actual o última</p>
-              <p>{candidate.modalidad_actual_o_ultima || "No Especificado"}</p>
+              <p className="font-bold text-sm">Modalidad actual o última</p>
+              <Badge variant="outline" className="text-sm font-normal">
+                {candidate.modalidad_actual_o_ultima || "No Especificado"}
+              </Badge>
             </div>
             <div className="flex  justify-between w-full">
-              <p>Ubicación último trabajo</p>
-              <p>{candidate.ubicacion_ultimo_trabajo || "No Especificado"}</p>
+              <p className="font-bold text-sm">Ubicación último trabajo</p>
+              <Badge variant="outline" className="text-sm font-normal">
+                {candidate.ubicacion_ultimo_trabajo || "No Especificado"}
+              </Badge>
             </div>
           </div>
         </SheetHeader>

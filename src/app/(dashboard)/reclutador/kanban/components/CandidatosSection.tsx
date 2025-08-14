@@ -17,13 +17,11 @@ import {
   Plus,
   UserPlus,
   AlertCircle,
-  FileText,
   Mail,
   Phone,
   UserCheck,
   Pencil,
   Trash2,
-  ExternalLink,
   FileUser,
 } from "lucide-react";
 import { MoreVertical } from "lucide-react";
