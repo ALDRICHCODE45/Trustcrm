@@ -151,7 +151,7 @@ model Person {
   cv       VacancyFile? @relation("PersonCV", fields: [cvFileId], references: [id]) // solo para candidatos o en un futuro para donde se necesite
 
   //Datos extra del candidato (vacancy) opcionales
-  esta_empleado                   String?
+  esta_empleado                   Boolean?
   sueldo_actual_o_ultimo          String?
   prestaciones_actuales_o_ultimas String?
   bonos_comisiones                String?
@@ -160,7 +160,6 @@ model Person {
   direccion_actual                String?
   modalidad_actual_o_ultima       String?
   ubicacion_ultimo_trabajo        String?
-  modalidad_ultimo_trabajo        String?
 
   //etiqueta del contacto
   etiqueta LeadStatus @default(Contacto)

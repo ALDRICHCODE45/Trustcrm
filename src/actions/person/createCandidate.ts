@@ -137,6 +137,7 @@ export const updateCandidate = async (
         message: "Usuario no autenticado",
       };
     }
+
     // TODO: Implementar la lógica para actualizar el candidato
     const person = await prisma.person.update({
       where: { id: candidateId },
@@ -144,8 +145,19 @@ export const updateCandidate = async (
         name: data.name,
         email: data.email || undefined,
         phone: data.phone || undefined,
+        esta_empleado: data.esta_empleado || false,
+        sueldo_actual_o_ultimo: data.sueldo_actual_o_ultimo || undefined,
+        prestaciones_actuales_o_ultimas:
+          data.prestaciones_actuales_o_ultimas || undefined,
+        bonos_comisiones: data.bonos_comisiones || undefined,
+        otros_beneficios: data.otros_beneficios || undefined,
+        expectativa_económica: data.expectativa_económica || undefined,
+        direccion_actual: data.direccion_actual || undefined,
+        modalidad_actual_o_ultima: data.modalidad_actual_o_ultima || undefined,
+        ubicacion_ultimo_trabajo: data.ubicacion_ultimo_trabajo || undefined,
       },
     });
+
     revalidatePath("/list/reclutamiento");
     revalidatePath("/reclutador/kanban");
     revalidatePath("/reclutador");

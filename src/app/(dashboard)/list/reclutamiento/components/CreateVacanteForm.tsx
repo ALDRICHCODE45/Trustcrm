@@ -197,7 +197,7 @@ function VacancyForm({ reclutadores, clientes, user_logged }: Props) {
     resolver: zodResolver(vacancySchema),
     defaultValues: {
       tipo: VacancyTipo.Recompra,
-      estado: VacancyEstado.Hunting,
+      estado: VacancyEstado.QuickMeeting,
       posicion: "",
       prioridad: VacancyPrioridad.Normal,
       fechaAsignacion: new Date(),

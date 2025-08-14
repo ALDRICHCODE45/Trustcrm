@@ -53,6 +53,7 @@ import { CompareChecklistForm } from "@/app/(dashboard)/list/reclutamiento/Vacan
 import { CreateCandidateForm } from "./CreateCandidateForm";
 import { EditCandidateDialog } from "./EditCandidateDialog";
 import { useCandidates } from "@/hooks/candidates/use-candidates";
+import { CandidateSheetDetails } from "./CandidateSheetDetails";
 
 interface CandidatesSectionProps {
   vacante: VacancyWithRelations;
@@ -249,7 +250,7 @@ export const CandidatesSectionReclutador = ({
                     <span>Agregar</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="z-[9999] flex flex-col gap-0 overflow-y-visible p-0 sm:max-w-lg [&>button:last-child]:top-3.5">
+                <DialogContent className="z-[9999] max-h-[70vh] overflow-y-auto flex flex-col gap-0 overflow-y-visible p-0 sm:max-w-lg [&>button:last-child]:top-3.5">
                   <DialogHeader className="contents space-y-0 text-left">
                     <DialogTitle className="border-b px-6 py-4 text-base">
                       Agregar candidato
@@ -323,19 +324,16 @@ export const CandidatesSectionReclutador = ({
                               <span>{candidato.phone || "Sin teléfono"}</span>
                             </div>
                             {candidato.cv?.url && (
-                              <Button
-                                variant="link"
-                                className="cursor-pointer text-xs text-muted-foreground p-0"
-                              >
+                              <div className="">
                                 <Link
-                                  className="flex items-center gap-2 text-xs"
+                                  className="flex hover:underline items-center gap-2 text-xs text-muted-foreground"
                                   href={candidato.cv.url}
                                   target="_blank"
                                 >
-                                  <FileUser className="h-4 w-4" />
-                                  <span className="text-xs">Ver CV</span>
+                                  <FileUser className="h-3 w-3" />
+                                  <span className="">Ver CV</span>
                                 </Link>
-                              </Button>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -409,8 +407,9 @@ export const CandidatesSectionReclutador = ({
                   </div>
 
                   {/* Información de estado */}
-                  <div className="mt-3 pt-2 border-t">
+                  <div className="mt-3 pt-2 border-t flex justify-between">
                     <CompareChecklistForm />
+                    <CandidateSheetDetails candidate={candidato} />
                   </div>
                 </CardContent>
               </Card>

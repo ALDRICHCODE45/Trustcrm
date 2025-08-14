@@ -36,6 +36,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { CVUploadSection } from "./CVUploadSection";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 
 interface EditCandidateDialogProps {
   refreshCandidates: () => void;
@@ -58,6 +60,21 @@ export const EditCandidateDialog = ({
 
   const form = useForm<CreateCandidateFormData>({
     resolver: zodResolver(createCandidateSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      email: "",
+      cvFile: undefined,
+      esta_empleado: false,
+      sueldo_actual_o_ultimo: "",
+      prestaciones_actuales_o_ultimas: "",
+      bonos_comisiones: "",
+      otros_beneficios: "",
+      expectativa_económica: "",
+      direccion_actual: "",
+      modalidad_actual_o_ultima: "",
+      ubicacion_ultimo_trabajo: "",
+    },
   });
 
   // Actualizar valores del formulario cuando cambie el candidato
@@ -68,9 +85,23 @@ export const EditCandidateDialog = ({
         phone: candidate.phone || "",
         email: candidate.email || "",
         cvFile: undefined,
+        // valores por defecto para campos adicionales
+        esta_empleado: (candidate as any)?.esta_empleado ?? false,
+        sueldo_actual_o_ultimo:
+          (candidate as any)?.sueldo_actual_o_ultimo || "",
+        prestaciones_actuales_o_ultimas:
+          (candidate as any)?.prestaciones_actuales_o_ultimas || "",
+        bonos_comisiones: (candidate as any)?.bonos_comisiones || "",
+        otros_beneficios: (candidate as any)?.otros_beneficios || "",
+        expectativa_económica: (candidate as any)?.expectativa_económica || "",
+        direccion_actual: (candidate as any)?.direccion_actual || "",
+        modalidad_actual_o_ultima:
+          (candidate as any)?.modalidad_actual_o_ultima || "",
+        ubicacion_ultimo_trabajo:
+          (candidate as any)?.ubicacion_ultimo_trabajo || "",
       });
     }
-  }, [candidate, form]);
+  }, [candidate, form, open]);
 
   const onSubmit = async (data: CreateCandidateFormData) => {
     if (!candidate?.id) return;
@@ -103,10 +134,11 @@ export const EditCandidateDialog = ({
       // Actualizar el candidato en el componente padre
       const updatedCandidate = {
         ...candidate,
+        ...data,
         name: data.name,
         phone: data.phone || null,
         email: data.email || null,
-      };
+      } as unknown as PersonWithRelations;
       onCandidateUpdated(updatedCandidate);
 
       form.reset();
@@ -277,7 +309,7 @@ export const EditCandidateDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] z-[9999]">
+      <DialogContent className="max-h-[70vh] overflow-y-auto z-[9999]">
         <DialogHeader>
           <DialogTitle>Editar candidato</DialogTitle>
           <DialogDescription>
@@ -327,6 +359,169 @@ export const EditCandidateDialog = ({
                       type="email"
                       {...field}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Campo booleano: ¿Está empleado? */}
+            <FormField
+              control={form.control}
+              name="esta_empleado"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between">
+                  <FormLabel>¿Actualmente empleado?</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={!!field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Sueldo y expectativa económica */}
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <div className="flex-1">
+                <FormField
+                  control={form.control}
+                  name="sueldo_actual_o_ultimo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sueldo actual o último</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ej. 20000"
+                          type="number"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="flex-1">
+                <FormField
+                  control={form.control}
+                  name="expectativa_económica"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Expectativa económica</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ej. 25000"
+                          type="number"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Modalidad y ubicación último trabajo */}
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <div className="flex-1">
+                <FormField
+                  control={form.control}
+                  name="modalidad_actual_o_ultima"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Modalidad actual o última</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Presencial / Híbrido / Remoto"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="flex-1">
+                <FormField
+                  control={form.control}
+                  name="ubicacion_ultimo_trabajo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ubicación último trabajo</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ciudad, País" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="bonos_comisiones"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bonos / Comisiones</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ej. 10% comisión, bono anual, etc."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Textareas para campos largos */}
+            <FormField
+              control={form.control}
+              name="prestaciones_actuales_o_ultimas"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Prestaciones actuales o últimas</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Describe prestaciones (vales, SGMM, vacaciones, etc.)"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="direccion_actual"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dirección actual</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Calle, número, colonia, ciudad, estado"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="otros_beneficios"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Otros beneficios</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Beneficios adicionales" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

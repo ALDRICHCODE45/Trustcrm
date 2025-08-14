@@ -20,6 +20,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UploadIcon, FileText, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 
 interface CreateCandidateFormProps {
   vacancyId: string;
@@ -45,6 +47,16 @@ export const CreateCandidateForm = ({
       phone: "",
       email: "",
       cvFile: undefined,
+      //campos extra
+      esta_empleado: false,
+      sueldo_actual_o_ultimo: "",
+      prestaciones_actuales_o_ultimas: "",
+      bonos_comisiones: "",
+      otros_beneficios: "",
+      expectativa_económica: "",
+      direccion_actual: "",
+      modalidad_actual_o_ultima: "",
+      ubicacion_ultimo_trabajo: "",
     },
   });
 
@@ -70,10 +82,25 @@ export const CreateCandidateForm = ({
     setIsSubmitting(true);
     try {
       // Limpiar campos vacíos antes de enviar
-      const cleanData = {
+      const cleanData: CreateCandidateFormData = {
         name: data.name,
         phone: data.phone?.trim() || undefined,
         email: data.email?.trim() || undefined,
+        esta_empleado: data.esta_empleado,
+        sueldo_actual_o_ultimo:
+          data.sueldo_actual_o_ultimo?.toString().trim() || undefined,
+        prestaciones_actuales_o_ultimas:
+          data.prestaciones_actuales_o_ultimas?.trim() || undefined,
+        bonos_comisiones: data.bonos_comisiones?.trim() || undefined,
+        otros_beneficios: data.otros_beneficios?.trim() || undefined,
+        expectativa_económica:
+          data["expectativa_económica"]?.toString().trim() || undefined,
+        direccion_actual: data.direccion_actual?.trim() || undefined,
+        modalidad_actual_o_ultima:
+          data.modalidad_actual_o_ultima?.trim() || undefined,
+        ubicacion_ultimo_trabajo:
+          data.ubicacion_ultimo_trabajo?.trim() || undefined,
+        cvFile: data.cvFile,
       };
 
       // Agregar archivo CV si existe
@@ -85,7 +112,7 @@ export const CreateCandidateForm = ({
       };
 
       // Pasar los datos al hook para que maneje la creación
-      await onCandidateCreated(dataWithFile);
+      onCandidateCreated(dataWithFile);
 
       // Reset del formulario solo si la creación fue exitosa
       form.reset();
@@ -101,7 +128,7 @@ export const CreateCandidateForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="flex flex-col gap-4 sm:flex-row ">
           <div className="flex-1">
             <FormField
               control={form.control}
@@ -144,6 +171,168 @@ export const CreateCandidateForm = ({
                 <Input
                   placeholder="candidato@ejemplo.com"
                   type="email"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Campo booleano: ¿Está empleado? */}
+        <FormField
+          control={form.control}
+          name="esta_empleado"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between">
+              <FormLabel>¿Actualmente empleado?</FormLabel>
+              <FormControl>
+                <Switch
+                  checked={!!field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Sueldo y expectativa económica */}
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="flex-1">
+            <FormField
+              control={form.control}
+              name="sueldo_actual_o_ultimo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sueldo actual o último</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ej. 20000" type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="flex-1">
+            <FormField
+              control={form.control}
+              name="expectativa_económica"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Expectativa económica</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ej. 25000" type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Modalidades y ubicación último trabajo */}
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="flex-1">
+            <FormField
+              control={form.control}
+              name="modalidad_actual_o_ultima"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Modalidad actual o última</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Presencial / Híbrido / Remoto"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="flex-1">
+            <FormField
+              control={form.control}
+              name="ubicacion_ultimo_trabajo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ubicación último trabajo</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ciudad, País" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="flex-1">
+            <FormField
+              control={form.control}
+              name="bonos_comisiones"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bonos / Comisiones</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ej. 10% comisión, bono anual, etc."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Textareas para campos largos */}
+        <FormField
+          control={form.control}
+          name="prestaciones_actuales_o_ultimas"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Prestaciones actuales o últimas</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Describe prestaciones (vales, SGMM, vacaciones, etc.)"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="direccion_actual"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Dirección actual</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Calle, número, colonia, ciudad, estado"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="otros_beneficios"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Otros beneficios</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Beneficios adicionales relevantes"
                   {...field}
                 />
               </FormControl>
