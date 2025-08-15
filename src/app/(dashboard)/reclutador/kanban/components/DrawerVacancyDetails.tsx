@@ -23,7 +23,7 @@ export const DrawerVacancyDetails = ({
 }) => {
   const details = [
     { label: "Prestaciones", value: vacante.prestaciones },
-    { label: "Herramientas", value: vacante.herramientas },
+    { label: "Herramientas de trabajo", value: vacante.herramientas },
     { label: "Comisiones/Bonos", value: vacante.comisiones },
     { label: "Modalidad", value: vacante.modalidad },
     { label: "Horario", value: vacante.horario },

@@ -32,6 +32,7 @@ const fetchVacancies = async (): Promise<VacancyWithRelations[]> => {
   try {
     const vacantes = await prisma.vacancy.findMany({
       include: {
+        InputChecklist: true,
         reclutador: true,
         cliente: true,
         candidatoContratado: {

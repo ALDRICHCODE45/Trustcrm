@@ -253,9 +253,10 @@ model Vacancy {
   creatorId String?
 
   // Relación con checklist
-  InputChecklist InputChecklist[]
+  InputChecklist       InputChecklist[]
+  IsChecklistValidated Boolean          @default(false)
   // Relación con tareas
-  tasks          Task[]
+  tasks                Task[]
 }
 
 model InputChecklist {
@@ -264,7 +265,8 @@ model InputChecklist {
   vacancy   Vacancy? @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
   content   String
 
-  isValidate Boolean @default(false)
+  // Datos del candidato para comparar con el contenido del checklist
+  candidate_feedback String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -305,6 +307,10 @@ enum ClienteModalidad {
 }
 
 model Client {
+  //Datos de auditoria
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+
   //Data principal
   id           String            @id @default(cuid())
   //Relacion con el lead

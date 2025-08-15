@@ -283,7 +283,12 @@ export const DetailsSectionReclutador = ({
           </SheetTrigger>
           <SheetPortal>
             <SheetOverlay className="z-[9999]" />
-            <VacancyDetailsChecklist vacante={vacancyDetails} />
+            <VacancyDetailsChecklist
+              vacante={vacancyDetails}
+              onSaveRequisitos={() => {
+                fetchVacancyDetails();
+              }}
+            />
           </SheetPortal>
         </Sheet>
       </div>

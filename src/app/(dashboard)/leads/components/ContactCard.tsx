@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Mail,
   MoreVertical,
@@ -175,109 +175,118 @@ export const ContactoCard = ({
     contacto.etiqueta ?? "none"
   );
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsPending(true);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      setIsPending(true);
 
-    const formData = new FormData(e.currentTarget);
+      const formData = new FormData(e.currentTarget);
 
-    try {
-      await editLeadPerson(contacto.id, formData);
-      toast.success("Contacto editado con exito");
+      try {
+        await editLeadPerson(contacto.id, formData);
+        toast.success("Contacto editado con exito");
 
-      // Extraer los nuevos valores del formulario
-      const newName = formData.get("name") as string;
-      const newPosition = formData.get("position") as string;
-      const newEmail = (formData.get("email") as string) || null;
-      const newPhone = (formData.get("phone") as string) || null;
-      const newLinkedin = (formData.get("linkedin") as string) || null;
+        // Extraer los nuevos valores del formulario
+        const newName = formData.get("name") as string;
+        const newPosition = formData.get("position") as string;
+        const newEmail = (formData.get("email") as string) || null;
+        const newPhone = (formData.get("phone") as string) || null;
+        const newLinkedin = (formData.get("linkedin") as string) || null;
 
-      // Crear el contacto actualizado
-      const updatedContacto: ContactWithRelations = {
-        ...contacto,
-        name: newName,
-        position: newPosition,
-        email: newEmail,
-        phone: newPhone,
-        linkedin: newLinkedin,
-      };
+        // Crear el contacto actualizado
+        const updatedContacto: ContactWithRelations = {
+          ...contacto,
+          name: newName,
+          position: newPosition,
+          email: newEmail,
+          phone: newPhone,
+          linkedin: newLinkedin,
+        };
 
-      // Actualizar la lista de contactos reemplazando el contacto editado
-      onUpdateContacts((prev) =>
-        prev.map((contact) =>
-          contact.id === contacto.id ? updatedContacto : contact
-        )
-      );
-    } catch (error) {
-      toast.error("Algo salio mal..");
-    } finally {
-      setIsPending(false);
-      setOpenDialog(false);
-    }
-  };
+        // Actualizar la lista de contactos reemplazando el contacto editado
+        onUpdateContacts((prev) =>
+          prev.map((contact) =>
+            contact.id === contacto.id ? updatedContacto : contact
+          )
+        );
+      } catch (error) {
+        toast.error("Algo salio mal..");
+      } finally {
+        setIsPending(false);
+        setOpenDialog(false);
+      }
+    },
+    [contacto.id, onUpdateContacts]
+  );
 
-  const handleAddEtiqueta = async (newEtiqueta: LeadStatus | "none") => {
-    try {
-      const response = await addEtiqueta(contacto.id, newEtiqueta);
-      if (!response.ok) {
+  const handleAddEtiqueta = useCallback(
+    async (newEtiqueta: LeadStatus | "none") => {
+      try {
+        const response = await addEtiqueta(contacto.id, newEtiqueta);
+        if (!response.ok) {
+          toast.custom((t) => (
+            <ToastCustomMessage
+              title="Error"
+              onClick={() => {
+                toast.dismiss(t);
+              }}
+              message={response.message}
+              type="error"
+            />
+          ));
+          return;
+        }
+
         toast.custom((t) => (
           <ToastCustomMessage
-            title="Error"
+            title="Etiqueta agregada"
+            message={response.message}
+            type="success"
             onClick={() => {
               toast.dismiss(t);
             }}
-            message={response.message}
-            type="error"
           />
         ));
-        return;
+      } catch (error) {
+        console.error("Error adding etiqueta:", error);
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Error"
+            message="Ah ocurrido un error"
+            type="error"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        ));
       }
+    },
+    [contacto]
+  );
 
-      toast.custom((t) => (
-        <ToastCustomMessage
-          title="Etiqueta agregada"
-          message={response.message}
-          type="success"
-          onClick={() => {
-            toast.dismiss(t);
-          }}
-        />
-      ));
-    } catch (error) {
-      console.error("Error adding etiqueta:", error);
-      toast.custom((t) => (
-        <ToastCustomMessage
-          title="Error"
-          message="Ah ocurrido un error"
-          type="error"
-          onClick={() => {
-            toast.dismiss(t);
-          }}
-        />
-      ));
-    }
-  };
+  const deleteContact = useCallback(
+    async (id: string) => {
+      try {
+        const promise = deleteContactById(id);
 
-  const deleteContact = async (id: string) => {
-    try {
-      const promise = deleteContactById(id);
-
-      toast.promise(promise, {
-        loading: "Eliminando...",
-        success: () => {
-          // Actualizar la lista local eliminando el contacto
-          onUpdateContacts((prev) =>
-            prev.filter((contact) => contact.id !== id)
-          );
-          return "Contacto eliminado con exito";
-        },
-        error: "Ah ocurrido un error",
-      });
-    } catch (error) {
-      console.log(error);
-      throw Error("Error eliminando leadContact");
-    }
-  };
+        toast.promise(promise, {
+          loading: "Eliminando...",
+          success: () => {
+            // Actualizar la lista local eliminando el contacto
+            onUpdateContacts((prev) =>
+              prev.filter((contact) => contact.id !== id)
+            );
+            return "Contacto eliminado con exito";
+          },
+          error: "Ah ocurrido un error",
+        });
+      } catch (error) {
+        console.log(error);
+        throw Error("Error eliminando leadContact");
+      }
+    },
+    [onUpdateContacts]
+  );
 
   return (
     <>
@@ -588,66 +597,72 @@ export const SeguimientoContacto = ({
   const [openCreateTask, setOpenCreateTask] = useState<boolean>(false);
 
   // Manejar el envío del formulario
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-    if (!newContent.trim()) {
-      toast.error("El contenido no puede estar vacío");
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      const newInteraction = await createContactInteraction(
-        contacto.id,
-        newContent,
-        attachment || undefined
-      );
-
-      setInteractions((prev) => [...prev, newInteraction]);
-      setNewContent("");
-      setAttachment(null);
-      toast.success("Interacción registrada con éxito");
-
-      // Actualizar el estado global si la función está disponible
-      if (updateLeadInState && contacto.leadId) {
-        // Obtener los contactos actualizados del lead
-        try {
-          const updatedContacts = await getContactosByLeadId(contacto.leadId);
-          updateLeadInState(contacto.leadId, {
-            contactos: updatedContacts,
-          });
-        } catch (error) {
-          console.error("Error al actualizar el estado global:", error);
-        }
+      if (!newContent.trim()) {
+        toast.error("El contenido no puede estar vacío");
+        return;
       }
-    } catch (error) {
-      toast.error("Error al registrar la interacción");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+
+      setSubmitting(true);
+
+      try {
+        const newInteraction = await createContactInteraction(
+          contacto.id,
+          newContent,
+          attachment || undefined
+        );
+
+        setInteractions((prev) => [...prev, newInteraction]);
+        setNewContent("");
+        setAttachment(null);
+        toast.success("Interacción registrada con éxito");
+
+        // Actualizar el estado global si la función está disponible
+        if (updateLeadInState && contacto.leadId) {
+          // Obtener los contactos actualizados del lead
+          try {
+            const updatedContacts = await getContactosByLeadId(contacto.leadId);
+            updateLeadInState(contacto.leadId, {
+              contactos: updatedContacts,
+            });
+          } catch (error) {
+            console.error("Error al actualizar el estado global:", error);
+          }
+        }
+      } catch (error) {
+        toast.error("Error al registrar la interacción");
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [contacto.id, contacto.leadId, newContent, attachment, updateLeadInState]
+  );
 
   // Manejar selección de archivo
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    // Crear el FormData y agregar el archivo
-    const formData = new FormData();
-    formData.append("file", file);
+      // Crear el FormData y agregar el archivo
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const attachment = await uploadFile(formData);
+      const attachment = await uploadFile(formData);
 
-    if (attachment.success) {
-      setAttachment({
-        attachmentName: attachment.fileName,
-        attachmentType: attachment.fileType,
-        attachmentUrl: attachment.url,
-      });
-    }
-  };
+      if (attachment.success) {
+        setAttachment({
+          attachmentName: attachment.fileName,
+          attachmentType: attachment.fileType,
+          attachmentUrl: attachment.url,
+        });
+      }
+    },
+    []
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

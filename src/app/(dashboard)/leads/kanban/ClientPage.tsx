@@ -16,7 +16,7 @@ import { TagIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { KanbanFilters, FilterState } from "./components/KanbanFilters";
 import { DroppableKanbanColumn } from "./components/KanbanColumn";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Lead, LeadStatus, SubSector, User } from "@prisma/client";
 import {
   editLeadById,
@@ -78,14 +78,6 @@ export default function KanbanLeadsBoard({
   const [activeLead, setActiveLead] = useState<LeadWithRelations | null>(null);
   const [subSectores, setSubSectores] = useState<SubSector[]>([]);
 
-  useEffect(() => {
-    const fetchSubSectores = async () => {
-      const subSectores = await getSubSectores();
-      setSubSectores(subSectores);
-    };
-    fetchSubSectores();
-  }, []);
-
   // Estados para el dialog de ContactoCalido
   const [showContactoCalidoDialog, setShowContactoCalidoDialog] =
     useState(false);
@@ -102,6 +94,7 @@ export default function KanbanLeadsBoard({
     searchTerm: "",
   });
 
+  // Memoizar sensors para evitar recreación - FIXED: no usar useMemo con hooks
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: { distance: 10 },
@@ -111,176 +104,231 @@ export default function KanbanLeadsBoard({
     })
   );
 
-  // Cuando cambien los filtros, recargar datos
+  // Memoizar fetch de subsectores
+  const fetchSubSectores = useCallback(async () => {
+    try {
+      const subSectores = await getSubSectores();
+      setSubSectores(subSectores);
+    } catch (error) {
+      console.error("Error fetching subsectores:", error);
+    }
+  }, []);
+
   useEffect(() => {
-    refreshLeads(filters);
-  }, [filters, refreshLeads]);
+    fetchSubSectores();
+  }, [fetchSubSectores]);
 
-  const handleFilterChange = (newFilters: InfiniteFilterState) => {
+  // Memoizar refreshLeads para evitar bucle infinito
+  const memoizedRefreshLeads = useCallback(
+    (newFilters: InfiniteFilterState) => {
+      refreshLeads(newFilters);
+    },
+    [refreshLeads]
+  );
+
+  // Cuando cambien los filtros, recargar datos - FIXED: usar memoizedRefreshLeads
+  useEffect(() => {
+    memoizedRefreshLeads(filters);
+  }, [filters, memoizedRefreshLeads]);
+
+  const handleFilterChange = useCallback((newFilters: InfiniteFilterState) => {
     setFilters(newFilters);
-  };
+  }, []);
 
-  const clearSingleFilter = (filterKey: keyof InfiniteFilterState) => {
-    setFilters((prev) => ({
-      ...prev,
-      [filterKey]:
-        filterKey === "fechaCreacion" ? { from: null, to: null } : null,
-    }));
-  };
+  const clearSingleFilter = useCallback(
+    (filterKey: keyof InfiniteFilterState) => {
+      setFilters((prev) => ({
+        ...prev,
+        [filterKey]:
+          filterKey === "fechaCreacion" ? { from: null, to: null } : null,
+      }));
+    },
+    []
+  );
 
   // Funciones para manejar el dialog de ContactoCalido
-  const handleContactoCalidoConfirm = async (
-    formData: ContactoCalidoFormData
-  ) => {
-    if (pendingLeadUpdate) {
-      // Crear FormData con TODOS los datos incluyendo el nuevo status
-      const formDataToSend = new FormData();
-      formDataToSend.append("numero_empleados", formData.numeroEmpleados);
-      formDataToSend.append("ubicacion", formData.ubicacion);
-      formDataToSend.append("subSectorId", formData.subsector);
-      formDataToSend.append("status", pendingLeadUpdate.newStatus);
+  const handleContactoCalidoConfirm = useCallback(
+    async (formData: ContactoCalidoFormData) => {
+      if (pendingLeadUpdate) {
+        // Crear FormData con TODOS los datos incluyendo el nuevo status
+        const formDataToSend = new FormData();
+        formDataToSend.append("numero_empleados", formData.numeroEmpleados);
+        formDataToSend.append("ubicacion", formData.ubicacion);
+        formDataToSend.append("subSectorId", formData.subsector);
+        formDataToSend.append("status", pendingLeadUpdate.newStatus);
 
-      // Buscar el subsector seleccionado para incluir el objeto completo
-      const selectedSubSector = subSectores.find(
-        (sub) => sub.id === formData.subsector
-      );
+        // Buscar el subsector seleccionado para incluir el objeto completo
+        const selectedSubSector = subSectores.find(
+          (sub) => sub.id === formData.subsector
+        );
 
-      // Actualizar el estado local optimistamente con todos los cambios
-      updateLeadInState(pendingLeadUpdate.leadId, {
-        status: pendingLeadUpdate.newStatus,
-        numero_empleados:
-          formData.numeroEmpleados === "500+"
-            ? 500
-            : parseInt(formData.numeroEmpleados.split("-")[0]) || undefined,
-        ubicacion: formData.ubicacion,
-        subSectorId: formData.subsector,
-        SubSector: selectedSubSector || null,
-      });
+        // Actualizar el estado local optimistamente con todos los cambios
+        updateLeadInState(pendingLeadUpdate.leadId, {
+          status: pendingLeadUpdate.newStatus,
+          numero_empleados:
+            formData.numeroEmpleados === "500+"
+              ? 500
+              : parseInt(formData.numeroEmpleados.split("-")[0]) || undefined,
+          ubicacion: formData.ubicacion,
+          subSectorId: formData.subsector,
+          SubSector: selectedSubSector || null,
+        });
 
-      // Hacer una sola llamada que actualice todo
-      //const promise = editLeadById(pendingLeadUpdate.leadId, formDataToSend);
-      const preClientPromise = editLeadByIdAndCreatePreClient(
-        formDataToSend,
-        pendingLeadUpdate.leadId
-      );
+        // Hacer una sola llamada que actualice todo
+        const preClientPromise = editLeadByIdAndCreatePreClient(
+          formDataToSend,
+          pendingLeadUpdate.leadId
+        );
 
-      toast.promise(preClientPromise, {
+        toast.promise(preClientPromise, {
+          loading: "Guardando cambios...",
+          success: () =>
+            `Lead actualizado a Contacto Cálido con información adicional`,
+          error: () => {
+            // Revertir el cambio si hay un error
+            updateLeadInState(pendingLeadUpdate.leadId, {
+              status: pendingLeadUpdate.leadToUpdate.status,
+            });
+            return `Error al actualizar`;
+          },
+        });
+
+        setShowContactoCalidoDialog(false);
+        setPendingLeadUpdate(null);
+      }
+    },
+    [pendingLeadUpdate, subSectores, updateLeadInState]
+  );
+
+  const handleContactoCalidoCancel = useCallback(() => {
+    setShowContactoCalidoDialog(false);
+    setPendingLeadUpdate(null);
+  }, []);
+
+  // Función auxiliar para encontrar un lead por ID a través de todos los estados
+  const findLeadById = useCallback(
+    (leadId: string): LeadWithRelations | undefined => {
+      for (const status of Object.keys(leadsData) as LeadStatus[]) {
+        const lead = leadsData[status].find((lead) => lead.id === leadId);
+        if (lead) return lead;
+      }
+      return undefined;
+    },
+    [leadsData]
+  );
+
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const { active } = event;
+      const lead = findLeadById(active.id as string);
+      if (lead) {
+        setActiveLead(lead);
+        setActiveId(active.id as string);
+      }
+    },
+    [findLeadById]
+  );
+
+  // Función para verificar si el lead ya tiene los datos requeridos para ContactoCalido
+  const hasContactoCalidoData = useCallback(
+    (lead: LeadWithRelations): boolean => {
+      return !!(lead.numero_empleados && lead.ubicacion && lead.subSectorId);
+    },
+    []
+  );
+
+  const updateLeadStatus = useCallback(
+    async (
+      leadId: string,
+      newStatus: LeadStatus,
+      leadToUpdate: LeadWithRelations
+    ) => {
+      // Actualizar optimistamente el estado local
+      updateLeadInState(leadId, { status: newStatus });
+
+      // llamar accion para ACTUALIZAR lead
+      const formData = new FormData();
+      formData.append("status", newStatus);
+
+      const promise = editLeadById(leadId, formData);
+
+      toast.promise(promise, {
         loading: "Guardando cambios...",
-        success: () =>
-          `Lead actualizado a Contacto Cálido con información adicional`,
+        success: () => `Lead actualizado a ${newStatus}`,
         error: () => {
           // Revertir el cambio si hay un error
-          updateLeadInState(pendingLeadUpdate.leadId, {
-            status: pendingLeadUpdate.leadToUpdate.status,
-          });
+          updateLeadInState(leadId, { status: leadToUpdate.status });
           return `Error al actualizar`;
         },
       });
 
-      setShowContactoCalidoDialog(false);
-      setPendingLeadUpdate(null);
-    }
-  };
+      if (newStatus === LeadStatus.Asignadas) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 10000);
+      }
+    },
+    [updateLeadInState]
+  );
 
-  const handleContactoCalidoCancel = () => {
-    setShowContactoCalidoDialog(false);
-    setPendingLeadUpdate(null);
-  };
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
 
-  // Función auxiliar para encontrar un lead por ID a través de todos los estados
-  const findLeadById = (leadId: string): LeadWithRelations | undefined => {
-    for (const status of Object.keys(leadsData) as LeadStatus[]) {
-      const lead = leadsData[status].find((lead) => lead.id === leadId);
-      if (lead) return lead;
-    }
-    return undefined;
-  };
+      setActiveId(null);
+      setActiveLead(null);
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    const lead = findLeadById(active.id as string);
-    if (lead) {
-      setActiveLead(lead);
-      setActiveId(active.id as string);
-    }
-  };
+      if (!over) return;
 
-  // Función para verificar si el lead ya tiene los datos requeridos para ContactoCalido
-  const hasContactoCalidoData = (lead: LeadWithRelations): boolean => {
-    return !!(lead.numero_empleados && lead.ubicacion && lead.subSectorId);
-  };
+      const leadId = active.id as string;
+      const newStatus = over.id as LeadStatus;
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
+      const leadToUpdate = findLeadById(leadId);
 
-    setActiveId(null);
-    setActiveLead(null);
+      if (leadToUpdate && leadToUpdate.status !== newStatus) {
+        // Si se intenta mover a ContactoCalido, verificar si ya tiene los datos requeridos
+        if (newStatus === LeadStatus.ContactoCalido) {
+          // Si ya tiene los datos requeridos, proceder directamente
+          if (hasContactoCalidoData(leadToUpdate)) {
+            await updateLeadStatus(leadId, newStatus, leadToUpdate);
+            return;
+          }
 
-    if (!over) return;
-
-    const leadId = active.id as string;
-    const newStatus = over.id as LeadStatus;
-
-    const leadToUpdate = findLeadById(leadId);
-
-    if (leadToUpdate && leadToUpdate.status !== newStatus) {
-      // Si se intenta mover a ContactoCalido, verificar si ya tiene los datos requeridos
-      if (newStatus === LeadStatus.ContactoCalido) {
-        // Si ya tiene los datos requeridos, proceder directamente
-        if (hasContactoCalidoData(leadToUpdate)) {
-          await updateLeadStatus(leadId, newStatus, leadToUpdate);
+          // Si no tiene los datos, mostrar el dialog
+          setPendingLeadUpdate({
+            leadId,
+            newStatus,
+            leadToUpdate,
+          });
+          setShowContactoCalidoDialog(true);
           return;
         }
 
-        // Si no tiene los datos, mostrar el dialog
-        setPendingLeadUpdate({
-          leadId,
-          newStatus,
-          leadToUpdate,
-        });
-        setShowContactoCalidoDialog(true);
-        return;
+        // Para otros estados, proceder normalmente
+        await updateLeadStatus(leadId, newStatus, leadToUpdate);
       }
+    },
+    [findLeadById, hasContactoCalidoData, updateLeadStatus]
+  );
 
-      // Para otros estados, proceder normalmente
-      await updateLeadStatus(leadId, newStatus, leadToUpdate);
-    }
-  };
+  // Contar el total de leads - memoizado
+  const totalLeads = useMemo(
+    () =>
+      Object.values(leadsData).reduce(
+        (total, leads) => total + leads.length,
+        0
+      ),
+    [leadsData]
+  );
 
-  const updateLeadStatus = async (
-    leadId: string,
-    newStatus: LeadStatus,
-    leadToUpdate: LeadWithRelations
-  ) => {
-    // Actualizar optimistamente el estado local
-    updateLeadInState(leadId, { status: newStatus });
-
-    // llamar accion para ACTUALIZAR lead
-    const formData = new FormData();
-    formData.append("status", newStatus);
-
-    const promise = editLeadById(leadId, formData);
-
-    toast.promise(promise, {
-      loading: "Guardando cambios...",
-      success: () => `Lead actualizado a ${newStatus}`,
-      error: () => {
-        // Revertir el cambio si hay un error
-        updateLeadInState(leadId, { status: leadToUpdate.status });
-        return `Error al actualizar`;
-      },
-    });
-
-    if (newStatus === LeadStatus.Asignadas) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 10000);
-    }
-  };
-
-  // Contar el total de leads
-  const totalLeads = Object.values(leadsData).reduce(
-    (total, leads) => total + leads.length,
-    0
+  // Memoizar el contenido de filtros activos
+  const hasActiveFilters = useMemo(
+    () =>
+      filters.generadorId ||
+      filters.fechaCreacion?.from ||
+      filters.fechaCreacion?.to ||
+      filters.oficina ||
+      filters.searchTerm,
+    [filters]
   );
 
   return (
@@ -303,11 +351,7 @@ export default function KanbanLeadsBoard({
       />
 
       {/* Filter status indicator */}
-      {filters.generadorId ||
-      filters.fechaCreacion?.from ||
-      filters.fechaCreacion?.to ||
-      filters.oficina ||
-      filters.searchTerm ? (
+      {hasActiveFilters ? (
         <div className="px-4 py-2 flex flex-wrap gap-2 text-black text-sm items-center">
           <span>Mostrando {totalLeads} leads</span>
 
@@ -406,6 +450,7 @@ export default function KanbanLeadsBoard({
                 hasMore={paginationInfo[status as LeadStatus]?.hasMore || false}
                 isLoading={loadingStates[status as LeadStatus] || false}
                 onLoadMore={() => loadMoreLeads(status as LeadStatus)}
+                updateLeadInState={updateLeadInState}
               />
             ))}
           </div>

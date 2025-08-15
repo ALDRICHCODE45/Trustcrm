@@ -433,6 +433,7 @@ export const getVacancyDetails = async (vacancyId: string) => {
     const vacancy = await prisma.vacancy.findUnique({
       where: { id: vacancyId },
       include: {
+        InputChecklist: true,
         reclutador: true,
         cliente: true,
         candidatoContratado: {

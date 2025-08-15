@@ -16,9 +16,17 @@ import { getDiffDays } from "@/app/helpers/getDiffDays";
 type LeadCardProps = {
   lead: LeadWithRelations & { _count?: { contactos: number } };
   setSelectedTask: (task: Lead | null) => void;
+  updateLeadInState?: (
+    leadId: string,
+    updates: Partial<LeadWithRelations>
+  ) => void;
 };
 
-export const DraggableLeadCard = ({ lead, setSelectedTask }: LeadCardProps) => {
+export const DraggableLeadCard = ({
+  lead,
+  setSelectedTask,
+  updateLeadInState,
+}: LeadCardProps) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: lead.id,
     data: { lead },
@@ -92,7 +100,7 @@ export const DraggableLeadCard = ({ lead, setSelectedTask }: LeadCardProps) => {
         </Card>
       </DialogTrigger>
       <SheetContent>
-        <LeadSheet lead={lead} />
+        <LeadSheet lead={lead} updateLeadInState={updateLeadInState} />
       </SheetContent>
     </Sheet>
   );

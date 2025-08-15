@@ -9,6 +9,7 @@ import QuickStatsDialog from "../components/QuickStatsDialog";
 const fetchVacancies = async (): Promise<VacancyWithRelations[]> => {
   const vacancies = await prisma.vacancy.findMany({
     include: {
+      InputChecklist: true,
       Comments: {
         include: {
           author: true,

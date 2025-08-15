@@ -28,6 +28,10 @@ type KanbanColumnProps = {
   hasMore?: boolean;
   isLoading?: boolean;
   onLoadMore?: () => void;
+  updateLeadInState?: (
+    leadId: string,
+    updates: Partial<LeadWithRelations>
+  ) => void;
 };
 
 const getColumnIcon = (status: string) => {
@@ -96,6 +100,7 @@ export const DroppableKanbanColumn = ({
   hasMore = false,
   isLoading = false,
   onLoadMore,
+  updateLeadInState,
 }: KanbanColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const leadTitle = leadStatusMap[status];
@@ -155,6 +160,7 @@ export const DroppableKanbanColumn = ({
               key={lead.id}
               lead={lead}
               setSelectedTask={setSelectedTask}
+              updateLeadInState={updateLeadInState}
             />
           ))}
 

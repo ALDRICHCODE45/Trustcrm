@@ -1,3 +1,6 @@
+import { addCandidateFeedback } from "@/actions/vacantes/checklist/actions";
+import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,15 +14,176 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { NotepadText } from "lucide-react";
+import { UserCheck, Edit3 } from "lucide-react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
 
-export const CompareChecklistForm = () => {
+interface Props {
+  vacante: VacancyWithRelations;
+  refreshCandidates: () => void;
+}
+
+interface ValidationFormData {
+  validaciones: { requisitoId: string; candidate_feedback: string }[];
+}
+
+interface EditValidationFormData {
+  ediciones: { requisitoId: string; candidate_feedback: string }[];
+}
+
+export const CompareChecklistForm = ({ vacante, refreshCandidates }: Props) => {
+  useEffect(() => {
+    console.log(vacante.InputChecklist);
+  }, []);
+
+  // Separar requisitos con y sin feedback
+  const requisitosConFeedback = vacante.InputChecklist.filter(
+    (item) => item.candidate_feedback !== null && item.candidate_feedback !== ""
+  );
+
+  const validacionesSinFeedback = vacante.InputChecklist.filter(
+    (item) => item.candidate_feedback === null || item.candidate_feedback === ""
+  );
+
+  // Formulario para nuevos feedbacks (requisitos sin feedback)
+  const {
+    control: controlNuevos,
+    handleSubmit: handleSubmitNuevos,
+    register: registerNuevos,
+    reset: resetNuevos,
+  } = useForm<ValidationFormData>({
+    defaultValues: {
+      validaciones: validacionesSinFeedback.map((item) => ({
+        requisitoId: item.id,
+        candidate_feedback: "",
+      })),
+    },
+  });
+
+  // Formulario para editar feedbacks existentes
+  const {
+    control: controlEditar,
+    handleSubmit: handleSubmitEditar,
+    register: registerEditar,
+    reset: resetEditar,
+  } = useForm<EditValidationFormData>({
+    defaultValues: {
+      ediciones: requisitosConFeedback.map((item) => ({
+        requisitoId: item.id,
+        candidate_feedback: item.candidate_feedback || "",
+      })),
+    },
+  });
+
+  // Función para agregar nuevos feedbacks
+  const handleValidationSubmit = async (data: ValidationFormData) => {
+    const validacionesConFeedback = data.validaciones.filter(
+      (validacion) => validacion.candidate_feedback.trim().length > 0
+    );
+
+    if (validacionesConFeedback.length === 0) {
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error"
+          message="No se puede agregar un feedback vacío"
+          type="error"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
+      return;
+    }
+
+    console.log("Datos de validación (NUEVOS):", validacionesConFeedback);
+
+    try {
+      const response = await addCandidateFeedback(validacionesConFeedback);
+      if (!response.ok) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Error"
+            message="Error al agregar el feedback del candidato"
+            type="error"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        ));
+        return;
+      }
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Success"
+          message="Feedback del candidato agregado correctamente"
+          type="success"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
+      refreshCandidates();
+    } catch (e) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error"
+            message="Error al agregar el feedback del candidato"
+            type="error"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    }
+  };
+
+  // Función para editar feedbacks existentes
+  const handleEditValidationSubmit = async (data: EditValidationFormData) => {
+    const edicionesConCambios = data.ediciones.filter(
+      (edicion) => edicion.candidate_feedback.trim().length > 0
+    );
+
+    if (edicionesConCambios.length === 0) {
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error"
+          message="No hay cambios para guardar"
+          type="error"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
+      return;
+    }
+
+    console.log("Datos de validación (EDITAR):", edicionesConCambios);
+
+    // TODO: Aquí puedes llamar a una función diferente para editar
+    // await editCandidateFeedback(edicionesConCambios);
+
+    toast.custom((t) => (
+      <ToastCustomMessage
+        title="Info"
+        message="Función de edición pendiente de implementar en el servidor"
+        type="info"
+        onClick={() => {
+          toast.dismiss(t);
+        }}
+      />
+    ));
+  };
+
   return (
     <Sheet>
       <SheetTrigger asChild className="mt-4">
         <Button variant="outline" size="sm">
-          <NotepadText />
-          <span>Checklist</span>
+          <UserCheck />
+          <span>Validar Candidato</span>
         </Button>
       </SheetTrigger>
       <SheetContent className="min-w-[40vw] z-[9999] min-h-[500px] overflow-y-auto">
@@ -30,127 +194,159 @@ export const CompareChecklistForm = () => {
           </SheetDescription>
         </SheetHeader>
 
-        <div className="grid grid-cols-2 gap-8 py-6">
-          {/* Columna 1: Requisitos de la Vacante */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold mb-4">
-              Requisitos de la Vacante
-            </h3>
+        <div className="py-6 space-y-8">
+          {/* Sección 1: Requisitos CON feedback (para editar) */}
+          {requisitosConFeedback.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Edit3 className="h-5 w-5" />
+                Requisitos con Feedback Existente
+              </h3>
 
-            <div className="grid gap-3">
-              <Label htmlFor="req-experiencia">Requisito 1</Label>
-              <Input id="req-experiencia" placeholder="Ej: 3 años en ventas" />
+              <form onSubmit={handleSubmitEditar(handleEditValidationSubmit)}>
+                <div className="grid grid-cols-2 gap-8 mb-6">
+                  {/* Columna 1: Requisitos */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-muted-foreground">
+                      Requisitos
+                    </h4>
+                    {requisitosConFeedback.map((item, index) => (
+                      <div key={item.id} className="grid gap-3">
+                        <Label htmlFor={`req-edit-${item.id}`}>
+                          Requisito {index + 1}
+                        </Label>
+                        <Input
+                          id={`req-edit-${item.id}`}
+                          defaultValue={item.content}
+                          disabled
+                          className="bg-muted"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Columna 2: Feedback para editar */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-muted-foreground">
+                      Feedback (Editar)
+                    </h4>
+                    {requisitosConFeedback.map((item, index) => (
+                      <div key={item.id} className="grid gap-3">
+                        <Label htmlFor={`edit-${item.id}`}>
+                          Editar Feedback {index + 1}
+                        </Label>
+                        <Input
+                          id={`edit-${item.id}`}
+                          {...registerEditar(
+                            `ediciones.${index}.candidate_feedback`
+                          )}
+                          placeholder="Editar feedback existente..."
+                          type="text"
+                        />
+                        {/* Campo oculto para el requisitoId */}
+                        <input
+                          type="hidden"
+                          {...registerEditar(`ediciones.${index}.requisitoId`)}
+                          value={item.id}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end mb-6">
+                  <Button type="submit" variant="secondary">
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Actualizar Feedback
+                  </Button>
+                </div>
+              </form>
+
+              <Separator className="my-6" />
             </div>
+          )}
 
-            <div className="grid gap-3">
-              <Label htmlFor="req-educacion">Requisito 2</Label>
-              <Input id="req-educacion" placeholder="Ej: Licenciatura en..." />
+          {/* Sección 2: Requisitos SIN feedback (para agregar) */}
+          {validacionesSinFeedback.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <UserCheck className="h-5 w-5" />
+                Agregar Feedback a Requisitos
+              </h3>
+
+              <form onSubmit={handleSubmitNuevos(handleValidationSubmit)}>
+                <div className="grid grid-cols-2 gap-8 mb-6">
+                  {/* Columna 1: Requisitos */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-muted-foreground">
+                      Requisitos
+                    </h4>
+                    {validacionesSinFeedback.map((item, index) => (
+                      <div key={item.id} className="grid gap-3">
+                        <Label htmlFor={`req-new-${item.id}`}>
+                          Requisito {index + 1}
+                        </Label>
+                        <Input
+                          id={`req-new-${item.id}`}
+                          defaultValue={item.content}
+                          disabled
+                          className="bg-muted"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Columna 2: Nuevo feedback */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-muted-foreground">
+                      Nuevo Feedback
+                    </h4>
+                    {validacionesSinFeedback.map((item, index) => (
+                      <div key={item.id} className="grid gap-3">
+                        <Label htmlFor={`validation-${item.id}`}>
+                          Feedback para Requisito {index + 1}
+                        </Label>
+                        <Input
+                          id={`validation-${item.id}`}
+                          {...registerNuevos(
+                            `validaciones.${index}.candidate_feedback`
+                          )}
+                          placeholder="Ej: El candidato cumple con este requisito porque..."
+                          type="text"
+                        />
+                        {/* Campo oculto para el requisitoId */}
+                        <input
+                          type="hidden"
+                          {...registerNuevos(
+                            `validaciones.${index}.requisitoId`
+                          )}
+                          value={item.id}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button type="submit">
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Agregar Feedback
+                  </Button>
+                </div>
+              </form>
             </div>
+          )}
 
-            <div className="grid gap-3">
-              <Label htmlFor="req-habilidades">Requisito 3</Label>
-              <Input
-                id="req-habilidades"
-                placeholder="Ej: Excel avanzado, CRM"
-              />
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="req-idiomas">Requisito 4</Label>
-              <Input id="req-idiomas" placeholder="Ej: Inglés intermedio" />
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="req-ubicacion">Requisito 5</Label>
-              <Input id="req-ubicacion" placeholder="Ej: Ciudad de México" />
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="req-disponibilidad">Requisito 6</Label>
-              <Input
-                id="req-disponibilidad"
-                placeholder="Ej: Tiempo completo"
-              />
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="req-salario">Requisito 7</Label>
-              <Input id="req-salario" placeholder="Ej: $15,000 - $20,000" />
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="req-otros">Requisito 8</Label>
-              <Input id="req-otros" placeholder="Requisitos adicionales" />
-            </div>
-          </div>
-
-          {/* Columna 2: Datos del Candidato */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold mb-4">Comentarios</h3>
-
-            <div className="grid gap-3">
-              <Label htmlFor="cand-nombre" className="text-red-500">
-                *
-              </Label>
-              <Input id="cand-nombre" />
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="cand-experiencia" className="text-red-500">
-                *
-              </Label>
-              <Input id="cand-experiencia" />
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="cand-educacion" className="text-red-500">
-                *
-              </Label>
-              <Input id="cand-educacion" />
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="cand-habilidades" className="text-red-500">
-                *
-              </Label>
-              <Input id="cand-habilidades" />
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="cand-idiomas" className="text-red-500">
-                *
-              </Label>
-              <Input id="cand-idiomas" />
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="cand-ubicacion" className="text-red-500">
-                *
-              </Label>
-              <Input id="cand-ubicacion" />
-            </div>
-
-            <div className="grid gap-3">
-              <Label htmlFor="cand-disponibilidad" className="text-red-500">
-                *
-              </Label>
-              <Input id="cand-disponibilidad" />
-            </div>
-
-            <div className="grid gap-3">
-              <Label
-                htmlFor="cand-expectativa justify-end"
-                className="text-red-500"
-              >
-                *
-              </Label>
-              <Input id="cand-expectativa" />
-            </div>
-          </div>
+          {/* Mensaje cuando no hay requisitos */}
+          {requisitosConFeedback.length === 0 &&
+            validacionesSinFeedback.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No hay requisitos disponibles para validar.</p>
+              </div>
+            )}
         </div>
 
         <SheetFooter>
-          <Button type="submit">Guardar Comparación</Button>
           <SheetClose asChild>
             <Button variant="outline">Cerrar</Button>
           </SheetClose>

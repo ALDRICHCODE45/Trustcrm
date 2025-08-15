@@ -23,6 +23,10 @@ import Link from "next/link";
 
 interface Props {
   lead: LeadWithRelations;
+  updateLeadInState?: (
+    leadId: string,
+    updates: Partial<LeadWithRelations>
+  ) => void;
 }
 
 export const getStatusColor = (status: LeadStatus) => {
@@ -50,7 +54,7 @@ const getEmployeeCountDisplay = (count: number | null): string => {
   return "Más de 500 empleados";
 };
 
-export function LeadSheet({ lead }: Props) {
+export function LeadSheet({ lead, updateLeadInState }: Props) {
   const diffInDays = getDiffDays(lead.createdAt);
   const [contactos, setContactos] = useState<ContactWithRelations[]>(
     lead?.contactos || []
@@ -206,6 +210,7 @@ export function LeadSheet({ lead }: Props) {
                             contacto={contacto}
                             key={contacto.id}
                             onUpdateContacts={setContactos}
+                            updateLeadInState={updateLeadInState}
                           />
                         ))}
                       </div>
