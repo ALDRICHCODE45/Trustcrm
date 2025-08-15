@@ -9,7 +9,7 @@ interface addCandidateFeedbackProps {
 }
 
 export const addCandidateFeedback = async (
-  props: addCandidateFeedbackProps[]
+  props: addCandidateFeedbackProps[],
 ) => {
   try {
     const session = await auth();
@@ -39,7 +39,7 @@ export const addCandidateFeedback = async (
 };
 export const createChecklist = async (
   vacancyId: string,
-  inputsChecklist: string[]
+  inputsChecklist: string[],
 ) => {
   try {
     const session = await auth();

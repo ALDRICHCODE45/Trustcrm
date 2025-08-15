@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Mail,
   MoreVertical,
@@ -170,6 +170,10 @@ export const ContactoCard = ({
   const [isPending, setIsPending] = useState<boolean>(false);
   const [openSeguimiento, setOpenSeguimiento] = useState<boolean>(false);
   const [openDelete, setIsOpenDelete] = useState(false);
+
+  useEffect(() => {
+    console.log("interactions", contacto.name, contacto.interactions);
+  }, [contacto.interactions]);
 
   const [etiqueta, setEtiqueta] = useState<LeadStatus | "none">(
     contacto.etiqueta ?? "none"
@@ -587,6 +591,9 @@ export const SeguimientoContacto = ({
 }: SeguimientoContactoProps) => {
   const [interactions, setInteractions] =
     useState<ContactInteractionWithRelations[]>(initialInteractions);
+  useEffect(() => {
+    console.log("initialInteractions", initialInteractions);
+  }, []);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);

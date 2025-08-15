@@ -59,6 +59,13 @@ const getInitialLeadsByStatus = async () => {
                 linkedin: true,
                 etiqueta: true,
                 leadId: true,
+                interactions: {
+                  include: {
+                    autor: true,
+                    contacto: true,
+                    linkedTasks: true,
+                  },
+                },
               },
               orderBy: { name: "asc" },
             },
@@ -137,6 +144,7 @@ const page = async () => {
   }
 
   const { leadsData, paginationInfo } = await getInitialLeadsByStatus();
+
   const generadores = await getGeneradores();
 
   return (
