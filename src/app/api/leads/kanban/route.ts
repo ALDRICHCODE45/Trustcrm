@@ -100,6 +100,13 @@ export async function GET(request: NextRequest) {
               linkedin: true,
               etiqueta: true,
               leadId: true,
+              interactions: {
+                include: {
+                  autor: true,
+                  contacto: true,
+                  linkedTasks: true,
+                },
+              },
             },
             orderBy: { name: "asc" },
           },
