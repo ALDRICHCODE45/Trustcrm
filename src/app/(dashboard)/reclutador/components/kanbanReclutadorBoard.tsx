@@ -559,7 +559,7 @@ const VacanteTabs: React.FC<{
       <DetailsSectionReclutador vacante={vacante} user_logged={user_logged} />
     </TabsContent>
     <TabsContent value="candidatos">
-      <CandidatesSectionReclutador vacante={vacante} />
+      <CandidatesSectionReclutador vacancyId={vacante.id} />
     </TabsContent>
     <TabsContent value="comentarios">
       <CommentsSectionReclutador vacante={vacante} />

@@ -1,7 +1,7 @@
 import { PersonWithRelations } from "@/app/(dashboard)/list/reclutamiento/components/FinalTernaSheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
   SheetTrigger,
@@ -20,76 +20,133 @@ export const CandidateSheetDetails = ({
   return (
     <Sheet>
       <SheetTrigger asChild className="mt-4">
-        <Button variant="outline">
-          <FileUser className="h-4 w-4" />
+        <Button variant="outline" size="sm">
+          <FileUser className="h-4 w-4 mr-2" />
           Detalles
         </Button>
       </SheetTrigger>
 
-      <SheetContent className="min-w-[25vw] z-[9999]">
-        <SheetHeader>
-          <SheetTitle>{candidate.name}</SheetTitle>
-          <SheetDescription>Detalles del candidate</SheetDescription>
-          <Separator orientation="horizontal" className="my-4" />
-          <div className="flex flex-col gap-4">
-            <div className="flex  justify-between w-full">
-              <p className="font-bold text-sm">¿Actualmente empleado?</p>
-              <Badge variant="outline" className="text-sm font-normal">
-                {candidate.esta_empleado ? "Sí" : "No"}
+      <SheetContent className="min-w-[27vw] z-[9999]">
+        <ScrollArea className="h-full pr-4">
+          <SheetHeader className="mb-6">
+            <SheetTitle className="text-lg">{candidate.name}</SheetTitle>
+            <SheetDescription>
+              Información detallada del candidato
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="space-y-4">
+            {/* Estado de empleo */}
+            <div className="flex justify-between items-center py-3 border-b">
+              <span className="text-sm font-medium">Estado actual</span>
+              <Badge
+                variant={candidate.esta_empleado ? "default" : "secondary"}
+                className="text-xs"
+              >
+                {candidate.esta_empleado ? "Empleado" : "No empleado"}
               </Badge>
             </div>
-            <div className="flex  justify-between w-full">
-              <p className="font-bold text-sm">Sueldo actual o último</p>
-              <Badge variant="outline" className="text-sm font-normal">
-                {candidate.sueldo_actual_o_ultimo || "No Especificado"}
+
+            {/* Información económica */}
+            <div className="flex justify-between items-center py-3 border-b">
+              <span className="text-sm font-medium">Sueldo actual/último</span>
+              <Badge variant="outline" className="text-xs font-normal">
+                {candidate.sueldo_actual_o_ultimo || "No especificado"}
               </Badge>
             </div>
-            <div className="flex  justify-between w-full">
-              <p className="font-bold text-sm">
-                Prestaciones actuales o últimas
-              </p>
-              <Badge variant="outline" className="text-sm font-normal">
-                {candidate.prestaciones_actuales_o_ultimas || "No Especificado"}
+
+            <div className="flex justify-between items-center py-3 border-b">
+              <span className="text-sm font-medium">Expectativa económica</span>
+              <Badge variant="outline" className="text-xs font-normal">
+                {candidate.expectativa_económica || "No especificado"}
               </Badge>
             </div>
-            <div className="flex  justify-between w-full">
-              <p className="font-bold text-sm">Bonos y comisiones</p>
-              <Badge variant="outline" className="text-sm font-normal">
-                {candidate.bonos_comisiones || "No Especificado"}
+
+            {/* Prestaciones y beneficios */}
+            <div className="flex justify-between items-start py-3 border-b">
+              <span className="text-sm font-medium">
+                Prestaciones actuales/últimas
+              </span>
+              <Badge
+                variant="outline"
+                className="text-xs font-normal max-w-[180px] text-right"
+              >
+                {candidate.prestaciones_actuales_o_ultimas || "No especificado"}
               </Badge>
             </div>
-            <div className="flex  justify-between w-full">
-              <p className="font-bold text-sm">Otros beneficios</p>
-              <Badge variant="outline" className="text-sm font-normal">
-                {candidate.otros_beneficios || "No Especificado"}
+
+            <div className="flex justify-between items-start py-3 border-b">
+              <span className="text-sm font-medium">Bonos y comisiones</span>
+              <Badge
+                variant="outline"
+                className="text-xs font-normal max-w-[180px] text-right"
+              >
+                {candidate.bonos_comisiones || "No especificado"}
               </Badge>
             </div>
-            <div className="flex  justify-between w-full">
-              <p className="font-bold text-sm">Expectativa económica</p>
-              <Badge variant="outline" className="text-sm font-normal">
-                {candidate.expectativa_económica || "No Especificado"}
+
+            <div className="flex justify-between items-start py-3 border-b">
+              <span className="text-sm font-medium">Otros beneficios</span>
+              <Badge
+                variant="outline"
+                className="text-xs font-normal max-w-[180px] text-right"
+              >
+                {candidate.otros_beneficios || "No especificado"}
               </Badge>
             </div>
-            <div className="flex  justify-between w-full">
-              <p className="font-bold text-sm">Dirección actual</p>
-              <Badge variant="outline" className="text-sm font-normal">
-                {candidate.direccion_actual || "No Especificado"}
+
+            {/* Ubicación y modalidad */}
+            <div className="flex justify-between items-start py-3 border-b">
+              <span className="text-sm font-medium">Dirección actual</span>
+              <Badge
+                variant="outline"
+                className="text-xs font-normal max-w-[180px] text-right"
+              >
+                {candidate.direccion_actual || "No especificado"}
               </Badge>
             </div>
-            <div className="flex  justify-between w-full">
-              <p className="font-bold text-sm">Modalidad actual o última</p>
-              <Badge variant="outline" className="text-sm font-normal">
-                {candidate.modalidad_actual_o_ultima || "No Especificado"}
+
+            <div className="flex justify-between items-center py-3 border-b">
+              <span className="text-sm font-medium">
+                Modalidad actual/última
+              </span>
+              <Badge variant="outline" className="text-xs font-normal">
+                {candidate.modalidad_actual_o_ultima || "No especificado"}
               </Badge>
             </div>
-            <div className="flex  justify-between w-full">
-              <p className="font-bold text-sm">Ubicación último trabajo</p>
-              <Badge variant="outline" className="text-sm font-normal">
-                {candidate.ubicacion_ultimo_trabajo || "No Especificado"}
+
+            <div className="flex justify-between items-start py-3 border-b">
+              <span className="text-sm font-medium">
+                Ubicación último trabajo
+              </span>
+              <Badge
+                variant="outline"
+                className="text-xs font-normal max-w-[180px] text-right"
+              >
+                {candidate.ubicacion_ultimo_trabajo || "No especificado"}
               </Badge>
             </div>
+
+            {/* Información de contacto */}
+            {candidate.email && (
+              <div className="flex justify-between items-center py-3 border-b">
+                <span className="text-sm font-medium">Email</span>
+                <Badge variant="outline" className="text-xs font-normal">
+                  {candidate.email}
+                </Badge>
+              </div>
+            )}
+
+            {candidate.phone && (
+              <div className="flex justify-between items-center py-3">
+                <span className="text-sm font-medium">Teléfono</span>
+                <Badge variant="outline" className="text-xs font-normal">
+                  {candidate.phone}
+                </Badge>
+              </div>
+            )}
           </div>
-        </SheetHeader>
+        </ScrollArea>
       </SheetContent>
     </Sheet>
   );

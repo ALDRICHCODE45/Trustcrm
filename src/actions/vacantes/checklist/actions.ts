@@ -4,12 +4,13 @@ import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 interface addCandidateFeedbackProps {
-  requisitoId: string;
-  candidate_feedback: string;
+  feedback: string;
+  candidateId: string;
+  inputChecklistId: string;
 }
 
 export const addCandidateFeedback = async (
-  props: addCandidateFeedbackProps[],
+  props: addCandidateFeedbackProps[]
 ) => {
   try {
     const session = await auth();
@@ -17,10 +18,13 @@ export const addCandidateFeedback = async (
       throw new Error("Unauthorized");
     }
 
-    for (const { candidate_feedback, requisitoId } of props) {
-      await prisma.inputChecklist.update({
-        where: { id: requisitoId },
-        data: { candidate_feedback },
+    for (const { feedback, candidateId, inputChecklistId } of props) {
+      await prisma.inputChecklistFeedback.create({
+        data: {
+          feedback,
+          candidateId,
+          inputChecklistId,
+        },
       });
     }
 
@@ -37,9 +41,10 @@ export const addCandidateFeedback = async (
     };
   }
 };
+
 export const createChecklist = async (
   vacancyId: string,
-  inputsChecklist: string[],
+  inputsChecklist: string[]
 ) => {
   try {
     const session = await auth();
@@ -58,10 +63,10 @@ export const createChecklist = async (
     }
 
     //crear el checklist para la vacante
-    for (const input of inputsChecklist) {
+    for (const content of inputsChecklist) {
       await prisma.inputChecklist.create({
         data: {
-          content: input,
+          content,
           vacancyId: vacancy.id,
         },
       });
@@ -115,6 +120,40 @@ export const deleteChecklist = async (id: string) => {
     return {
       ok: false,
       message: "Error al eliminar el requisito",
+    };
+  }
+};
+
+//Editar feedback de candidato
+export const editCandidateFeedback = async (
+  feedbackId: string,
+  newFeedback: string
+) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    await prisma.inputChecklistFeedback.update({
+      where: {
+        id: feedbackId,
+      },
+      data: {
+        feedback: newFeedback,
+      },
+    });
+
+    revalidatePath(`/reclutador/kanban`);
+    revalidatePath(`/list/reclutamiento`);
+    return {
+      ok: true,
+      message: "Feedback del candidato actualizado correctamente",
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: "Error al actualizar el feedback del candidato",
     };
   }
 };

@@ -127,7 +127,7 @@ export const CreateCandidateForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 w-full">
         <div className="flex flex-col gap-4 sm:flex-row ">
           <div className="flex-1">
             <FormField

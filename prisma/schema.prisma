@@ -176,11 +176,12 @@ model Person {
   interactions ContactInteraction[]
 
   // Relaciones específicas con Vacancy
-  vacanciesContratado Vacancy[] @relation("VacancyCandidatoContratado")
-  vacanciesTernaFinal Vacancy[] @relation("VacancyTernaFinal")
-  Client              Client?   @relation(fields: [clientId], references: [id])
-  clientId            String?
-  cvFileId            String?   @unique
+  vacanciesContratado    Vacancy[]                @relation("VacancyCandidatoContratado")
+  vacanciesTernaFinal    Vacancy[]                @relation("VacancyTernaFinal")
+  Client                 Client?                  @relation(fields: [clientId], references: [id])
+  clientId               String?
+  cvFileId               String?                  @unique
+  InputChecklistFeedback InputChecklistFeedback[]
 }
 
 enum VacancyTipo {
@@ -266,8 +267,21 @@ model InputChecklist {
   content   String
 
   // Datos del candidato para comparar con el contenido del checklist
-  candidate_feedback String?
 
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  InputChecklistFeedback InputChecklistFeedback[]
+}
+
+model InputChecklistFeedback {
+  id               String         @id @default(uuid())
+  inputChecklistId String
+  inputChecklist   InputChecklist @relation(fields: [inputChecklistId], references: [id], onDelete: Cascade)
+  candidate        Person?        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId      String?
+  feedback         String
+
+  //Datos de auditoria
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

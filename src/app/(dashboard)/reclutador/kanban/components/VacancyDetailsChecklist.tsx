@@ -83,11 +83,12 @@ export const VacancyDetailsChecklist = ({
       return;
     }
 
-    console.log({ requisitosLimpios, vacanteId: vacante.id });
-
     try {
       //llamar a la funcion para crear los requisitos
       await createChecklist(vacante.id, requisitosLimpios);
+
+      //Refrescar los requisitos
+      onSaveRequisitos();
 
       toast.custom((t) => {
         return (
@@ -102,8 +103,6 @@ export const VacancyDetailsChecklist = ({
         );
       });
 
-      //Refrescar los requisitos
-      onSaveRequisitos();
       // Limpiar el formulario después de guardar
       reset();
     } catch (error) {

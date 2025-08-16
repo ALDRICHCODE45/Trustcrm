@@ -22,7 +22,15 @@ import { CandidatoContratadoDrawer } from "./CandidatoContratadoDrawer";
 
 export type VacancyWithRelations = Prisma.VacancyGetPayload<{
   include: {
-    InputChecklist: true;
+    InputChecklist: {
+      include: {
+        InputChecklistFeedback: {
+          include: {
+            candidate: true;
+          };
+        };
+      };
+    };
     reclutador: true;
     cliente: true;
     candidatoContratado: {

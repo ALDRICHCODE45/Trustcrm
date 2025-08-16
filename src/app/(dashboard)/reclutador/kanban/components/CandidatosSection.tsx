@@ -1,6 +1,6 @@
 "use client";
 import { VacancyWithRelations } from "../../components/ReclutadorColumns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PersonWithRelations } from "@/app/(dashboard)/list/reclutamiento/components/FinalTernaSheet";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -52,13 +52,15 @@ import { CreateCandidateForm } from "./CreateCandidateForm";
 import { EditCandidateDialog } from "./EditCandidateDialog";
 import { useCandidates } from "@/hooks/candidates/use-candidates";
 import { CandidateSheetDetails } from "./CandidateSheetDetails";
+import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CandidatesSectionProps {
-  vacante: VacancyWithRelations;
+  vacancyId: string;
 }
 
 export const CandidatesSectionReclutador = ({
-  vacante,
+  vacancyId,
 }: CandidatesSectionProps) => {
   // Usar el hook optimizado para candidatos
   const {
@@ -71,7 +73,18 @@ export const CandidatesSectionReclutador = ({
     selectCandidate,
     deselectCandidate,
     fetchCandidates,
-  } = useCandidates(vacante.id);
+  } = useCandidates(vacancyId);
+
+  const {
+    vacancyDetails,
+    fetchVacancyDetails,
+    isLoading: isLoadingVacancyDetails,
+  } = useVacancyDetails(vacancyId);
+
+  //refrescar los detalles de la vacante cada vez que la tab se renderiza
+  useEffect(() => {
+    fetchVacancyDetails();
+  }, [fetchVacancyDetails]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
@@ -202,12 +215,25 @@ export const CandidatesSectionReclutador = ({
   };
 
   // Mostrar estado de carga
-  if (isLoading) {
+  if (isLoading || isLoadingVacancyDetails) {
     return (
       <div className="space-y-6 mt-4">
         <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600 mb-2" />
           <p className="text-sm">Cargando candidatos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!vacancyDetails && !isLoadingVacancyDetails) {
+    return (
+      <div className="space-y-6 mt-4">
+        <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+          <AlertCircle className="h-10 w-10 mb-4 text-red-400" />
+          <p className="text-base font-medium mb-2 text-red-600">
+            Error al cargar la vacante, intenta recargar la página
+          </p>
         </div>
       </div>
     );
@@ -262,12 +288,14 @@ export const CandidatesSectionReclutador = ({
                       Complete la información del candidato.
                     </p>
                   </div>
-                  <div className="overflow-y-auto px-6 pt-4 pb-6">
-                    <CreateCandidateForm
-                      vacancyId={vacante.id}
-                      onCandidateCreated={handleCandidateCreated}
-                      onCancel={() => setIsDialogOpen(false)}
-                    />
+                  <div className="px-6 pt-4 pb-6">
+                    <div className="max-h-[50vh] overflow-y-auto">
+                      <CreateCandidateForm
+                        vacancyId={vacancyId}
+                        onCandidateCreated={handleCandidateCreated}
+                        onCancel={() => setIsDialogOpen(false)}
+                      />
+                    </div>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -276,145 +304,159 @@ export const CandidatesSectionReclutador = ({
 
           {/* Lista de candidatos */}
           <div className="space-y-3">
-            {candidates.map((candidato, index) => (
-              <Card
-                key={candidato.id}
-                className="group hover:shadow-sm transition-shadow duration-200"
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    {/* Avatar compacto */}
-                    <div className="relative">
-                      <Avatar className="h-11 w-11">
-                        <AvatarImage
-                          src={
-                            typeof candidato.cv === "string"
-                              ? candidato.cv
-                              : (candidato.cv as any)?.url || ""
-                          }
-                          alt={candidato.name}
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="bg-muted text-muted-foreground font-medium">
-                          {candidato.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      {/* Indicador de estado minimalista */}
-                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                    </div>
-
-                    {/* Información del candidato */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-sm text-foreground mb-1 truncate">
-                            {candidato.name}
-                          </h3>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Mail className="h-3 w-3" />
-                              <span className="truncate">
-                                {candidato.email || "Sin email"}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Phone className="h-3 w-3" />
-                              <span>{candidato.phone || "Sin teléfono"}</span>
-                            </div>
-                            {candidato.cv?.url && (
-                              <div className="">
-                                <Link
-                                  className="flex hover:underline items-center gap-2 text-xs text-muted-foreground"
-                                  href={candidato.cv.url}
-                                  target="_blank"
-                                >
-                                  <FileUser className="h-3 w-3" />
-                                  <span className="">Ver CV</span>
-                                </Link>
-                              </div>
-                            )}
-                          </div>
+            <ScrollArea className="h-[350px] w-full ">
+              <div className="space-y-3 p-4">
+                {candidates.map((candidato, index) => (
+                  <Card
+                    key={candidato.id}
+                    className="group hover:shadow-sm transition-shadow duration-200"
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        {/* Avatar compacto */}
+                        <div className="relative">
+                          <Avatar className="h-11 w-11">
+                            <AvatarImage
+                              src={
+                                typeof candidato.cv === "string"
+                                  ? candidato.cv
+                                  : (candidato.cv as any)?.url || ""
+                              }
+                              alt={candidato.name}
+                              className="object-cover"
+                            />
+                            <AvatarFallback className="bg-muted text-muted-foreground font-medium">
+                              {candidato.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          {/* Indicador de estado minimalista */}
+                          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                         </div>
 
-                        {/* Dropdown de acciones */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="w-40 z-[9999]"
-                          >
-                            {candidato.vacanciesContratado &&
-                            candidato.vacanciesContratado.length > 0 ? (
-                              <DropdownMenuItem
-                                onClick={() => handleDeseleccionarCandidato()}
-                                className="cursor-pointer"
-                              >
-                                <UserRoundX className="h-4 w-4 mr-2" />
-                                Deseleccionar
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleMarkCandidateAsContratado(candidato.id);
-                                }}
-                                className="cursor-pointer"
-                              >
-                                {isSelecting ? (
-                                  <LoaderCircleIcon
-                                    className="-ms-1 animate-spin"
-                                    size={16}
-                                    aria-hidden="true"
-                                  />
-                                ) : (
-                                  <UserCheck className="h-4 w-4 mr-2" />
+                        {/* Información del candidato */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-sm text-foreground mb-1 truncate">
+                                {candidato.name}
+                              </h3>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Mail className="h-3 w-3" />
+                                  <span className="truncate">
+                                    {candidato.email || "Sin email"}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Phone className="h-3 w-3" />
+                                  <span>
+                                    {candidato.phone || "Sin teléfono"}
+                                  </span>
+                                </div>
+                                {candidato.cv?.url && (
+                                  <div className="">
+                                    <Link
+                                      className="flex hover:underline items-center gap-2 text-xs text-muted-foreground"
+                                      href={candidato.cv.url}
+                                      target="_blank"
+                                    >
+                                      <FileUser className="h-3 w-3" />
+                                      <span className="">Ver CV</span>
+                                    </Link>
+                                  </div>
                                 )}
-                                Seleccionar
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
+                              </div>
+                            </div>
 
-                            <DropdownMenuItem
-                              onClick={() => handleEditCandidate(candidato)}
-                              className="cursor-pointer"
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
+                            {/* Dropdown de acciones */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="end"
+                                className="w-40 z-[9999]"
+                              >
+                                {candidato.vacanciesContratado &&
+                                candidato.vacanciesContratado.length > 0 ? (
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleDeseleccionarCandidato()
+                                    }
+                                    className="cursor-pointer"
+                                  >
+                                    <UserRoundX className="h-4 w-4 mr-2" />
+                                    Deseleccionar
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handleMarkCandidateAsContratado(
+                                        candidato.id
+                                      );
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    {isSelecting ? (
+                                      <LoaderCircleIcon
+                                        className="-ms-1 animate-spin"
+                                        size={16}
+                                        aria-hidden="true"
+                                      />
+                                    ) : (
+                                      <UserCheck className="h-4 w-4 mr-2" />
+                                    )}
+                                    Seleccionar
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuSeparator />
 
-                            <DropdownMenuItem
-                              onClick={() => openDeleteDialog(candidato)}
-                              className="cursor-pointer"
-                              variant="destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                                <DropdownMenuItem
+                                  onClick={() => handleEditCandidate(candidato)}
+                                  className="cursor-pointer"
+                                >
+                                  <Pencil className="h-4 w-4 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+
+                                <DropdownMenuItem
+                                  onClick={() => openDeleteDialog(candidato)}
+                                  className="cursor-pointer"
+                                  variant="destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Eliminar
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Información de estado */}
-                  <div className="mt-3 pt-2 border-t flex justify-between">
-                    <CompareChecklistForm
-                      vacante={vacante}
-                      refreshCandidates={fetchCandidates}
-                    />
-                    <CandidateSheetDetails candidate={candidato} />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      {/* Información de estado */}
+                      <div className="mt-3 pt-2 border-t flex justify-between">
+                        <CompareChecklistForm
+                          vacante={vacancyDetails!}
+                          candidateId={candidato.id}
+                          refreshCandidates={() => {
+                            fetchVacancyDetails();
+                            fetchCandidates();
+                          }}
+                        />
+                        <CandidateSheetDetails candidate={candidato} />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
           </div>
         </div>
       ) : (
@@ -448,12 +490,14 @@ export const CandidatesSectionReclutador = ({
                   Complete la información del candidato. El nombre es requerido.
                 </p>
               </div>
-              <div className="overflow-y-auto px-6 pt-4 pb-6">
-                <CreateCandidateForm
-                  vacancyId={vacante.id}
-                  onCandidateCreated={handleCandidateCreated}
-                  onCancel={() => setIsDialogOpen(false)}
-                />
+              <div className="px-6 pt-4 pb-6">
+                <div className="max-h-[50vh] overflow-y-auto">
+                  <CreateCandidateForm
+                    vacancyId={vacancyId}
+                    onCandidateCreated={handleCandidateCreated}
+                    onCancel={() => setIsDialogOpen(false)}
+                  />
+                </div>
               </div>
             </DialogContent>
           </Dialog>

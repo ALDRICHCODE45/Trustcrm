@@ -285,8 +285,8 @@ export const DetailsSectionReclutador = ({
             <SheetOverlay className="z-[9999]" />
             <VacancyDetailsChecklist
               vacante={vacancyDetails}
-              onSaveRequisitos={() => {
-                fetchVacancyDetails();
+              onSaveRequisitos={async () => {
+                await fetchVacancyDetails();
               }}
             />
           </SheetPortal>

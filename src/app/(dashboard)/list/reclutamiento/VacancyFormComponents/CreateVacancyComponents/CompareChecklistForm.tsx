@@ -1,4 +1,7 @@
-import { addCandidateFeedback } from "@/actions/vacantes/checklist/actions";
+import {
+  addCandidateFeedback,
+  editCandidateFeedback,
+} from "@/actions/vacantes/checklist/actions";
 import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { Button } from "@/components/ui/button";
@@ -19,32 +22,77 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+import { Prisma } from "@prisma/client";
+
+type VacancyWithChecklistAndFeedback = Prisma.VacancyGetPayload<{
+  include: {
+    InputChecklist: {
+      include: {
+        InputChecklistFeedback: {
+          include: {
+            candidate: true;
+          };
+        };
+      };
+    };
+    reclutador: true;
+    cliente: true;
+    candidatoContratado: {
+      include: {
+        cv: true;
+        vacanciesContratado: true;
+      };
+    };
+    ternaFinal: {
+      include: {
+        cv: true;
+        vacanciesContratado: true;
+      };
+    };
+    files: true;
+    Comments: {
+      include: {
+        author: true;
+      };
+    };
+  };
+}>;
 
 interface Props {
-  vacante: VacancyWithRelations;
+  vacante: VacancyWithChecklistAndFeedback;
   refreshCandidates: () => void;
+  candidateId: string;
 }
 
 interface ValidationFormData {
-  validaciones: { requisitoId: string; candidate_feedback: string }[];
+  validaciones: {
+    requisitoId: string;
+    feedback: string;
+    candidateId: string;
+  }[];
 }
 
 interface EditValidationFormData {
-  ediciones: { requisitoId: string; candidate_feedback: string }[];
+  ediciones: { requisitoId: string; feedback: string; candidateId: string }[];
 }
 
-export const CompareChecklistForm = ({ vacante, refreshCandidates }: Props) => {
-  useEffect(() => {
-    console.log(vacante.InputChecklist);
-  }, []);
-
-  // Separar requisitos con y sin feedback
-  const requisitosConFeedback = vacante.InputChecklist.filter(
-    (item) => item.candidate_feedback !== null && item.candidate_feedback !== ""
+export const CompareChecklistForm = ({
+  vacante,
+  refreshCandidates,
+  candidateId,
+}: Props) => {
+  // Separar requisitos con y sin feedback para el candidato específico
+  const requisitosConFeedback = vacante.InputChecklist.filter((item) =>
+    item.InputChecklistFeedback.some(
+      (feedback) => feedback.candidateId === candidateId
+    )
   );
 
   const validacionesSinFeedback = vacante.InputChecklist.filter(
-    (item) => item.candidate_feedback === null || item.candidate_feedback === ""
+    (item) =>
+      !item.InputChecklistFeedback.some(
+        (feedback) => feedback.candidateId === candidateId
+      )
   );
 
   // Formulario para nuevos feedbacks (requisitos sin feedback)
@@ -57,7 +105,8 @@ export const CompareChecklistForm = ({ vacante, refreshCandidates }: Props) => {
     defaultValues: {
       validaciones: validacionesSinFeedback.map((item) => ({
         requisitoId: item.id,
-        candidate_feedback: "",
+        feedback: "",
+        candidateId: candidateId,
       })),
     },
   });
@@ -70,17 +119,23 @@ export const CompareChecklistForm = ({ vacante, refreshCandidates }: Props) => {
     reset: resetEditar,
   } = useForm<EditValidationFormData>({
     defaultValues: {
-      ediciones: requisitosConFeedback.map((item) => ({
-        requisitoId: item.id,
-        candidate_feedback: item.candidate_feedback || "",
-      })),
+      ediciones: requisitosConFeedback.map((item) => {
+        const feedback = item.InputChecklistFeedback.find(
+          (f) => f.candidateId === candidateId
+        );
+        return {
+          requisitoId: item.id,
+          feedback: feedback?.feedback || "",
+          candidateId: candidateId,
+        };
+      }),
     },
   });
 
   // Función para agregar nuevos feedbacks
   const handleValidationSubmit = async (data: ValidationFormData) => {
     const validacionesConFeedback = data.validaciones.filter(
-      (validacion) => validacion.candidate_feedback.trim().length > 0
+      (validacion) => validacion.feedback.trim().length > 0
     );
 
     if (validacionesConFeedback.length === 0) {
@@ -100,7 +155,14 @@ export const CompareChecklistForm = ({ vacante, refreshCandidates }: Props) => {
     console.log("Datos de validación (NUEVOS):", validacionesConFeedback);
 
     try {
-      const response = await addCandidateFeedback(validacionesConFeedback);
+      console.log("Datos de validación (NUEVOS):", validacionesConFeedback);
+      const response = await addCandidateFeedback(
+        validacionesConFeedback.map((item) => ({
+          feedback: item.feedback,
+          candidateId: item.candidateId,
+          inputChecklistId: item.requisitoId,
+        }))
+      );
       if (!response.ok) {
         toast.custom((t) => (
           <ToastCustomMessage
@@ -144,7 +206,7 @@ export const CompareChecklistForm = ({ vacante, refreshCandidates }: Props) => {
   // Función para editar feedbacks existentes
   const handleEditValidationSubmit = async (data: EditValidationFormData) => {
     const edicionesConCambios = data.ediciones.filter(
-      (edicion) => edicion.candidate_feedback.trim().length > 0
+      (edicion) => edicion.feedback.trim().length > 0
     );
 
     if (edicionesConCambios.length === 0) {
@@ -161,21 +223,45 @@ export const CompareChecklistForm = ({ vacante, refreshCandidates }: Props) => {
       return;
     }
 
-    console.log("Datos de validación (EDITAR):", edicionesConCambios);
+    try {
+      // Actualizar cada feedback existente
+      for (const edicion of edicionesConCambios) {
+        const inputChecklist = vacante.InputChecklist.find(
+          (item) => item.id === edicion.requisitoId
+        );
+        const existingFeedback = inputChecklist?.InputChecklistFeedback.find(
+          (f) => f.candidateId === candidateId
+        );
 
-    // TODO: Aquí puedes llamar a una función diferente para editar
-    // await editCandidateFeedback(edicionesConCambios);
+        if (existingFeedback) {
+          await editCandidateFeedback(existingFeedback.id, edicion.feedback);
+        }
+      }
 
-    toast.custom((t) => (
-      <ToastCustomMessage
-        title="Info"
-        message="Función de edición pendiente de implementar en el servidor"
-        type="info"
-        onClick={() => {
-          toast.dismiss(t);
-        }}
-      />
-    ));
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Éxito"
+          message="Feedback actualizado correctamente"
+          type="success"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
+
+      refreshCandidates();
+    } catch (error) {
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error"
+          message="Error al actualizar el feedback"
+          type="error"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
+    }
   };
 
   return (
@@ -237,9 +323,7 @@ export const CompareChecklistForm = ({ vacante, refreshCandidates }: Props) => {
                         </Label>
                         <Input
                           id={`edit-${item.id}`}
-                          {...registerEditar(
-                            `ediciones.${index}.candidate_feedback`
-                          )}
+                          {...registerEditar(`ediciones.${index}.feedback`)}
                           placeholder="Editar feedback existente..."
                           type="text"
                         />
@@ -308,9 +392,7 @@ export const CompareChecklistForm = ({ vacante, refreshCandidates }: Props) => {
                         </Label>
                         <Input
                           id={`validation-${item.id}`}
-                          {...registerNuevos(
-                            `validaciones.${index}.candidate_feedback`
-                          )}
+                          {...registerNuevos(`validaciones.${index}.feedback`)}
                           placeholder="Ej: El candidato cumple con este requisito porque..."
                           type="text"
                         />
