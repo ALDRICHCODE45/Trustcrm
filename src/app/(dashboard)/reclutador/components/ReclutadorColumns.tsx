@@ -19,6 +19,7 @@ import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { DocumentsSection } from "./DocumentsSection";
 import { CandidatoContratadoDrawer } from "./CandidatoContratadoDrawer";
+import { CandidatesTableSheet } from "../../list/reclutamiento/components/CandidatesTableSheet";
 
 export type VacancyWithRelations = Prisma.VacancyGetPayload<{
   include: {
@@ -494,9 +495,10 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
     accessorKey: "ternaFinal",
     header: "Candidatos",
     cell: ({ row }) => (
-      <FinalTernaSheet
+      <CandidatesTableSheet
         vacancyId={row.original.id}
         ternaFinal={row.original.ternaFinal}
+        vacancy={row.original}
       />
     ),
   },

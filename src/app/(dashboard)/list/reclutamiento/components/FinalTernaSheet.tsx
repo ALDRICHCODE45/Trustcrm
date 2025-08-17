@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Sheet,
   SheetContent,
@@ -113,6 +115,16 @@ export const FinalTernaSheet = ({
       phone: "",
       email: "",
       cvFile: undefined,
+      //campos extra
+      esta_empleado: false,
+      sueldo_actual_o_ultimo: "",
+      prestaciones_actuales_o_ultimas: "",
+      bonos_comisiones: "",
+      otros_beneficios: "",
+      expectativa_económica: "",
+      direccion_actual: "",
+      modalidad_actual_o_ultima: "",
+      ubicacion_ultimo_trabajo: "",
     },
   });
 
@@ -394,6 +406,19 @@ export const FinalTernaSheet = ({
       phone: candidato.phone || "",
       email: candidato.email || "",
       cvFile: undefined,
+      // valores por defecto para campos adicionales
+      esta_empleado: (candidato as any)?.esta_empleado ?? false,
+      sueldo_actual_o_ultimo: (candidato as any)?.sueldo_actual_o_ultimo || "",
+      prestaciones_actuales_o_ultimas:
+        (candidato as any)?.prestaciones_actuales_o_ultimas || "",
+      bonos_comisiones: (candidato as any)?.bonos_comisiones || "",
+      otros_beneficios: (candidato as any)?.otros_beneficios || "",
+      expectativa_económica: (candidato as any)?.expectativa_económica || "",
+      direccion_actual: (candidato as any)?.direccion_actual || "",
+      modalidad_actual_o_ultima:
+        (candidato as any)?.modalidad_actual_o_ultima || "",
+      ubicacion_ultimo_trabajo:
+        (candidato as any)?.ubicacion_ultimo_trabajo || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -527,6 +552,168 @@ export const FinalTernaSheet = ({
                           </FormItem>
                         )}
                       />
+
+                      {/* Campo booleano: ¿Está empleado? */}
+                      <FormField
+                        control={form.control}
+                        name="esta_empleado"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">
+                                ¿Está empleado actualmente?
+                              </FormLabel>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={Boolean(field.value)}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Información económica */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="sueldo_actual_o_ultimo"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sueldo actual o último</FormLabel>
+                              <FormControl>
+                                <Input placeholder="$50,000" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="expectativa_económica"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Expectativa económica</FormLabel>
+                              <FormControl>
+                                <Input placeholder="$60,000" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="prestaciones_actuales_o_ultimas"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              Prestaciones actuales o últimas
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Seguro médico, vales de despensa, etc."
+                                className="resize-none"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="bonos_comisiones"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Bonos y comisiones</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Bonos trimestrales, comisiones por ventas"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="otros_beneficios"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Otros beneficios</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Coche de empresa, celular, etc."
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Información de ubicación y modalidad */}
+                      <FormField
+                        control={form.control}
+                        name="direccion_actual"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Dirección actual</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Calle, colonia, ciudad"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="modalidad_actual_o_ultima"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Modalidad actual o última</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Presencial, remoto, híbrido"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="ubicacion_ultimo_trabajo"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Ubicación último trabajo</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Ciudad, estado"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="cv-upload">Curriculum Vitae (CV)</Label>
@@ -687,37 +874,45 @@ export const FinalTernaSheet = ({
                         onSubmit={formEdit.handleSubmit(onSubmitEdit)}
                         className="space-y-4"
                       >
-                        <FormField
-                          control={formEdit.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nombre completo *</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Juan Pérez" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={formEdit.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Teléfono</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="555-123-4567"
-                                  type="tel"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <div className="flex flex-col gap-4 sm:flex-row">
+                          <div className="flex-1">
+                            <FormField
+                              control={formEdit.control}
+                              name="name"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Nombre completo *</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="Juan Pérez"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <FormField
+                              control={formEdit.control}
+                              name="phone"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Teléfono</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="555-123-4567"
+                                      type="tel"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </div>
 
                         <FormField
                           control={formEdit.control}
@@ -736,6 +931,168 @@ export const FinalTernaSheet = ({
                             </FormItem>
                           )}
                         />
+
+                        {/* Campo booleano: ¿Está empleado? */}
+                        <FormField
+                          control={formEdit.control}
+                          name="esta_empleado"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                              <div className="space-y-0.5">
+                                <FormLabel className="text-base">
+                                  ¿Está empleado actualmente?
+                                </FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={Boolean(field.value)}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Información económica */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={formEdit.control}
+                            name="sueldo_actual_o_ultimo"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Sueldo actual o último</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="$50,000" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={formEdit.control}
+                            name="expectativa_económica"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Expectativa económica</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="$60,000" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={formEdit.control}
+                          name="prestaciones_actuales_o_ultimas"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                Prestaciones actuales o últimas
+                              </FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Seguro médico, vales de despensa, etc."
+                                  className="resize-none"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={formEdit.control}
+                            name="bonos_comisiones"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Bonos y comisiones</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Bonos trimestrales, comisiones por ventas"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={formEdit.control}
+                            name="otros_beneficios"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Otros beneficios</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Coche de empresa, celular, etc."
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        {/* Información de ubicación y modalidad */}
+                        <FormField
+                          control={formEdit.control}
+                          name="direccion_actual"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Dirección actual</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Calle, colonia, ciudad"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={formEdit.control}
+                            name="modalidad_actual_o_ultima"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Modalidad actual o última</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Presencial, remoto, híbrido"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={formEdit.control}
+                            name="ubicacion_ultimo_trabajo"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Ubicación último trabajo</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Ciudad, estado"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
 
                         <DialogFooter>
                           <DialogClose asChild>
