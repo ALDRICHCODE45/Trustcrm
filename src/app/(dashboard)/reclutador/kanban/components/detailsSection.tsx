@@ -7,7 +7,9 @@ import {
   Building,
   CalendarIcon,
   CheckCircle2,
+  ClipboardCheck,
   Clock,
+  FileCheck2,
   FileText,
 } from "lucide-react";
 import { Role } from "@prisma/client";
@@ -34,6 +36,8 @@ import { DrawerVacancyDetails } from "./DrawerVacancyDetails";
 import { useCandidates } from "@/hooks/candidates/use-candidates";
 import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 import { useEffect } from "react";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
+import { toast } from "sonner";
 
 interface DetailsSectionProps {
   vacante: VacancyWithRelations;
@@ -49,12 +53,84 @@ export const DetailsSectionReclutador = ({
   vacante,
   user_logged,
 }: DetailsSectionProps) => {
-  const { vacancyDetails, fetchVacancyDetails, error, isLoading } =
-    useVacancyDetails(vacante.id);
+  const {
+    vacancyDetails,
+    fetchVacancyDetails,
+    error,
+    isLoading,
+    validateChecklist,
+    validatePerfilMuestra,
+  } = useVacancyDetails(vacante.id);
+
+  const handleValidateChecklist = async () => {
+    try {
+      await validateChecklist();
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Checklist validado correctamente"
+            message="Checklist validado correctamente"
+            type="success"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    } catch (e) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error al validar el checklist"
+            message="Error al validar el checklist"
+            type="error"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    } finally {
+      fetchVacancyDetails();
+    }
+  };
 
   useEffect(() => {
     fetchVacancyDetails();
   }, [fetchVacancyDetails]);
+
+  const handleValidatePerfilMuestra = async () => {
+    try {
+      await validatePerfilMuestra();
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Perfil muestra validado correctamente"
+            message="Perfil muestra validado correctamente"
+            type="success"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    } catch (e) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error al validar el perfil muestra"
+            message="Error al validar el perfil muestra"
+            type="error"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    } finally {
+      fetchVacancyDetails();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -273,24 +349,55 @@ export const DetailsSectionReclutador = ({
           )}
         </div>
       </div>
-      <div>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm">
-              <FileText className="h-4 w-4 mr-1" />
-              Checklist
+      <div className="flex justify-between items-center">
+        <div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm">
+                <FileText className="h-4 w-4 mr-1" />
+                Checklist
+              </Button>
+            </SheetTrigger>
+            <SheetPortal>
+              <SheetOverlay className="z-[9999]" />
+              <VacancyDetailsChecklist
+                vacante={vacancyDetails}
+                onSaveRequisitos={async () => {
+                  await fetchVacancyDetails();
+                }}
+              />
+            </SheetPortal>
+          </Sheet>
+        </div>
+        <div className="flex gap-2">
+          {user_logged.role === Role.Admin && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={handleValidatePerfilMuestra}
+              disabled={vacancyDetails.IsPerfilMuestraValidated}
+            >
+              <FileCheck2 className="h-4 w-4 mr-1 text-green-500" />
+              {vacancyDetails.IsPerfilMuestraValidated
+                ? "Perfil muestra validado"
+                : "Validar perfil muestra"}
             </Button>
-          </SheetTrigger>
-          <SheetPortal>
-            <SheetOverlay className="z-[9999]" />
-            <VacancyDetailsChecklist
-              vacante={vacancyDetails}
-              onSaveRequisitos={async () => {
-                await fetchVacancyDetails();
-              }}
-            />
-          </SheetPortal>
-        </Sheet>
+          )}
+
+          {user_logged.role === Role.Admin && (
+            <Button
+              variant="outline"
+              onClick={handleValidateChecklist}
+              disabled={vacancyDetails.IsChecklistValidated}
+            >
+              <ClipboardCheck className="text-green-500 h-4 w-4 mr-1" />
+              {vacancyDetails.IsChecklistValidated
+                ? "Checklist validado"
+                : "Validar checklist"}
+            </Button>
+          )}
+        </div>
       </div>
       {/* Candidato contratado (condicional) */}
       {vacancyDetails.candidatoContratado && (

@@ -94,7 +94,7 @@ export const CreateCandidateForm = ({
         bonos_comisiones: data.bonos_comisiones?.trim() || undefined,
         otros_beneficios: data.otros_beneficios?.trim() || undefined,
         expectativa_económica:
-          data["expectativa_económica"]?.toString().trim() || undefined,
+          data.expectativa_económica?.toString().trim() || undefined,
         direccion_actual: data.direccion_actual?.trim() || undefined,
         modalidad_actual_o_ultima:
           data.modalidad_actual_o_ultima?.trim() || undefined,
@@ -207,7 +207,7 @@ export const CreateCandidateForm = ({
                 <FormItem>
                   <FormLabel>Sueldo actual o último</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej. 20000" type="number" {...field} />
+                    <Input placeholder="Ej. 20000" type="text" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -222,7 +222,7 @@ export const CreateCandidateForm = ({
                 <FormItem>
                   <FormLabel>Expectativa económica</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej. 25000" type="number" {...field} />
+                    <Input placeholder="Ej. 25000" type="text" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

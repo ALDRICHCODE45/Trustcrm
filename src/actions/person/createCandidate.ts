@@ -59,6 +59,18 @@ export async function createCandidate(
           email: data.email || undefined,
           phone: data.phone || undefined,
           cvFileId: vacancyFile.id,
+          //datos extra del candidato
+          esta_empleado: data.esta_empleado || false,
+          sueldo_actual_o_ultimo: data.sueldo_actual_o_ultimo || undefined,
+          prestaciones_actuales_o_ultimas:
+            data.prestaciones_actuales_o_ultimas || undefined,
+          bonos_comisiones: data.bonos_comisiones || undefined,
+          otros_beneficios: data.otros_beneficios || undefined,
+          expectativa_económica: data.expectativa_económica || undefined,
+          direccion_actual: data.direccion_actual || undefined,
+          modalidad_actual_o_ultima:
+            data.modalidad_actual_o_ultima || undefined,
+          ubicacion_ultimo_trabajo: data.ubicacion_ultimo_trabajo || undefined,
           vacanciesTernaFinal: {
             connect: {
               id: vacancyId,
@@ -81,6 +93,18 @@ export async function createCandidate(
           name: data.name,
           email: data.email || undefined,
           phone: data.phone || undefined,
+          //datos extra del candidato
+          esta_empleado: data.esta_empleado || false,
+          sueldo_actual_o_ultimo: data.sueldo_actual_o_ultimo || undefined,
+          prestaciones_actuales_o_ultimas:
+            data.prestaciones_actuales_o_ultimas || undefined,
+          bonos_comisiones: data.bonos_comisiones || undefined,
+          otros_beneficios: data.otros_beneficios || undefined,
+          expectativa_económica: data.expectativa_económica || undefined,
+          direccion_actual: data.direccion_actual || undefined,
+          modalidad_actual_o_ultima:
+            data.modalidad_actual_o_ultima || undefined,
+          ubicacion_ultimo_trabajo: data.ubicacion_ultimo_trabajo || undefined,
           vacanciesTernaFinal: {
             connect: {
               id: vacancyId,

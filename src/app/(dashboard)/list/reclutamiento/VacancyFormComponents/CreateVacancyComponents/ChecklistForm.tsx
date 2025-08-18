@@ -2,45 +2,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useFieldArray, Control } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
 import { CompareChecklistForm } from "./CompareChecklistForm";
 
-interface ChecklistFormData {
-  requisitos: { valor: string }[];
-}
-
 interface ChecklistFormProps {
-  onSubmit?: (requisitos: string[]) => void;
-  initialData?: string[];
+  form: {
+    control: Control<any>;
+    register: any;
+  };
 }
 
-export const ChecklistForm = ({
-  onSubmit,
-  initialData = [],
-}: ChecklistFormProps) => {
-  const { control, handleSubmit, watch } = useForm<ChecklistFormData>({
-    defaultValues: {
-      requisitos:
-        initialData.length > 0
-          ? initialData.map((req) => ({ valor: req }))
-          : [{ valor: "" }], // Al menos un campo inicial
-    },
-  });
-
+export const ChecklistForm = ({ form }: ChecklistFormProps) => {
   const { fields, append, remove } = useFieldArray({
-    control,
+    control: form.control,
     name: "requisitos",
   });
-
-  const handleFormSubmit = (data: ChecklistFormData) => {
-    // Filtrar requisitos vacíos y extraer solo los valores
-    const requisitosLimpios = data.requisitos
-      .map((req) => req.valor.trim())
-      .filter((req) => req.length > 0);
-
-    onSubmit?.(requisitosLimpios);
-  };
 
   const agregarRequisito = () => {
     append({ valor: "" });
@@ -56,7 +33,7 @@ export const ChecklistForm = ({
     <div className="min-w-full min-h-full">
       <Card>
         <CardContent className="mt-5">
-          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          <div className="space-y-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">Requisitos de la Vacante</h3>
               <Button
@@ -92,20 +69,14 @@ export const ChecklistForm = ({
                   </div>
                   <Input
                     id={`requisito-${index}`}
-                    {...control.register(`requisitos.${index}.valor`)}
+                    {...form.register(`requisitos.${index}.valor`)}
                     placeholder="Agregar Requisito"
                     type="text"
                   />
                 </div>
               ))}
             </div>
-
-            {onSubmit && (
-              <div className="flex justify-end pt-4 border-t">
-                <Button type="submit">Guardar Requisitos</Button>
-              </div>
-            )}
-          </form>
+          </div>
         </CardContent>
       </Card>
       {/* <CompareChecklistForm /> */}

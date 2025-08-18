@@ -1,4 +1,5 @@
 "use server";
+import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 import {
   VacancyTipo,
@@ -81,6 +82,8 @@ interface VacancyFormData {
   psicometria?: string;
   ubicacion?: string;
   comentarios?: string;
+  // Requisitos del checklist
+  requisitos?: string[];
 }
 
 export const updateVacancy = async (data: UpdateVacancyFormData) => {
@@ -236,6 +239,22 @@ export const createVacancy = async (vacancy: VacancyFormData) => {
       },
     });
 
+    // Crear los requisitos del checklist si se proporcionaron
+    if (vacancy.requisitos && vacancy.requisitos.length > 0) {
+      const requisitosLimpios = vacancy.requisitos
+        .map((req) => req.trim())
+        .filter((req) => req.length > 0);
+
+      for (const content of requisitosLimpios) {
+        await prisma.inputChecklist.create({
+          data: {
+            content,
+            vacancyId: newVacancy.id,
+          },
+        });
+      }
+    }
+
     revalidatePath("/list/reclutamiento");
     revalidatePath("/reclutador");
     revalidatePath("/");
@@ -255,6 +274,68 @@ export const updateVacancyStatus = async (
   status: VacancyEstado
 ) => {
   try {
+    // Primero obtener la vacante con todas sus relaciones para validar
+    const currentVacancy = await prisma.vacancy.findUnique({
+      where: { id: vacancyId },
+      include: {
+        InputChecklist: {
+          include: {
+            InputChecklistFeedback: {
+              include: {
+                candidate: true,
+              },
+            },
+          },
+        },
+        Comments: {
+          include: {
+            author: true,
+          },
+        },
+        candidatoContratado: {
+          include: {
+            cv: true,
+            vacanciesContratado: true,
+          },
+        },
+        reclutador: true,
+        cliente: true,
+        ternaFinal: {
+          include: {
+            cv: true,
+            vacanciesContratado: true,
+          },
+        },
+        files: true,
+      },
+    });
+
+    if (!currentVacancy) {
+      return {
+        ok: false,
+        message: "Vacante no encontrada",
+      };
+    }
+
+    // Importar y usar las validaciones
+    const { validateStateTransition } = await import(
+      "@/lib/vacancyStateValidations"
+    );
+
+    // Validar la transición de estado
+    const validationResult = validateStateTransition(currentVacancy, status);
+
+    if (!validationResult.isValid) {
+      return {
+        ok: false,
+        message:
+          validationResult.message ||
+          "No se puede cambiar al estado solicitado",
+        reason: validationResult.reason,
+      };
+    }
+
+    // Si la validación es exitosa, actualizar el estado
     const vacancy = await prisma.vacancy.update({
       where: { id: vacancyId },
       data: { estado: status },
@@ -266,7 +347,11 @@ export const updateVacancyStatus = async (
 
     return { ok: true, message: "Vacante actualizada correctamente", vacancy };
   } catch (err) {
-    throw new Error("Error al actualizar el estado de la vacante");
+    console.error("Error al actualizar el estado de la vacante:", err);
+    return {
+      ok: false,
+      message: "Error al actualizar el estado de la vacante",
+    };
   }
 };
 
@@ -522,6 +607,34 @@ export const getVacancies = async () => {
       ok: false,
       message: "Error al obtener las vacantes",
       vacancies: null,
+    };
+  }
+};
+
+export const validateCandidateAction = async (candidateId: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    //actualizar el candidato para hacer entrevistas
+    await prisma.person.update({
+      where: { id: candidateId },
+      data: { IsCandidateValidated: true },
+    });
+
+    revalidatePath("/reclutador");
+    revalidatePath("/reclutador/kanban");
+
+    return {
+      ok: true,
+      message: "Candidato validado correctamente",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Error al validar el candidato",
     };
   }
 };

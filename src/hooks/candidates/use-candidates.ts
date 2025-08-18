@@ -8,6 +8,7 @@ import {
   getCandidates,
   seleccionarCandidato,
   deseleccionarCandidato,
+  validateCandidateAction,
 } from "@/actions/vacantes/actions";
 import { PersonWithRelations } from "@/app/(dashboard)/list/reclutamiento/components/FinalTernaSheet";
 import { CreateCandidateFormData } from "@/zod/createCandidateSchema";
@@ -198,6 +199,20 @@ export const useCandidates = (vacancyId?: string) => {
     }
   };
 
+  const validateCandidate = async (candidateId: string) => {
+    try {
+      const response = await validateCandidateAction(candidateId);
+      if (!response.ok) {
+        throw new Error(response.message || "Error al validar candidato");
+      }
+      return response;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Error al validar candidato";
+      throw new Error(errorMessage);
+    }
+  };
+
   // Auto-fetch candidates when vacancyId changes
   useEffect(() => {
     fetchCandidates();
@@ -217,5 +232,6 @@ export const useCandidates = (vacancyId?: string) => {
     deleteCandidateAction,
     selectCandidate,
     deselectCandidate,
+    validateCandidate,
   };
 };

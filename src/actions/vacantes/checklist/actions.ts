@@ -159,12 +159,85 @@ export const editCandidateFeedback = async (
 };
 
 //Validar checklist
-export const ValidateChecklist = async (vacancyId: string) => {
+export const ValidateChecklistAction = async (vacancyId: string) => {
   try {
     const session = await auth();
     if (!session?.user) {
       throw new Error("Unauthorized");
     }
-    //Todo: implementar la logica para validar el checklist
-  } catch (error) {}
+    //buscar vacante
+    const vacancy = await prisma.vacancy.findUnique({
+      where: {
+        id: vacancyId,
+      },
+    });
+
+    if (!vacancy) {
+      throw new Error("Vacante no encontrada");
+    }
+
+    //actualizar la vacante
+    await prisma.vacancy.update({
+      where: {
+        id: vacancyId,
+      },
+      data: {
+        IsChecklistValidated: true,
+      },
+    });
+
+    revalidatePath(`/reclutador/kanban`);
+    revalidatePath(`/list/reclutamiento`);
+    revalidatePath(`/reclutamiento`);
+
+    return {
+      ok: true,
+      message: "Checklist validado correctamente",
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: "Error al validar el checklist",
+    };
+  }
+};
+
+export const ValidatePerfilMuestraAction = async (vacancyId: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    //buscar la vacante
+    const vacancy = await prisma.vacancy.findUnique({
+      where: {
+        id: vacancyId,
+      },
+    });
+
+    if (!vacancy) {
+      throw new Error("Vacante no encontrada");
+    }
+
+    //actualizar la vacante
+    await prisma.vacancy.update({
+      where: { id: vacancyId },
+      data: { IsPerfilMuestraValidated: true },
+    });
+
+    revalidatePath(`/reclutador/kanban`);
+    revalidatePath(`/list/reclutamiento`);
+    revalidatePath(`/reclutamiento`);
+
+    return {
+      ok: true,
+      message: "Perfil muestra validado correctamente",
+    };
+  } catch (er) {
+    return {
+      ok: false,
+      message: "Error al validar el perfil muestra",
+    };
+  }
 };

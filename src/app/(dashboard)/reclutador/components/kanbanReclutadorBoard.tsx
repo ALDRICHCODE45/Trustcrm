@@ -30,6 +30,7 @@ import { KanbanFilters, FilterState } from "./KanbanFilters";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { updateVacancyStatus } from "@/actions/vacantes/actions";
+import { ValidationErrorToast } from "@/components/ui/ValidationErrorToast";
 import {
   DndContext,
   DragEndEvent,
@@ -514,7 +515,7 @@ const DroppableColumn: React.FC<ColumnProps> = ({
                     />
                   </div>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto z-[900]">
+                <DialogContent className="sm:max-w-[730px] max-h-[90vh] overflow-y-auto z-[900]">
                   <DialogHeader>
                     <DialogTitle className="text-xl">
                       {vacante.posicion}
@@ -819,16 +820,30 @@ export const KanbanBoardPage = ({
             />
           ));
         } else {
-          toast.custom((t) => (
-            <ToastCustomMessage
-              title="Error"
-              message={result.message || "Error al actualizar la vacante"}
-              type="error"
-              onClick={() => {
-                toast.dismiss(t);
-              }}
-            />
-          ));
+          // Verificar si es un error de validación con razón detallada
+          if (result.reason) {
+            toast.custom((t) => (
+              <ValidationErrorToast
+                title="No se puede cambiar el estado"
+                message={result.message || "Error al actualizar la vacante"}
+                reason={result.reason}
+                onClick={() => {
+                  toast.dismiss(t);
+                }}
+              />
+            ));
+          } else {
+            toast.custom((t) => (
+              <ToastCustomMessage
+                title="Error"
+                message={result.message || "Error al actualizar la vacante"}
+                type="error"
+                onClick={() => {
+                  toast.dismiss(t);
+                }}
+              />
+            ));
+          }
         }
       } catch (error) {
         console.error("Error updating vacancy status:", error);
@@ -880,16 +895,30 @@ export const KanbanBoardPage = ({
               />
             ));
           } else {
-            toast.custom((t) => (
-              <ToastCustomMessage
-                title="Error"
-                message={result.message || "Error al actualizar la vacante"}
-                type="error"
-                onClick={() => {
-                  toast.dismiss(t);
-                }}
-              />
-            ));
+            // Verificar si es un error de validación con razón detallada
+            if (result.reason) {
+              toast.custom((t) => (
+                <ValidationErrorToast
+                  title="No se puede cambiar el estado"
+                  message={result.message || "Error al actualizar la vacante"}
+                  reason={result.reason}
+                  onClick={() => {
+                    toast.dismiss(t);
+                  }}
+                />
+              ));
+            } else {
+              toast.custom((t) => (
+                <ToastCustomMessage
+                  title="Error"
+                  message={result.message || "Error al actualizar la vacante"}
+                  type="error"
+                  onClick={() => {
+                    toast.dismiss(t);
+                  }}
+                />
+              ));
+            }
           }
         } catch (error) {
           console.error("Error updating vacancy status:", error);

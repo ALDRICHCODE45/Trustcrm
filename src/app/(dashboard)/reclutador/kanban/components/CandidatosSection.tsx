@@ -1,5 +1,4 @@
 "use client";
-import { VacancyWithRelations } from "../../components/ReclutadorColumns";
 import { useEffect, useState } from "react";
 import { PersonWithRelations } from "@/app/(dashboard)/list/reclutamiento/components/FinalTernaSheet";
 import { toast } from "sonner";
@@ -23,6 +22,7 @@ import {
   Pencil,
   Trash2,
   FileUser,
+  FileCheck2,
 } from "lucide-react";
 import { MoreVertical } from "lucide-react";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
@@ -54,6 +54,7 @@ import { useCandidates } from "@/hooks/candidates/use-candidates";
 import { CandidateSheetDetails } from "./CandidateSheetDetails";
 import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CreateCandidateFormData } from "@/zod/createCandidateSchema";
 
 interface CandidatesSectionProps {
   vacancyId: string;
@@ -73,6 +74,7 @@ export const CandidatesSectionReclutador = ({
     selectCandidate,
     deselectCandidate,
     fetchCandidates,
+    validateCandidate,
   } = useCandidates(vacancyId);
 
   const {
@@ -106,7 +108,9 @@ export const CandidatesSectionReclutador = ({
     await fetchCandidates();
   };
 
-  const handleCandidateCreated = async (candidateData: any) => {
+  const handleCandidateCreated = async (
+    candidateData: CreateCandidateFormData
+  ) => {
     try {
       await addCandidate(candidateData);
       toast.custom((t) => (
@@ -211,6 +215,37 @@ export const CandidatesSectionReclutador = ({
       handleDeleteCandidate(candidateToDelete.id);
       setAlertDialogDelete(false);
       setCandidateToDelete(null);
+    }
+  };
+
+  const handleValidateCandidate = async (candidateId: string) => {
+    try {
+      await validateCandidate(candidateId);
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Candidato validado correctamente"
+            message="El candidato ha sido validado correctamente"
+            type="success"
+            onClick={() => toast.dismiss(t)}
+          />
+        );
+      });
+    } catch (error) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error al validar candidato"
+            message={
+              error instanceof Error ? error.message : "Error desconocido"
+            }
+            type="error"
+            onClick={() => toast.dismiss(t)}
+          />
+        );
+      });
+    } finally {
+      fetchCandidates();
     }
   };
 
@@ -450,7 +485,22 @@ export const CandidatesSectionReclutador = ({
                             fetchCandidates();
                           }}
                         />
-                        <CandidateSheetDetails candidate={candidato} />
+                        <div className="flex items-center gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-4"
+                            onClick={() =>
+                              handleValidateCandidate(candidato.id)
+                            }
+                          >
+                            <FileCheck2 className="h-4 w-4 mr-2 text-green-500" />
+                            {candidato.IsCandidateValidated
+                              ? "Candidato validado"
+                              : "Validar candidato"}
+                          </Button>
+                          <CandidateSheetDetails candidate={candidato} />
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

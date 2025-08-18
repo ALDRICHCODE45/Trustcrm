@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { VacancyWithRelations } from "../../components/ReclutadorColumns";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { useDocuments } from "@/hooks/documents/use-documents";
@@ -50,6 +50,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { CreateJobDescriptionDialog } from "./CreateJobDescriptionDialog";
+import { CreatePerfilMuestraDialog } from "./CreatePerfilMuestraDialog";
+import { deleteJobDescriptionAction } from "@/actions/vacantes/files/actions";
 
 interface DocumentsSectionProps {
   vacante: VacancyWithRelations;
@@ -61,17 +64,25 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
   const [open, setOpen] = useState(false);
   const [documentTitle, setDocumentTitle] = useState("");
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openCreateJobDescriptionDialog, setOpenCreateJobDescriptionDialog] =
+    useState<boolean>(false);
+  const [openCreatePerfilMuestraDialog, setOpenCreatePerfilMuestraDialog] =
+    useState<boolean>(false);
 
   // Hook personalizado para manejar documentos
   const {
     documents,
+    perfilesMuestra,
     isLoading,
     error,
     isUploading,
     isDeleting,
     addDocument,
     deleteDocument,
+    createJobDescription,
     downloadDocument,
+    fetchDocuments,
+    jobDescription,
   } = useDocuments(vacante.id);
 
   const [fileUploadState, fileUploadActions] = useFileUpload({
@@ -215,6 +226,66 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
     }).format(new Date(date));
   };
 
+  // Funciones para manejar Job Description (vacías para implementar)
+  const handleViewJobDescription = () => {
+    // TODO: Implementar visualización del Job Description
+    console.log("Ver Job Description");
+  };
+
+  const handleDeleteJobDescription = async () => {
+    try {
+      if (!jobDescription?.id) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Error"
+            type="error"
+            message="No se encontró el ID del JobDescription"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
+        return;
+      }
+      const response = await deleteJobDescriptionAction(
+        vacante.id,
+        jobDescription.id
+      );
+      if (!response.ok) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Error"
+            type="error"
+            message="Error al eliminar el JobDescription"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
+        return;
+      }
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="JobDescription eliminado correctamente"
+          type="success"
+          message="El JobDescription ha sido eliminado correctamente"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
+      fetchDocuments();
+      setOpenDeleteDialog(false);
+    } catch (e) {
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error No controlado"
+          type="error"
+          message="Reinicie su sesion o hable con el area de TI para resolver el problema"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
+    }
+  };
+
+  const handleReplaceJobDescription = () => {
+    setOpenCreateJobDescriptionDialog(true);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6 mt-4">
@@ -244,7 +315,18 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
   return (
     <div className="space-y-6 mt-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-semibold">Documentos</h3>
+        <CreateJobDescriptionDialog
+          fetchDocuments={fetchDocuments}
+          createJobDescription={createJobDescription}
+          isOpen={openCreateJobDescriptionDialog}
+          setIsOpen={setOpenCreateJobDescriptionDialog}
+        />
+        <CreatePerfilMuestraDialog
+          vacancyId={vacante.id}
+          fetchDocuments={fetchDocuments}
+          isOpen={openCreatePerfilMuestraDialog}
+          setIsOpen={setOpenCreatePerfilMuestraDialog}
+        />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
@@ -373,121 +455,369 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
           </DialogContent>
         </Dialog>
       </div>
-
-      {/* Documentos existentes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {documents && documents.length > 0 ? (
-          documents.map((file) => (
-            <Card
-              key={file.id}
-              className="group hover:shadow-md transition-all duration-200"
-            >
-              <CardContent className="p-5">
-                <div className="flex flex-col gap-4">
-                  <div className="flex justify-between items-start">
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="z-[9999]">
-                        <DropdownMenuItem
-                          className="cursor-pointer"
-                          onClick={() => downloadDocument(file.url, file.name)}
-                        >
-                          <FileSymlink className="mr-2" />
-                          <span>Ver</span>
-                        </DropdownMenuItem>
-                        <AlertDialog
-                          open={openDeleteDialog}
-                          onOpenChange={setOpenDeleteDialog}
-                        >
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem
-                              className="text-red-500 cursor-pointer"
-                              onSelect={(e) => e.preventDefault()}
+      <div className="max-h-[30vh] overflow-y-auto">
+        <div className="flex gap-4 justify-between w-full">
+          {/* Job Description y Perfiles Muestra juntos en la misma fila */}
+          {(jobDescription ||
+            (perfilesMuestra && perfilesMuestra.length > 0)) && (
+            <div className="mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Job Description */}
+                {jobDescription && (
+                  <Card className="group hover:shadow-md transition-all duration-200 border-l-4 border-l-green-500">
+                    <CardContent className="p-5">
+                      <div className="flex flex-col gap-4">
+                        <div className="flex justify-between items-start">
+                          <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                            <FileText className="h-6 w-6 text-green-600 dark:text-green-400" />
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="z-[9999]"
                             >
-                              <Trash className="h-4 w-4 mr-2" />
-                              <span>Eliminar</span>
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="z-[9999]">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                ¿Estás seguro de querer eliminar este documento?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta acción no se puede deshacer. Se eliminará
-                                el documento permanentemente.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteDocument(file.id)}
-                                disabled={isDeleting}
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => handleReplaceJobDescription()}
                               >
-                                {isDeleting ? "Eliminando..." : "Eliminar"}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  <div>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <div className="font-medium text-lg mb-1 max-w-[130px] truncate">
-                          {file.name}
+                                <UploadIcon className="mr-2" />
+                                <span>Reemplazar</span>
+                              </DropdownMenuItem>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    className="text-red-500 cursor-pointer"
+                                    onSelect={(e) => e.preventDefault()}
+                                  >
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    <span>Eliminar</span>
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="z-[9999]">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      ¿Estás seguro de querer eliminar el Job
+                                      Description?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta acción no se puede deshacer. Se
+                                      eliminará el Job Description
+                                      permanentemente de esta vacante.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() =>
+                                        handleDeleteJobDescription()
+                                      }
+                                      disabled={isDeleting}
+                                    >
+                                      {isDeleting
+                                        ? "Eliminando..."
+                                        : "Eliminar"}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-sm">{file.name}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <div className="text-sm text-muted-foreground">
-                      Actualizado el {formatDate(file.updatedAt)}
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge
-                      variant="outline"
-                      className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+                        <div>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <div className="font-medium text-lg mb-1 max-w-[130px] truncate">
+                                {jobDescription.name}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="z-[9999]">
+                              <p className="text-sm">{jobDescription.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <div className="text-sm text-muted-foreground">
+                            Actualizado el{" "}
+                            {formatDate(jobDescription.updatedAt)}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge
+                            variant="outline"
+                            className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+                          >
+                            JD •{" "}
+                            {getFileTypeFromMimeType(jobDescription.mimeType)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {formatFileSize(jobDescription.size)}
+                          </span>
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            downloadDocument(
+                              jobDescription.url,
+                              jobDescription.name
+                            )
+                          }
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          <span>Ver JD</span>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Perfiles Muestra */}
+                {perfilesMuestra &&
+                  perfilesMuestra.map((perfil: any) => (
+                    <Card
+                      key={perfil.id}
+                      className="group hover:shadow-md transition-all duration-200 border-l-4 border-l-purple-500"
                     >
-                      {getFileTypeFromMimeType(file.mimeType)}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {formatFileSize(file.size)}
-                    </span>
-                  </div>
+                      <CardContent className="p-5">
+                        <div className="flex flex-col gap-4">
+                          <div className="flex justify-between items-start">
+                            <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                              <FileText className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="end"
+                                className="z-[9999]"
+                              >
+                                <DropdownMenuItem
+                                  className="cursor-pointer"
+                                  onClick={() =>
+                                    downloadDocument(perfil.url, perfil.name)
+                                  }
+                                >
+                                  <FileSymlink className="mr-2" />
+                                  <span>Ver</span>
+                                </DropdownMenuItem>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem
+                                      className="text-red-500 cursor-pointer"
+                                      onSelect={(e) => e.preventDefault()}
+                                    >
+                                      <Trash className="h-4 w-4 mr-2" />
+                                      <span>Eliminar</span>
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent className="z-[9999]">
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        ¿Estás seguro de querer eliminar este
+                                        Perfil Muestra?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Esta acción no se puede deshacer. Se
+                                        eliminará el Perfil Muestra
+                                        permanentemente de esta vacante.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Cancelar
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() =>
+                                          deleteDocument(perfil.id)
+                                        }
+                                        disabled={isDeleting}
+                                      >
+                                        {isDeleting
+                                          ? "Eliminando..."
+                                          : "Eliminar"}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => downloadDocument(file.url, file.name)}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    <span>Descargar</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <div className="col-span-full text-center py-8">
-            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-sm text-muted-foreground">
-              No hay documentos asociados a esta vacante
-            </p>
-          </div>
-        )}
+                          <div>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <div className="font-medium text-lg mb-1 max-w-[130px] truncate">
+                                  {perfil.name}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="z-[9999]">
+                                <p className="text-sm">{perfil.name}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <div className="text-sm text-muted-foreground">
+                              Actualizado el {formatDate(perfil.updatedAt)}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge
+                              variant="outline"
+                              className="bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800"
+                            >
+                              PM • {getFileTypeFromMimeType(perfil.mimeType)}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {formatFileSize(perfil.size)}
+                            </span>
+                          </div>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              downloadDocument(perfil.url, perfil.name)
+                            }
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            <span>Ver Perfil</span>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+        {/* Documentos existentes */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {documents && documents.length > 0 ? (
+            documents.map((file) => (
+              <Card
+                key={file.id}
+                className="group hover:shadow-md transition-all duration-200"
+              >
+                <CardContent className="p-5">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex justify-between items-start">
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="z-[9999]">
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() =>
+                              downloadDocument(file.url, file.name)
+                            }
+                          >
+                            <FileSymlink className="mr-2" />
+                            <span>Ver</span>
+                          </DropdownMenuItem>
+                          <AlertDialog
+                            open={openDeleteDialog}
+                            onOpenChange={setOpenDeleteDialog}
+                          >
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem
+                                className="text-red-500 cursor-pointer"
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                <Trash className="h-4 w-4 mr-2" />
+                                <span>Eliminar</span>
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="z-[9999]">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  ¿Estás seguro de querer eliminar este
+                                  documento?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta acción no se puede deshacer. Se eliminará
+                                  el documento permanentemente.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteDocument(file.id)}
+                                  disabled={isDeleting}
+                                >
+                                  {isDeleting ? "Eliminando..." : "Eliminar"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <div>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <div className="font-medium text-lg mb-1 max-w-[130px] truncate">
+                            {file.name}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-sm">{file.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <div className="text-sm text-muted-foreground">
+                        Actualizado el {formatDate(file.updatedAt)}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge
+                        variant="outline"
+                        className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+                      >
+                        {getFileTypeFromMimeType(file.mimeType)}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {formatFileSize(file.size)}
+                      </span>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadDocument(file.url, file.name)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      <span>Descargar</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-sm text-muted-foreground">
+                No hay documentos asociados a esta vacante
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

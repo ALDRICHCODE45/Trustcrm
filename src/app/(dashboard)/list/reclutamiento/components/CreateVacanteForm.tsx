@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -20,8 +19,6 @@ import {
   FileText,
   UserIcon,
   CircleOff,
-  ChevronsUpDown,
-  Check,
   ChevronDownIcon,
   CheckIcon,
 } from "lucide-react";
@@ -72,7 +69,6 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import ClientCombobox from "@/app/(dashboard)/reclutador/components/ClientCombobox";
 import { Label } from "@/components/ui/label";
 
 // Schema basado en el modelo Vacancy de Prisma
@@ -122,6 +118,9 @@ const vacancySchema = z.object({
   psicometria: z.string().optional(),
   ubicacion: z.string().optional(),
   comentarios: z.string().optional(),
+
+  // Requisitos del checklist
+  requisitos: z.array(z.object({ valor: z.string() })).optional(),
 });
 
 type VacancyFormData = z.infer<typeof vacancySchema>;
@@ -216,12 +215,24 @@ function VacancyForm({ reclutadores, clientes, user_logged }: Props) {
       psicometria: "",
       ubicacion: "",
       comentarios: "",
+      requisitos: [{ valor: "" }], // Al menos un requisito inicial
     },
   });
 
   const onSubmit = async (data: VacancyFormData) => {
     try {
-      const result = await createVacancy(data);
+      // Procesar los requisitos antes de enviar
+      const requisitosLimpios =
+        data.requisitos
+          ?.map((req) => req.valor.trim())
+          .filter((req) => req.length > 0) || [];
+
+      const vacancyData = {
+        ...data,
+        requisitos: requisitosLimpios,
+      };
+
+      const result = await createVacancy(vacancyData);
 
       if (!result.ok) {
         toast.custom((t) => (
@@ -287,7 +298,7 @@ function VacancyForm({ reclutadores, clientes, user_logged }: Props) {
             <FinancialInformationTab form={form} user_logged={user_logged} />
           </TabsContent>
           <TabsContent value="checklist">
-            <ChecklistForm />
+            <ChecklistForm form={form} />
           </TabsContent>
 
           {/* Botón de Guardar */}

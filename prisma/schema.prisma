@@ -164,6 +164,8 @@ model Person {
   direccion_actual                String?
   modalidad_actual_o_ultima       String?
   ubicacion_ultimo_trabajo        String?
+  //validacion de candidato para hacer entrevistas
+  IsCandidateValidated            Boolean  @default(false)
 
   //etiqueta del contacto
   etiqueta LeadStatus @default(Contacto)
@@ -246,8 +248,17 @@ model Vacancy {
   cliente   Client @relation(fields: [clienteId], references: [id])
   clienteId String
 
-  // Relación con archivos
-  files VacancyFile[]
+  // Relación con archivos generales
+  files VacancyFile[] @relation("VacancyFiles")
+
+  // Relación con perfiles muestra (múltiples)
+  perfilesMuestra          VacancyFile[] @relation("VacancyPerfilMuestra")
+  //Perfil Muestra validado
+  IsPerfilMuestraValidated Boolean       @default(false)
+
+  //Job Description (solo uno)
+  JobDescription   VacancyFile? @relation("VacancyJobDescription", fields: [jobDescriptionId], references: [id])
+  jobDescriptionId String?      @unique
 
   // Datos del usuario que creo la vacante
   creator   User?   @relation("VacancyCreator", fields: [creatorId], references: [id]) // Renombrado para claridad
@@ -287,9 +298,18 @@ model InputChecklistFeedback {
 }
 
 model VacancyFile {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
+
+  // Relación con vacante para archivos generales
   vacancyId String?
-  vacancy   Vacancy? @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  vacancy   Vacancy? @relation("VacancyFiles", fields: [vacancyId], references: [id], onDelete: Cascade)
+
+  // Relación con vacante para perfiles muestra
+  perfilMuestraVacancyId String?
+  perfilMuestraVacancy   Vacancy? @relation("VacancyPerfilMuestra", fields: [perfilMuestraVacancyId], references: [id], onDelete: Cascade)
+
+  // Relación específica para JobDescription (uno a uno)
+  jobDescriptionVacancy Vacancy? @relation("VacancyJobDescription")
 
   // Datos del archivo
   url       String
@@ -307,6 +327,7 @@ model VacancyFile {
   personCV Person? @relation("PersonCV")
 
   @@index([vacancyId])
+  @@index([perfilMuestraVacancyId])
   @@index([authorId])
 }
 

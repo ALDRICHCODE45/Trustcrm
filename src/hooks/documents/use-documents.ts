@@ -1,15 +1,35 @@
 import { useState, useEffect, useCallback } from "react";
-import { VacancyFile } from "@prisma/client";
+import { Prisma, VacancyFile } from "@prisma/client";
 import {
   getVacancyFiles,
   addFileToVacancy,
   deleteFileFromVacancy,
+  createJobDescriptionAction,
+  getVacancyFilesDetailed,
 } from "@/actions/vacantes/files/actions";
 
 interface AddDocumentData {
   title: string;
   file: File;
   authorId: string;
+}
+
+type VacancyFileWitOutRelations = Prisma.VacancyFileGetPayload<{
+  select: {
+    name: true;
+    id: true;
+    vacancyId: true;
+    url: true;
+    mimeType: true;
+    size: true;
+    createdAt: true;
+    updatedAt: true;
+    authorId: true;
+  };
+}>;
+
+export interface JobDescriptionData {
+  file: File;
 }
 
 /**
@@ -21,11 +41,13 @@ interface AddDocumentData {
  * @returns Objeto con estado de documentos y acciones para manipularlos
  */
 export const useDocuments = (vacancyId?: string) => {
-  const [documents, setDocuments] = useState<VacancyFile[]>([]);
+  const [documents, setDocuments] = useState<VacancyFileWitOutRelations[]>([]);
+  const [perfilesMuestra, setPerfilesMuestra] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [jobDescription, setJobDescription] = useState<any | null>(null);
 
   /**
    * Obtiene la lista de documentos de la vacante
@@ -37,11 +59,14 @@ export const useDocuments = (vacancyId?: string) => {
     setError(null);
 
     try {
-      const response = await getVacancyFiles(vacancyId);
+      // Usar la función detallada que incluye perfiles muestra
+      const response = await getVacancyFilesDetailed(vacancyId);
       if (!response.ok) {
         throw new Error(response.message || "Error al obtener documentos");
       }
-      setDocuments(response.files || []);
+      setDocuments(response.archivosGenerales || []);
+      setPerfilesMuestra(response.perfilesMuestra || []);
+      setJobDescription(response.jobDescription || null);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error al obtener documentos";
@@ -136,6 +161,47 @@ export const useDocuments = (vacancyId?: string) => {
     await fetchDocuments();
   };
 
+  const createJobDescription = useCallback(
+    async ({ file }: JobDescriptionData) => {
+      if (!vacancyId) {
+        setError("Datos incompletos");
+        return {
+          ok: false,
+        };
+      }
+
+      setIsUploading(true);
+      setError(null);
+
+      try {
+        //llamar a la funcion para crear el job description
+        const response = await createJobDescriptionAction({
+          file,
+          vacancyId,
+        });
+
+        if (!response.ok) {
+          setError(response.message || "Error al crear el JobDescription");
+          return {
+            ok: false,
+          };
+        }
+
+        //actualizar la lista de documentos
+        await fetchDocuments();
+
+        return {
+          ok: true,
+        };
+      } catch (e) {
+        setError("No se pudo crear el JobDescription");
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [vacancyId]
+  );
+
   // Auto-fetch documents when vacancyId changes
   useEffect(() => {
     fetchDocuments();
@@ -144,13 +210,16 @@ export const useDocuments = (vacancyId?: string) => {
   return {
     // Estado
     documents,
+    perfilesMuestra,
     isLoading,
     error,
     isUploading,
     isDeleting,
+    jobDescription,
 
     // Acciones
     fetchDocuments,
+    createJobDescription,
     addDocument,
     deleteDocument,
     downloadDocument,
