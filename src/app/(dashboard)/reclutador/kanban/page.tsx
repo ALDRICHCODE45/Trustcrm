@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
 import QuickStatsDialog from "../components/QuickStatsDialog";
+import CreateVacanteForm from "../../list/reclutamiento/components/CreateVacanteForm";
 
 const fetchVacancies = async (): Promise<VacancyWithRelations[]> => {
   const vacancies = await prisma.vacancy.findMany({
@@ -89,10 +90,22 @@ export default async function KanbanReclutadorPage() {
     image: user_logged.user.image || "",
   };
 
+  const user_logged_data_form = {
+    id: user_logged.user.id,
+    name: user_logged.user.name,
+    email: user_logged.user.email,
+    role: user_logged.user.role as Role,
+  };
+
   return (
     <>
       <div className="flex justify-end mt-2 mb-4 w-full gap-2">
         <QuickStatsDialog />
+        <CreateVacanteForm
+          clientes={clientes}
+          reclutadores={reclutadores}
+          user_logged={user_logged_data_form}
+        />
       </div>
       <KanbanBoardPage
         initialVacantes={vacancies}

@@ -388,6 +388,7 @@ export const DetailsSectionReclutador = ({
           {user_logged.role === Role.Admin && (
             <Button
               variant="outline"
+              size="sm"
               onClick={handleValidateChecklist}
               disabled={vacancyDetails.IsChecklistValidated}
             >

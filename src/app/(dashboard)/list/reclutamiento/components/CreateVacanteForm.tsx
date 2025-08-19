@@ -70,6 +70,8 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
+import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
+import { useRouter } from "next/navigation";
 
 // Schema basado en el modelo Vacancy de Prisma
 const vacancySchema = z.object({
@@ -163,6 +165,7 @@ interface Props {
     name: string;
     role: string;
   };
+  onVacancyCreated?: () => void;
 }
 
 // Componente principal para crear una vacante
@@ -191,7 +194,13 @@ export const CreateVacanteForm = ({
 };
 
 // Componente principal del formulario con react-hook-form
-function VacancyForm({ reclutadores, clientes, user_logged }: Props) {
+function VacancyForm({
+  reclutadores,
+  clientes,
+  user_logged,
+  onVacancyCreated,
+}: Props) {
+  const router = useRouter();
   const form = useForm<VacancyFormData>({
     resolver: zodResolver(vacancySchema),
     defaultValues: {
@@ -259,6 +268,7 @@ function VacancyForm({ reclutadores, clientes, user_logged }: Props) {
         />
       ));
       form.reset();
+      router.refresh();
     } catch (error) {
       toast.custom((t) => (
         <ToastCustomMessage

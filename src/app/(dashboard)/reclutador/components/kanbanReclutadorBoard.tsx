@@ -66,6 +66,11 @@ import { CandidatesSectionReclutador } from "../kanban/components/CandidatosSect
 import { CommentsSectionReclutador } from "../kanban/components/ComentariosSectionReclutador";
 import { DocumentsSectionReclutador } from "../kanban/components/DocumentSectionReclutador";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Types
 interface ColumnProps {
@@ -332,8 +337,8 @@ const DraggableVacanteCard: React.FC<VacanteCardProps> = ({
                       : vacante.posicion}
                   </h3>
                   {vacante.posicion.length > 30 && (
-                    <Popover>
-                      <PopoverTrigger asChild>
+                    <Tooltip>
+                      <TooltipTrigger className="z-[9999]">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -343,13 +348,13 @@ const DraggableVacanteCard: React.FC<VacanteCardProps> = ({
                         >
                           <MoreVertical className="h-4 w-4 text-muted-foreground" />
                         </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="max-w-xs">
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs z-[9999]">
                         <span className="text-sm break-words">
                           {vacante.posicion}
                         </span>
-                      </PopoverContent>
-                    </Popover>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
                 {/* Indicador de retraso - debajo del nombre */}
@@ -371,7 +376,7 @@ const DraggableVacanteCard: React.FC<VacanteCardProps> = ({
                 })()}
                 <div className="flex items-center text-xs text-muted-foreground mt-1">
                   <Building className="h-4 w-4 mr-1" />
-                  <span className="truncate">
+                  <span className="truncate max-w-[100px]">
                     {vacante.cliente?.cuenta || "Sin cliente"}
                   </span>
                 </div>
