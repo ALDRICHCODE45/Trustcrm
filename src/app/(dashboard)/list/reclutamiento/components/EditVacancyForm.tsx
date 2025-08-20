@@ -4,6 +4,7 @@ import {
   DialogTitle,
   DialogHeader,
   DialogContent,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
@@ -42,6 +43,8 @@ import { updateVacancy } from "@/actions/vacantes/actions";
 import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { EditVacancyDetailt } from "../VacancyFormComponents/CreateVacancyComponents/EditVacancyComponent";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { SquarePen } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -194,7 +197,6 @@ export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
           }}
         />
       ));
-      setOpen(false);
     } catch (error) {
       console.error("Error al actualizar la vacante:", error);
       toast.custom((t) => (
@@ -214,7 +216,18 @@ export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog>
+        <DialogTrigger asChild>
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onSelect={(e) => {
+              e.preventDefault();
+            }}
+          >
+            <SquarePen />
+            Editar
+          </DropdownMenuItem>
+        </DialogTrigger>
         <DialogContent className="sm:max-w-[800px] z-[200]">
           <DialogHeader>
             <DialogTitle>Editar vacante: {vacancy.posicion}</DialogTitle>

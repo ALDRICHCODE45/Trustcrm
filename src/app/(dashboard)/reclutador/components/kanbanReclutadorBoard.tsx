@@ -562,7 +562,10 @@ const VacanteTabs: React.FC<{
       <TabsTrigger value="documentos">Documentos</TabsTrigger>
     </TabsList>
     <TabsContent value="detalles">
-      <DetailsSectionReclutador vacante={vacante} user_logged={user_logged} />
+      <DetailsSectionReclutador
+        vacanteId={vacante.id}
+        user_logged={user_logged}
+      />
     </TabsContent>
     <TabsContent value="candidatos">
       <CandidatesSectionReclutador vacancyId={vacante.id} />

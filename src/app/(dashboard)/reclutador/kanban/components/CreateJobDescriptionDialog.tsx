@@ -10,7 +10,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { Plus, Upload, FileText, X, AlertCircle } from "lucide-react";
+import {
+  Plus,
+  Upload,
+  FileText,
+  X,
+  AlertCircle,
+  FileUp,
+  CloudUpload,
+} from "lucide-react";
 import { useState } from "react";
 import { useFileUpload, formatBytes } from "@/hooks/use-file-upload";
 import { JobDescriptionData } from "@/hooks/documents/use-documents";
@@ -29,7 +37,6 @@ export const CreateJobDescriptionDialog = ({
   setIsOpen,
 }: Props) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [jobDescriptionName] = useState("Job Description");
 
   const [fileState, fileActions] = useFileUpload({
     maxFiles: 1,
@@ -70,7 +77,8 @@ export const CreateJobDescriptionDialog = ({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="flex items-center gap-2">
-          <Plus className="h-4 w-4" /> <span>Añadir Job Description</span>
+          <CloudUpload />
+          <span>Job Description</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="z-[9999] max-w-2xl">

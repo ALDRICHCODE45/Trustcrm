@@ -11,6 +11,7 @@ import {
   Clock,
   FileCheck2,
   FileText,
+  ListCollapse,
 } from "lucide-react";
 import { Role } from "@prisma/client";
 import { format } from "date-fns";
@@ -40,7 +41,7 @@ import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { toast } from "sonner";
 
 interface DetailsSectionProps {
-  vacante: VacancyWithRelations;
+  vacanteId: string;
   user_logged: {
     name: string;
     email: string;
@@ -50,7 +51,7 @@ interface DetailsSectionProps {
 }
 
 export const DetailsSectionReclutador = ({
-  vacante,
+  vacanteId,
   user_logged,
 }: DetailsSectionProps) => {
   const {
@@ -60,7 +61,7 @@ export const DetailsSectionReclutador = ({
     isLoading,
     validateChecklist,
     validatePerfilMuestra,
-  } = useVacancyDetails(vacante.id);
+  } = useVacancyDetails(vacanteId);
 
   const handleValidateChecklist = async () => {
     try {
@@ -307,7 +308,18 @@ export const DetailsSectionReclutador = ({
             Información financiera
           </h4>
           <div className="mb-2">
-            <DrawerVacancyDetails vacante={vacancyDetails} />
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <ListCollapse />
+                  Ver detalles
+                </Button>
+              </SheetTrigger>
+              <SheetPortal>
+                <SheetOverlay className="z-[9999]" />
+                <DrawerVacancyDetails vacanteId={vacancyDetails.id} />
+              </SheetPortal>
+            </Sheet>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-4">

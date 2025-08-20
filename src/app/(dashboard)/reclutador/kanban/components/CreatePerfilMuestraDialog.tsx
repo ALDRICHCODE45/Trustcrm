@@ -17,7 +17,7 @@ import { useFileUpload } from "@/hooks/use-file-upload";
 import { createPerfilMuestraAction } from "@/actions/vacantes/files/actions";
 import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
-import { FileText, Plus, UploadIcon, X } from "lucide-react";
+import { CloudUpload, FileText, UploadIcon, X } from "lucide-react";
 
 interface CreatePerfilMuestraDialogProps {
   vacancyId: string;
@@ -144,8 +144,8 @@ export function CreatePerfilMuestraDialog({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          <span>Añadir Perfil Muestra</span>
+          <CloudUpload />
+          <span>Perfil Muestra</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="z-[9999] flex flex-col gap-0 overflow-y-visible p-0 sm:max-w-lg [&>button:last-child]:top-3.5">

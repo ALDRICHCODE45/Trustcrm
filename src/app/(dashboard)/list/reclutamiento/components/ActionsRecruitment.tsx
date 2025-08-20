@@ -96,10 +96,12 @@ export const ActionsRecruitment = ({
             <Clipboard />
             Copiar Usuario
           </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer" onClick={handleEdit}>
-            <SquarePen />
-            Editar
-          </DropdownMenuItem>
+
+          <EditVacancyForm
+            open={openEdit}
+            setOpen={handleCloseEdit}
+            vacancy={row.original}
+          />
           <DropdownMenuSeparator />
 
           <AlertDialog>
@@ -133,12 +135,6 @@ export const ActionsRecruitment = ({
           </AlertDialog>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <EditVacancyForm
-        open={openEdit}
-        setOpen={handleCloseEdit}
-        vacancy={row.original}
-      />
     </>
   );
 };

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
+  CloudUpload,
   Download,
   FileSymlink,
   FileText,
@@ -286,6 +287,41 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
     setOpenCreateJobDescriptionDialog(true);
   };
 
+  const handleDeletePerfilMuestra = async (perfilMuestraId: string) => {
+    try {
+      if (!perfilMuestraId) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Error"
+            type="error"
+            message="No se encontró el ID del perfil muestra"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
+        return;
+      }
+      await handleDeleteDocument(perfilMuestraId);
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Perfil muestra eliminado correctamente"
+          type="success"
+          message="El perfil muestra ha sido eliminado correctamente"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
+      fetchDocuments();
+    } catch (e) {
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error No controlado"
+          type="error"
+          message="Reinicie su sesion o hable con el area de TI para resolver el problema"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6 mt-4">
@@ -334,7 +370,7 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
               size="sm"
               className="flex items-center gap-2"
             >
-              <Plus className="h-4 w-4" /> <span>Añadir documento</span>
+              <CloudUpload /> <span>Documento Extra</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="z-[9999] flex flex-col gap-0 overflow-y-visible p-0 sm:max-w-lg [&>button:last-child]:top-3.5">
@@ -639,7 +675,7 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
                                       </AlertDialogCancel>
                                       <AlertDialogAction
                                         onClick={() =>
-                                          deleteDocument(perfil.id)
+                                          handleDeletePerfilMuestra(perfil.id)
                                         }
                                         disabled={isDeleting}
                                       >
