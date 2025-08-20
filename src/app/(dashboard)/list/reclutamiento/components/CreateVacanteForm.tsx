@@ -72,6 +72,7 @@ import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 import { useRouter } from "next/navigation";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Schema basado en el modelo Vacancy de Prisma
 const vacancySchema = z.object({
@@ -173,6 +174,7 @@ export const CreateVacanteForm = ({
   reclutadores,
   clientes,
   user_logged,
+  onVacancyCreated,
 }: Props) => {
   return (
     <Dialog>
@@ -187,6 +189,7 @@ export const CreateVacanteForm = ({
           reclutadores={reclutadores}
           clientes={clientes}
           user_logged={user_logged}
+          onVacancyCreated={onVacancyCreated}
         />
       </DialogContent>
     </Dialog>
@@ -200,7 +203,6 @@ function VacancyForm({
   user_logged,
   onVacancyCreated,
 }: Props) {
-  const router = useRouter();
   const form = useForm<VacancyFormData>({
     resolver: zodResolver(vacancySchema),
     defaultValues: {
@@ -268,7 +270,7 @@ function VacancyForm({
         />
       ));
       form.reset();
-      router.refresh();
+      onVacancyCreated?.();
     } catch (error) {
       toast.custom((t) => (
         <ToastCustomMessage
@@ -659,10 +661,10 @@ const BasicInformationTab = ({
             name="clienteId"
             render={({ field }) => (
               <FormItem>
-                <div className="*:not-first:mt-2">
-                  <Label>Cliente</Label>
-                  <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
+                <FormLabel>Cliente</FormLabel>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
                       <Button
                         variant="outline"
                         role="combobox"
@@ -687,45 +689,40 @@ const BasicInformationTab = ({
                           aria-hidden="true"
                         />
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0 z-[9999]"
-                      align="start"
-                    >
-                      <Command>
-                        <CommandInput placeholder="Buscar Cliente..." />
-                        <CommandList>
-                          <CommandEmpty>
-                            No se encontraron clientes.
-                          </CommandEmpty>
-                          <CommandGroup>
-                            {clientes.map((cliente) => (
-                              <CommandItem
-                                key={cliente.id}
-                                className="z-[9999]"
-                                value={cliente.cuenta || ""}
-                                onSelect={() => {
-                                  const newValue =
-                                    field.value === cliente.id
-                                      ? ""
-                                      : cliente.id;
-                                  field.onChange(newValue);
-                                  setValue(newValue || "");
-                                  setOpen(false);
-                                }}
-                              >
-                                {cliente.cuenta}
-                                {field.value === cliente.id && (
-                                  <CheckIcon size={16} className="ml-auto" />
-                                )}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0 z-[999]"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput placeholder="Buscar Cliente..." />
+                      <CommandList>
+                        <CommandEmpty>No se encontraron clientes.</CommandEmpty>
+                        <CommandGroup className="overflow-y-auto">
+                          {clientes.map((cliente) => (
+                            <CommandItem
+                              key={cliente.id}
+                              value={cliente.cuenta || ""}
+                              onSelect={() => {
+                                const newValue =
+                                  field.value === cliente.id ? "" : cliente.id;
+                                field.onChange(newValue);
+                                setValue(newValue || "");
+                                setOpen(false);
+                              }}
+                            >
+                              {cliente.cuenta}
+                              {field.value === cliente.id && (
+                                <CheckIcon size={16} className="ml-auto" />
+                              )}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
 
                 {/* <DropdownMenu>
                   <DropdownMenuTrigger asChild className="w-full">

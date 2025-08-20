@@ -4,6 +4,7 @@ import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { editClientSchema, EditClientFormData } from "@/zod/editClientSchema";
 import { CreateClientFormData } from "@/zod/createClientSchema";
+import { Client } from "@prisma/client";
 
 export const createClientFromClientForm = async (
   data: CreateClientFormData
@@ -78,5 +79,26 @@ export const updateClientById = async (data: EditClientFormData) => {
   } catch (error) {
     console.error("Error al actualizar cliente:", error);
     throw new Error("Error al actualizar el cliente");
+  }
+};
+
+export const getClients = async (): Promise<{
+  ok: boolean;
+  message: string;
+  clients: Client[];
+}> => {
+  try {
+    const clients = await prisma.client.findMany();
+    return {
+      ok: true,
+      message: "Clientes obtenidos correctamente",
+      clients,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: "Error al obtener los clientes",
+      clients: [],
+    };
   }
 };

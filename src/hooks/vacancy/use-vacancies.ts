@@ -1,4 +1,4 @@
-import { getVacancyDetails } from "@/actions/vacantes/actions";
+import { getVacancies, getVacancyDetails } from "@/actions/vacantes/actions";
 import {
   ValidateChecklistAction,
   ValidatePerfilMuestraAction,
@@ -6,11 +6,31 @@ import {
 import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
 import { useState, useCallback } from "react";
 
-export const useVacancyDetails = (vacancyId: string) => {
+export const useVacancyDetails = (vacancyId?: string) => {
   const [vacancyDetails, setVacancyDetails] =
     useState<VacancyWithRelations | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [vacancies, setVacancies] = useState<VacancyWithRelations[]>([]);
+
+  const fetchAllVacancies = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await getVacancies();
+      if (!response.ok) {
+        setError(response.message);
+        return;
+      }
+      setVacancies(response.vacancies);
+    } catch (e) {
+      setError("Error al obtener las vacantes");
+      setVacancies([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const fetchVacancyDetails = useCallback(async () => {
     if (!vacancyId) return;
@@ -71,10 +91,12 @@ export const useVacancyDetails = (vacancyId: string) => {
     isLoading,
     error,
     vacancyDetails,
+    vacancies,
 
     //metodos
     fetchVacancyDetails,
     validateChecklist,
     validatePerfilMuestra,
+    fetchAllVacancies,
   };
 };

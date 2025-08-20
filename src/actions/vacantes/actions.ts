@@ -1,4 +1,5 @@
 "use server";
+import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 import {
@@ -571,10 +572,23 @@ export const getVacancyDetails = async (vacancyId: string) => {
   }
 };
 
-export const getVacancies = async () => {
+export const getVacancies = async (): Promise<{
+  ok: boolean;
+  message: string;
+  vacancies: VacancyWithRelations[];
+}> => {
   try {
     const vacancies = await prisma.vacancy.findMany({
       include: {
+        InputChecklist: {
+          include: {
+            InputChecklistFeedback: {
+              include: {
+                candidate: true,
+              },
+            },
+          },
+        },
         reclutador: true,
         cliente: true,
         candidatoContratado: {
@@ -596,6 +610,9 @@ export const getVacancies = async () => {
           },
         },
       },
+      orderBy: {
+        fechaAsignacion: "desc",
+      },
     });
     return {
       ok: true,
@@ -606,7 +623,7 @@ export const getVacancies = async () => {
     return {
       ok: false,
       message: "Error al obtener las vacantes",
-      vacancies: null,
+      vacancies: [],
     };
   }
 };
