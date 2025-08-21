@@ -20,14 +20,7 @@ export async function createCandidate(
       };
     }
     const currentUserId = user.user.id;
-    // TODO: Implementar lógica para crear candidato
-    // Esta función debe:
-    // 1. Validar los datos (name es requerido, email/phone/cvFile opcionales)
-    // 2. Si hay cvFile, subir el archivo y crear VacancyFile
-    // 3. Crear el Person con el cvFileId si existe
-    // 4. Retornar resultado con ok: boolean y message?: string
 
-    // Ejemplo de lógica a implementar:
     if (data.cvFile) {
       // 1. Subir archivo a storage (S3, Cloudinary, etc.)
       const formData = new FormData();
@@ -71,6 +64,7 @@ export async function createCandidate(
           modalidad_actual_o_ultima:
             data.modalidad_actual_o_ultima || undefined,
           ubicacion_ultimo_trabajo: data.ubicacion_ultimo_trabajo || undefined,
+          empresa_actual_o_ultima: data.empresa_actual_o_ultima || undefined,
           vacanciesTernaFinal: {
             connect: {
               id: vacancyId,
@@ -105,6 +99,7 @@ export async function createCandidate(
           modalidad_actual_o_ultima:
             data.modalidad_actual_o_ultima || undefined,
           ubicacion_ultimo_trabajo: data.ubicacion_ultimo_trabajo || undefined,
+          empresa_actual_o_ultima: data.empresa_actual_o_ultima || undefined,
           vacanciesTernaFinal: {
             connect: {
               id: vacancyId,
@@ -179,6 +174,7 @@ export const updateCandidate = async (
         direccion_actual: data.direccion_actual || undefined,
         modalidad_actual_o_ultima: data.modalidad_actual_o_ultima || undefined,
         ubicacion_ultimo_trabajo: data.ubicacion_ultimo_trabajo || undefined,
+        empresa_actual_o_ultima: data.empresa_actual_o_ultima || undefined,
       },
     });
 

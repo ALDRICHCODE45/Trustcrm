@@ -75,6 +75,18 @@ export const CandidateSheetDetails = ({
               </Badge>
             </div>
 
+            <div className="flex justify-between items-start py-4 border-b">
+              <span className="text-sm font-medium">
+                Empresa actual o última
+              </span>
+              <Badge
+                variant="outline"
+                className="text-xs font-normal max-w-[180px] text-right"
+              >
+                {candidate.empresa_actual_o_ultima || "No especificado"}
+              </Badge>
+            </div>
+
             <div className="flex justify-between items-start py-3 border-b">
               <span className="text-sm font-medium">Bonos y comisiones</span>
               <Badge

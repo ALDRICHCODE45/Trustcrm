@@ -17,7 +17,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { UserCheck, Edit3 } from "lucide-react";
+import { UserCheck, Edit3, ListChecks } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -268,8 +268,8 @@ export const CompareChecklistForm = ({
     <Sheet>
       <SheetTrigger asChild className="mt-4">
         <Button variant="outline" size="sm">
-          <UserCheck />
-          <span>Validar Candidato</span>
+          <ListChecks />
+          <span>Checklist (Comparar)</span>
         </Button>
       </SheetTrigger>
       <SheetContent className="min-w-[40vw] z-[9999] min-h-[500px] overflow-y-auto">

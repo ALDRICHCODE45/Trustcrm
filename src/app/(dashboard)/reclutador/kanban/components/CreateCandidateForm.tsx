@@ -57,6 +57,7 @@ export const CreateCandidateForm = ({
       direccion_actual: "",
       modalidad_actual_o_ultima: "",
       ubicacion_ultimo_trabajo: "",
+      empresa_actual_o_ultima: "",
     },
   });
 
@@ -100,6 +101,8 @@ export const CreateCandidateForm = ({
           data.modalidad_actual_o_ultima?.trim() || undefined,
         ubicacion_ultimo_trabajo:
           data.ubicacion_ultimo_trabajo?.trim() || undefined,
+        empresa_actual_o_ultima:
+          data.empresa_actual_o_ultima?.trim() || undefined,
         cvFile: data.cvFile,
       };
 
@@ -205,7 +208,7 @@ export const CreateCandidateForm = ({
               name="sueldo_actual_o_ultimo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Sueldo actual o último</FormLabel>
+                  <FormLabel>Sueldo actual o último (bruto)</FormLabel>
                   <FormControl>
                     <Input placeholder="Ej. 20000" type="text" {...field} />
                   </FormControl>
@@ -220,7 +223,7 @@ export const CreateCandidateForm = ({
               name="expectativa_económica"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Expectativa económica</FormLabel>
+                  <FormLabel>Expectativa económica (bruto)</FormLabel>
                   <FormControl>
                     <Input placeholder="Ej. 25000" type="text" {...field} />
                   </FormControl>
@@ -245,6 +248,21 @@ export const CreateCandidateForm = ({
                       placeholder="Presencial / Híbrido / Remoto"
                       {...field}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="flex-1">
+            <FormField
+              control={form.control}
+              name="empresa_actual_o_ultima"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Empresa actual o última *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Empresa actual o última" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

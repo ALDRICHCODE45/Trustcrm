@@ -18,6 +18,7 @@ export const createCandidateSchema = z.object({
   direccion_actual: z.string().optional().or(z.literal("")),
   modalidad_actual_o_ultima: z.string().optional().or(z.literal("")),
   ubicacion_ultimo_trabajo: z.string().optional().or(z.literal("")),
+  empresa_actual_o_ultima: z.string().optional().or(z.literal("")),
 });
 
 export type CreateCandidateFormData = z.infer<typeof createCandidateSchema>;

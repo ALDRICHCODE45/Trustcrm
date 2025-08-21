@@ -52,11 +52,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { VacancyWithRelations } from "./ReclutadorColumns";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Role } from "@prisma/client";
 import { User, Client } from "@prisma/client";
 import { isToday, isPast, differenceInCalendarDays } from "date-fns";
@@ -554,7 +549,10 @@ const VacanteTabs: React.FC<{
       />
     </TabsContent>
     <TabsContent value="candidatos">
-      <CandidatesSectionReclutador vacancyId={vacante.id} />
+      <CandidatesSectionReclutador
+        vacancyId={vacante.id}
+        user_logged={user_logged}
+      />
     </TabsContent>
     <TabsContent value="comentarios">
       <CommentsSectionReclutador vacante={vacante} />
@@ -751,7 +749,7 @@ export const KanbanBoardPage = ({
     { id: "Entrevistas", title: "Entrevistas Con Cliente" },
     { id: "PrePlacement", title: "Pre Placement" },
     { id: "Placement", title: "Placement" },
-    { id: "Perdida", title: "Perdida" },
+    { id: "Perdida", title: "Posición perdida" },
     { id: "Cancelada", title: "Cancelada" },
   ];
 

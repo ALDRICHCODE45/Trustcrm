@@ -165,6 +165,7 @@ model Person {
   direccion_actual                String?
   modalidad_actual_o_ultima       String?
   ubicacion_ultimo_trabajo        String?
+  empresa_actual_o_ultima         String?
   //validacion de candidato para hacer entrevistas
   IsCandidateValidated            Boolean  @default(false)
 

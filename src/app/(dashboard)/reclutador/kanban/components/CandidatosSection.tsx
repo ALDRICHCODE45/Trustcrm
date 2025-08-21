@@ -46,6 +46,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { CompareChecklistForm } from "@/app/(dashboard)/list/reclutamiento/VacancyFormComponents/CreateVacancyComponents/CompareChecklistForm";
 import { CreateCandidateForm } from "./CreateCandidateForm";
@@ -55,13 +56,21 @@ import { CandidateSheetDetails } from "./CandidateSheetDetails";
 import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CreateCandidateFormData } from "@/zod/createCandidateSchema";
+import { Role } from "@prisma/client";
 
 interface CandidatesSectionProps {
   vacancyId: string;
+  user_logged: {
+    name: string;
+    email: string;
+    role: Role;
+    image: string;
+  };
 }
 
 export const CandidatesSectionReclutador = ({
   vacancyId,
+  user_logged,
 }: CandidatesSectionProps) => {
   // Usar el hook optimizado para candidatos
   const {
@@ -486,19 +495,46 @@ export const CandidatesSectionReclutador = ({
                           }}
                         />
                         <div className="flex items-center gap-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-4"
-                            onClick={() =>
-                              handleValidateCandidate(candidato.id)
-                            }
-                          >
-                            <FileCheck2 className="h-4 w-4 mr-2 text-green-500" />
-                            {candidato.IsCandidateValidated
-                              ? "Candidato validado"
-                              : "Validar candidato"}
-                          </Button>
+                          {user_logged.role === Role.Admin && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="mt-4"
+                                >
+                                  <FileCheck2 className="h-4 w-4 mr-2 text-green-500" />
+                                  {candidato.IsCandidateValidated
+                                    ? "Candidato validado"
+                                    : "Validar candidato"}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="z-[9999]">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Validar candidato
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta acción permitirá que la vacante pueda
+                                    actualizarce.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>
+                                    Cancelar
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    onClick={() =>
+                                      handleValidateCandidate(candidato.id)
+                                    }
+                                  >
+                                    Validar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                           <CandidateSheetDetails candidate={candidato} />
                         </div>
                       </div>

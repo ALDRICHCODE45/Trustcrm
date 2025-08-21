@@ -372,12 +372,17 @@ export const TaskKanbanBoard = ({
     formData.append("userId", user.id);
 
     try {
-      const promise = editTask(id, formData);
-      toast.promise(promise, {
-        loading: "Actualizando...",
-        success: "Tarea editada",
-        error: "Error al editar",
-      });
+      await editTask(id, formData);
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Tarea editada"
+          message="La tarea se ha editado correctamente"
+          type="success"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
 
       // Actualizar estado local optimistamente
       setTasks((prevTasks) =>
@@ -396,7 +401,7 @@ export const TaskKanbanBoard = ({
       toast.custom((t) => (
         <ToastCustomMessage
           title="Error"
-          message="Error al editar"
+          message="Error al editar la tarea"
           type="error"
           onClick={() => {
             toast.dismiss(t);

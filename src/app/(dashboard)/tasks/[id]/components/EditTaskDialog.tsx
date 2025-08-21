@@ -27,6 +27,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { TaskWithUsers } from "./TaskKanbanBoard";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 
 interface EditData {
   title?: string;
@@ -60,19 +61,40 @@ export const EditTaskDialog = ({ taskId, onEdit, activity }: Props) => {
     setIsSubmitting(true);
 
     if (!title.trim()) {
-      toast.error("Por favor, añade un título para la tarea");
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error"
+          message="Por favor añade un título para la tarea"
+          type="error"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
       setIsSubmitting(false);
       return;
     }
 
     if (!description.trim()) {
-      toast.error("Por favor añade una descripción para la tarea");
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error"
+          message="Por favor añade una descripción para la tarea"
+          type="error"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
       setIsSubmitting(false);
       return;
     }
 
     if (!date) {
-      toast.error("Por favor, selecciona una fecha límite");
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error"
+          message="Por favor, selecciona una fecha límite"
+          type="error"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
       setIsSubmitting(false);
       return;
     }

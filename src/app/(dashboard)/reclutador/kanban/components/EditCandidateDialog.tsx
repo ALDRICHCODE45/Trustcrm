@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -74,6 +73,7 @@ export const EditCandidateDialog = ({
       direccion_actual: "",
       modalidad_actual_o_ultima: "",
       ubicacion_ultimo_trabajo: "",
+      empresa_actual_o_ultima: "",
     },
   });
 
@@ -99,6 +99,8 @@ export const EditCandidateDialog = ({
           (candidate as any)?.modalidad_actual_o_ultima || "",
         ubicacion_ultimo_trabajo:
           (candidate as any)?.ubicacion_ultimo_trabajo || "",
+        empresa_actual_o_ultima:
+          (candidate as any).empresa_actual_o_ultima || "",
       });
     }
   }, [candidate, form, open]);
@@ -391,7 +393,7 @@ export const EditCandidateDialog = ({
                   name="sueldo_actual_o_ultimo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Sueldo actual o último</FormLabel>
+                      <FormLabel>Sueldo actual o último (bruto)</FormLabel>
                       <FormControl>
                         <Input placeholder="Ej. 20000" type="text" {...field} />
                       </FormControl>
@@ -406,7 +408,7 @@ export const EditCandidateDialog = ({
                   name="expectativa_económica"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Expectativa económica</FormLabel>
+                      <FormLabel>Expectativa económica (bruto)</FormLabel>
                       <FormControl>
                         <Input placeholder="Ej. 25000" type="text" {...field} />
                       </FormControl>
@@ -454,22 +456,44 @@ export const EditCandidateDialog = ({
               </div>
             </div>
 
-            <FormField
-              control={form.control}
-              name="bonos_comisiones"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bonos / Comisiones</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ej. 10% comisión, bono anual, etc."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <div className="flex-1">
+                <FormField
+                  control={form.control}
+                  name="bonos_comisiones"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bonos / Comisiones</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ej. 10% comisión, bono anual, etc."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="flex-1">
+                <FormField
+                  control={form.control}
+                  name="empresa_actual_o_ultima"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Empresa actual o última</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Empresa actual o última"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             {/* Textareas para campos largos */}
             <FormField
