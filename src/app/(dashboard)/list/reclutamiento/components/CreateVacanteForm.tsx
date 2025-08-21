@@ -15,12 +15,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Plus,
   FileText,
   UserIcon,
   CircleOff,
   ChevronDownIcon,
   CheckIcon,
+  BriefcaseBusiness,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,10 +69,6 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { Label } from "@/components/ui/label";
-import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
-import { useRouter } from "next/navigation";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { createVacancyAssignedNotification } from "@/actions/notifications/special-notifications";
 
@@ -143,25 +139,6 @@ interface File {
   icon: React.ReactNode;
 }
 
-const demoFiles: File[] = [
-  {
-    id: 1,
-    name: "Checklist",
-    type: "PDF",
-    size: "2.4 MB",
-    lastUpdated: "26 Feb, 2025",
-    icon: <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />,
-  },
-  {
-    id: 2,
-    name: "Muestra Perfil",
-    type: "DOCX",
-    size: "1.2 MB",
-    lastUpdated: "20 Feb, 2025",
-    icon: <FileText className="h-6 w-6 text-green-600 dark:text-green-400" />,
-  },
-];
-
 interface Props {
   reclutadores: User[];
 
@@ -185,7 +162,7 @@ export const CreateVacanteForm = ({
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Plus />
+          <BriefcaseBusiness />
           Crear Vacante
         </Button>
       </DialogTrigger>

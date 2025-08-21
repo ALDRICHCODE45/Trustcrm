@@ -22,7 +22,6 @@ import {
   Clock,
   Building,
   AlertCircle,
-  MoreVertical,
   Loader2,
   Filter,
 } from "lucide-react";
@@ -749,7 +748,7 @@ export const KanbanBoardPage = ({
   const columns = [
     { id: "QuickMeeting", title: "Quick Meeting" },
     { id: "Hunting", title: "Hunting" },
-    { id: "Entrevistas", title: "Entrevistas" },
+    { id: "Entrevistas", title: "Entrevistas Con Cliente" },
     { id: "PrePlacement", title: "Pre Placement" },
     { id: "Placement", title: "Placement" },
     { id: "Perdida", title: "Perdida" },

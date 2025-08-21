@@ -312,7 +312,7 @@ export const CreateCandidateForm = ({
           name="direccion_actual"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Dirección actual</FormLabel>
+              <FormLabel>Dirección del candidato</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Calle, número, colonia, ciudad, estado"

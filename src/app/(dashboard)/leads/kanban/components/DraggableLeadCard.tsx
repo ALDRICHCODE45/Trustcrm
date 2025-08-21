@@ -1,10 +1,9 @@
 "use client";
 import { useDraggable } from "@dnd-kit/core";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { DialogTrigger } from "@/components/ui/dialog";
 import { Lead } from "@prisma/client";
 import { LeadWithRelations } from "../page";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import { getStatusColor, LeadSheet } from "./SheetLead";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +37,7 @@ export const DraggableLeadCard = ({
 
   return (
     <Sheet>
-      <DialogTrigger asChild>
+      <SheetTrigger asChild>
         <Card
           ref={setNodeRef}
           {...attributes}
@@ -98,10 +97,8 @@ export const DraggableLeadCard = ({
             </div>
           </div>
         </Card>
-      </DialogTrigger>
-      <SheetContent>
-        <LeadSheet lead={lead} updateLeadInState={updateLeadInState} />
-      </SheetContent>
+      </SheetTrigger>
+      <LeadSheet lead={lead} updateLeadInState={updateLeadInState} />
     </Sheet>
   );
 };

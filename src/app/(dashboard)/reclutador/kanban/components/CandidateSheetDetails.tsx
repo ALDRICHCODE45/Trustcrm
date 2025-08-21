@@ -97,7 +97,9 @@ export const CandidateSheetDetails = ({
 
             {/* Ubicación y modalidad */}
             <div className="flex justify-between items-start py-3 border-b">
-              <span className="text-sm font-medium">Dirección actual</span>
+              <span className="text-sm font-medium">
+                Dirección del candidato
+              </span>
               <Badge
                 variant="outline"
                 className="text-xs font-normal max-w-[180px] text-right"
