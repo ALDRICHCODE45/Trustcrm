@@ -73,6 +73,8 @@ import { Label } from "@/components/ui/label";
 import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 import { useRouter } from "next/navigation";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
+import { createVacancyAssignedNotification } from "@/actions/notifications/special-notifications";
 
 // Schema basado en el modelo Vacancy de Prisma
 const vacancySchema = z.object({
@@ -124,6 +126,9 @@ const vacancySchema = z.object({
 
   // Requisitos del checklist
   requisitos: z.array(z.object({ valor: z.string() })).optional(),
+
+  // Nueva opción para enviar notificación especial
+  enviarNotificacion: z.boolean().optional(),
 });
 
 type VacancyFormData = z.infer<typeof vacancySchema>;
@@ -227,6 +232,7 @@ function VacancyForm({
       ubicacion: "",
       comentarios: "",
       requisitos: [{ valor: "" }], // Al menos un requisito inicial
+      enviarNotificacion: true, // Por defecto enviar notificación
     },
   });
 
@@ -257,6 +263,16 @@ function VacancyForm({
           />
         ));
         return;
+      }
+
+      // Crear notificación especial si se solicita
+      if (data.enviarNotificacion && result.vacancy && data.reclutadorId) {
+        await createVacancyAssignedNotification(
+          result.vacancy.id,
+          data.reclutadorId,
+          user_logged.id,
+          true
+        );
       }
 
       toast.custom((t) => (
@@ -792,6 +808,35 @@ const BasicInformationTab = ({
         <div className="w-full">
           <VacancyDetails form={form} />
         </div>
+
+        {/* Opción para enviar notificación especial */}
+        {user_logged.role === "Admin" && (
+          <div className="pt-4 border-t">
+            <FormField
+              control={form.control}
+              name="enviarNotificacion"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-sm font-medium">
+                      Enviar notificación especial al reclutador
+                    </FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      Se mostrará un dialog prominente al reclutador asignado
+                      informando sobre la nueva vacante
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

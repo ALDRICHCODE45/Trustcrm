@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/db";
 import { ToastAlerts } from "@/components/ToastAlerts";
+import { SpecialNotificationProvider } from "@/components/notifications/SpecialNotificationProvider";
 import { unstable_noStore as noStore } from "next/cache";
 
 interface LayoutProps {
@@ -55,12 +56,14 @@ export default async function Layout({ children }: LayoutProps) {
   return (
     <>
       <ToastAlerts />
-      <SidebarProvider>
-        <AppSidebar user={user} hasPendingTasks={hasPendingTasks} />
-        <SidebarInset>
-          <ClientLayout user={user}>{children}</ClientLayout>
-        </SidebarInset>
-      </SidebarProvider>
+      <SpecialNotificationProvider userId={user.id}>
+        <SidebarProvider>
+          <AppSidebar user={user} hasPendingTasks={hasPendingTasks} />
+          <SidebarInset>
+            <ClientLayout user={user}>{children}</ClientLayout>
+          </SidebarInset>
+        </SidebarProvider>
+      </SpecialNotificationProvider>
     </>
   );
 }

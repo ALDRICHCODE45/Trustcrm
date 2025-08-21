@@ -8,71 +8,20 @@ import { useClients } from "@/hooks/clientes/use-clients";
 import { useEffect } from "react";
 import { useUsers } from "@/hooks/users/use-users";
 
-// const fetchVacancies = async (): Promise<VacancyWithRelations[]> => {
-//   const vacancies = await prisma.vacancy.findMany({
-//     include: {
-//       InputChecklist: {
-//         include: {
-//           InputChecklistFeedback: {
-//             include: {
-//               candidate: true,
-//             },
-//           },
-//         },
-//       },
-//       Comments: {
-//         include: {
-//           author: true,
-//         },
-//       },
-//       candidatoContratado: {
-//         include: {
-//           cv: true,
-//           vacanciesContratado: true,
-//         },
-//       },
-//       reclutador: true,
-//       cliente: true,
-//       ternaFinal: {
-//         include: {
-//           cv: true,
-//           vacanciesContratado: true,
-//         },
-//       },
-//       files: true,
-//     },
-//     orderBy: {
-//       updatedAt: "desc",
-//     },
-//   });
-//   return vacancies;
-// };
-
-// const fetchReclutadores = async () => {
-//   try {
-//     const reclutadores = await prisma.user.findMany({
-//       where: {
-//         role: Role.reclutador,
-//       },
-//     });
-//     return reclutadores;
-//   } catch (err) {
-//     console.log(err);
-//     throw new Error("Error al devolver los reclutadores");
-//   }
-// };
-
 export default function KanbanReclutadorPage() {
+  //hook para vacantes
   const {
     fetchAllVacancies,
     vacancies,
     isLoading: isLoadingVacancies,
   } = useVacancyDetails();
+  //hook para clientes
   const {
     fetchAllClients,
     clients,
     isLoading: isLoadingClients,
   } = useClients();
+  //hook para reclutadores
   const {
     fetchReclutadores,
     users: reclutadores,

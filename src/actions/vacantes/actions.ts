@@ -85,6 +85,8 @@ interface VacancyFormData {
   comentarios?: string;
   // Requisitos del checklist
   requisitos?: string[];
+  // Nueva opción para notificaciones especiales
+  enviarNotificacion?: boolean;
 }
 
 export const updateVacancy = async (data: UpdateVacancyFormData) => {

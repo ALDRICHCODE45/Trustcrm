@@ -45,13 +45,14 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relaciones existentes
-  Lead               Lead[]
-  Task               Task[]
-  LeadStatusHistory  LeadStatusHistory[] // Nueva relación
-  ContactInteraction ContactInteraction[] // Nueva relación para las interacciones con contactos
-  Logs               Log[]
-  notifications      Notification[]
-  taskNotifications  Task[]               @relation("TaskNotificationRecipients")
+  Lead                 Lead[]
+  Task                 Task[]
+  LeadStatusHistory    LeadStatusHistory[] // Nueva relación
+  ContactInteraction   ContactInteraction[] // Nueva relación para las interacciones con contactos
+  Logs                 Log[]
+  notifications        Notification[]
+  specialNotifications SpecialNotification[]
+  taskNotifications    Task[]                @relation("TaskNotificationRecipients")
 
   // Relaciones específicas con nombres únicos para Vacancy
   vacanciesReclutador Vacancy[] @relation("VacancyReclutador")
@@ -269,6 +270,9 @@ model Vacancy {
   IsChecklistValidated Boolean          @default(false)
   // Relación con tareas
   tasks                Task[]
+
+  // Relación con notificaciones especiales
+  specialNotifications SpecialNotification[]
 }
 
 model InputChecklist {
@@ -381,6 +385,9 @@ model Client {
   usuarioId     String
   usuario       User        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   Vacancy       Vacancy[]
+
+  // Relación con notificaciones especiales
+  specialNotifications SpecialNotification[]
 }
 
 model Comment {
@@ -448,6 +455,9 @@ model Task {
   vacancy   Vacancy? @relation(fields: [vacancyId], references: [id])
   vacancyId String?
 
+  // Relación con notificaciones especiales
+  specialNotifications SpecialNotification[]
+
   @@index([interactionId]) // Índice para optimizar consultas por interacción vinculada
   @@index([vacancyId]) // Índice para optimizar consultas por vacante vinculada
 }
@@ -502,4 +512,60 @@ model Notification {
   updatedAt   DateTime           @updatedAt
 
   @@index([recipientId, status])
+}
+
+enum SpecialNotificationType {
+  VACANCY_ASSIGNED
+  VACANCY_STATUS_CHANGED
+  CLIENT_ASSIGNED
+  URGENT_TASK_ASSIGNED
+}
+
+enum SpecialNotificationStatus {
+  PENDING
+  SHOWN
+  DISMISSED
+}
+
+enum SpecialNotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model SpecialNotification {
+  id       String                      @id @default(cuid())
+  type     SpecialNotificationType
+  status   SpecialNotificationStatus   @default(PENDING)
+  priority SpecialNotificationPriority @default(MEDIUM)
+  title    String
+  message  String
+  metadata Json? // Para almacenar datos adicionales específicos del evento
+
+  // Relación con el destinatario
+  recipient   User   @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId String
+
+  // Relaciones opcionales con entidades específicas
+  vacancy   Vacancy? @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  vacancyId String?
+
+  task   Task?   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId String?
+
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String?
+
+  // Configuración de expiración automática
+  expiresAt DateTime?
+
+  // Auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([recipientId, status])
+  @@index([type, status])
+  @@index([priority, status])
+  @@index([expiresAt])
 }
