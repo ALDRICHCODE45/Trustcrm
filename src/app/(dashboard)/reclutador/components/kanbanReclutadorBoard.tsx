@@ -331,31 +331,18 @@ const DraggableVacanteCard: React.FC<VacanteCardProps> = ({
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
-                  <h3 className="font-semibold text-base truncate max-w-[150px]">
-                    {vacante.posicion.length > 30
-                      ? `${vacante.posicion.slice(0, 30)}...`
-                      : vacante.posicion}
-                  </h3>
-                  {vacante.posicion.length > 30 && (
-                    <Tooltip>
-                      <TooltipTrigger className="z-[9999]">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5 p-0"
-                          aria-label="Ver posición completa"
-                          tabIndex={0}
-                        >
-                          <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs z-[9999]">
-                        <span className="text-sm break-words">
-                          {vacante.posicion}
-                        </span>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <h3 className="font-semibold text-base truncate max-w-[100px]">
+                        {vacante.posicion}
+                      </h3>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <span className="text-sm break-words">
+                        {vacante.posicion}
+                      </span>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
                 {/* Indicador de retraso - debajo del nombre */}
                 {(() => {
