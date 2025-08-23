@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Prisma, VacancyFile } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import {
-  getVacancyFiles,
   addFileToVacancy,
   deleteFileFromVacancy,
   createJobDescriptionAction,

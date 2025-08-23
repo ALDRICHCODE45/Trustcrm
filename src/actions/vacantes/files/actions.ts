@@ -3,6 +3,8 @@ import { deleteAnyFile, uploadFile } from "@/actions/files/actions";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { createVacancyNotification } from "../notifications/vacancies-notificactions";
+import { NotificationVacancyType } from "@/types/vacancy-notifications";
 
 interface AddFileToVacancyArgs {
   name: string;
@@ -184,6 +186,19 @@ export const createJobDescriptionAction = async ({
         jobDescriptionId: jobDescriptionFile.id,
       },
     });
+    //crear y mandar notificaciones a los administradores
+    const { message: messageNotification, ok: okNotification } =
+      await createVacancyNotification({
+        vacancyId,
+        type: NotificationVacancyType.JobDescription,
+      });
+
+    if (!okNotification) {
+      return {
+        ok: false,
+        message: messageNotification,
+      };
+    }
 
     revalidatePath(`/reclutador`);
     revalidatePath(`/reclutador/kanban`);

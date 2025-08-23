@@ -7,6 +7,7 @@ import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 import { useClients } from "@/hooks/clientes/use-clients";
 import { useEffect } from "react";
 import { useUsers } from "@/hooks/users/use-users";
+import { Loader2 } from "lucide-react";
 
 export default function KanbanReclutadorPage() {
   //hook para vacantes
@@ -57,7 +58,14 @@ export default function KanbanReclutadorPage() {
     !loggedUser ||
     isLoadingClients
   ) {
-    return <div>Cargando...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] w-full">
+        <Loader2 className="animate-spin w-16 h-16 text-gray-600  dark:text-white mb-4" />
+        <span className="text-lg text-slate-600 dark:text-slate-300 font-medium">
+          Cargando información, por favor espera...
+        </span>
+      </div>
+    );
   }
 
   const handleVacancyCreated = async () => {
