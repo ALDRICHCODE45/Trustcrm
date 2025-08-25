@@ -319,6 +319,26 @@ export const updateVacancyStatus = async (
         message: "Vacante no encontrada",
       };
     }
+    //validar si el usuario es reclutador (en ese caso no puede cambiar a "Perdida" ni "Cancelada")
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        ok: false,
+        message: "No hay usuario logueado",
+      };
+    }
+
+    if (session.user.role === Role.reclutador) {
+      if (
+        status === VacancyEstado.Perdida ||
+        status === VacancyEstado.Cancelada
+      ) {
+        return {
+          ok: false,
+          message: "No puedes cambiar el estado a Perdida o Cancelada",
+        };
+      }
+    }
 
     // Importar y usar las validaciones
     const { validateStateTransition } = await import(
