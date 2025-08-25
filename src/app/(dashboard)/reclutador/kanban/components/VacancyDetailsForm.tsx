@@ -32,6 +32,10 @@ const vacancyDetailsSchema = z.object({
   psicometria: z.string().optional(),
   ubicacion: z.string().optional(),
   comentarios: z.string().optional(),
+  salario: z
+    .number()
+    .min(0, "El salario debe ser mayor o igual a 0")
+    .optional(),
 });
 
 type VacancyDetailsFormData = z.infer<typeof vacancyDetailsSchema>;
@@ -62,10 +66,16 @@ export const VacancyDetailsForm = ({
       psicometria: vacante.psicometria || "",
       ubicacion: vacante.ubicacion || "",
       comentarios: vacante.comentarios || "",
+      salario: vacante.salario || undefined,
     },
   });
 
   const details = [
+    {
+      label: "Salario (bruto)",
+      name: "salario" as const,
+      value: vacante.salario || "No especificado",
+    },
     {
       label: "Prestaciones",
       name: "prestaciones" as const,
@@ -187,6 +197,19 @@ export const VacancyDetailsForm = ({
                                   className="w-full min-h-[80px]"
                                   autoComplete="off"
                                   {...field}
+                                />
+                              ) : detail.name === "salario" ? (
+                                <Input
+                                  placeholder={`Ingresa ${detail.label.toLowerCase()}`}
+                                  className="w-full"
+                                  autoComplete="off"
+                                  value={field.value || ""}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    field.onChange(
+                                      value === "" ? 0 : Number(value)
+                                    );
+                                  }}
                                 />
                               ) : (
                                 <Input

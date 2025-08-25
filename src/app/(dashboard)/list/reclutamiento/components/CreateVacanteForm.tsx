@@ -21,6 +21,9 @@ import {
   ChevronDownIcon,
   CheckIcon,
   BriefcaseBusiness,
+  Contact,
+  Megaphone,
+  BellRing,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,6 +74,12 @@ import {
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { createVacancyAssignedNotification } from "@/actions/notifications/special-notifications";
+import {
+  Sheet,
+  SheetOverlay,
+  SheetPortal,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 // Schema basado en el modelo Vacancy de Prisma
 const vacancySchema = z.object({
@@ -282,10 +291,9 @@ function VacancyForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4 mt-4">
+          <TabsList className="grid w-full grid-cols-2 mb-4 mt-4">
             <TabsTrigger value="basic">Información Básica</TabsTrigger>
-            <TabsTrigger value="financial">Información Fiscal</TabsTrigger>
-            <TabsTrigger value="checklist">Requisitos</TabsTrigger>
+            <TabsTrigger value="checklist">Requisitos (Checklist)</TabsTrigger>
           </TabsList>
 
           {/* Tab de Información Básica */}
@@ -298,10 +306,7 @@ function VacancyForm({
             />
           </TabsContent>
 
-          {/* Tab de Información Fiscal */}
-          <TabsContent value="financial">
-            <FinancialInformationTab form={form} user_logged={user_logged} />
-          </TabsContent>
+          {/* Tab de Requisitos */}
           <TabsContent value="checklist">
             <ChecklistForm form={form} />
           </TabsContent>
@@ -685,12 +690,12 @@ const BasicInformationTab = ({
                     </FormControl>
                   </PopoverTrigger>
                   <PopoverContent
-                    className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0 z-[999]"
+                    className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0 z-[999999]"
                     align="start"
                   >
-                    <Command>
+                    <Command className="z-[999999]">
                       <CommandInput placeholder="Buscar Cliente..." />
-                      <CommandList>
+                      <CommandList className="">
                         <CommandEmpty>No se encontraron clientes.</CommandEmpty>
                         <CommandGroup className="overflow-y-auto">
                           {clientes.map((cliente) => (
@@ -717,65 +722,6 @@ const BasicInformationTab = ({
                   </PopoverContent>
                 </Popover>
 
-                {/* <DropdownMenu>
-                  <DropdownMenuTrigger asChild className="w-full">
-                    <Button variant="outline" size="sm" className="flex">
-                      <UserIcon className="h-4 w-4 mr-2" />
-                      <span className="truncate">
-                        {field.value
-                          ? clientes.find(
-                              (c) => c.id.toString() === field.value
-                            )?.cuenta || "Seleccionar"
-                          : "Seleccionar"}
-                      </span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-full max-h-[250px] overflow-y-auto z-[999]">
-                    {clientes.length === 0 && (
-                      <div className="w-full h-[200px] flex justify-center items-center gap-2">
-                        <div className="flex flex-col items-center gap-2">
-                          <CircleOff className="h-6 w-6 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">
-                            No hay clientes disponibles
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {clientes.length > 0 &&
-                      clientes.map((cliente) => (
-                        <DropdownMenuItem
-                          key={cliente.id}
-                          className="flex items-center gap-3 p-2 cursor-pointer"
-                          onClick={() => field.onChange(cliente.id.toString())}
-                        >
-                          <div className="flex items-center gap-3 flex-1">
-                            <Avatar className="h-9 w-9 shrink-0">
-                              <AvatarFallback>
-                                {cliente.cuenta?.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium">
-                                {cliente.cuenta}
-                              </span>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="link"
-                            className="ml-auto h-8 w-8 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                            }}
-                            asChild
-                          >
-                            <Link href={`/client/${cliente.id}`}>Ver</Link>
-                          </Button>
-                        </DropdownMenuItem>
-                      ))}
-                  </DropdownMenuContent>
-                </DropdownMenu> */}
                 <FormMessage />
               </FormItem>
             )}
@@ -783,7 +729,19 @@ const BasicInformationTab = ({
         </div>
 
         <div className="w-full">
-          <VacancyDetails form={form} />
+          <Sheet>
+            <SheetTrigger asChild className="mt-4 w-full">
+              <Button variant="outline">
+                <Contact />
+                <span>Detalles de la vacante</span>
+              </Button>
+            </SheetTrigger>
+
+            <SheetPortal>
+              <SheetOverlay className="z-[999]" />
+              <VacancyDetails form={form} />
+            </SheetPortal>
+          </Sheet>
         </div>
 
         {/* Opción para enviar notificación especial */}
@@ -794,20 +752,26 @@ const BasicInformationTab = ({
               name="enviarNotificacion"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel className="text-sm font-medium">
-                      Enviar notificación especial al reclutador
-                    </FormLabel>
-                    <p className="text-xs text-muted-foreground">
-                      Se mostrará un dialog prominente al reclutador asignado
-                      informando sobre la nueva vacante
-                    </p>
+                  <div className="border-input has-data-[state=checked]:border-primary/50 relative flex w-full items-start gap-2 rounded-md border p-4 shadow-xs outline-none">
+                    <BellRing size={20} />
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="order-1 after:absolute after:inset-0"
+                      />
+                    </FormControl>
+                    <div className="flex grow items-start gap-3">
+                      <div className="grid gap-2">
+                        <FormLabel>
+                          Enviar notificación especial al reclutador
+                        </FormLabel>
+                        <p className="text-muted-foreground text-xs">
+                          Se mostrará un dialog prominente al reclutador
+                          asignado informando sobre la nueva vacante
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </FormItem>
               )}
@@ -818,109 +782,5 @@ const BasicInformationTab = ({
     </Card>
   );
 };
-
-// Componente para la pestaña de información fiscal
-const FinancialInformationTab = ({
-  form,
-  user_logged,
-}: {
-  form: any; // FormReturn from react-hook-form
-  user_logged: {
-    id: string;
-    name: string;
-    role: string;
-  };
-}) => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center">Detalles Financieros</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <div className="grid grid-cols-3 gap-4">
-        <FormField
-          control={form.control}
-          name="salario"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Salario</FormLabel>
-              <FormControl>
-                <div className="*:not-first:mt-2 ">
-                  <div className="flex rounded-md shadow-xs relative">
-                    <span className="mr-1 text-muted-foreground pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-sm peer-disabled:opacity-50">
-                      $
-                    </span>
-                    <Input
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(Number(e.target.value) || undefined)
-                      }
-                      className="-me-px rounded-e-none ml-3 shadow-none focus-visible:z-10"
-                      placeholder="1000"
-                      type="number"
-                    />
-                    <SelectNative className="text-muted-foreground hover:text-foreground w-fit rounded-s-none shadow-none">
-                      <option>MXN</option>
-                      <option>USD</option>
-                    </SelectNative>
-                  </div>
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {user_logged.role === "Admin" && (
-          <>
-            <FormField
-              control={form.control}
-              name="valorFactura"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor Factura</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(Number(e.target.value) || undefined)
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="fee"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fee</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(Number(e.target.value) || undefined)
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </>
-        )}
-      </div>
-      <div className="text-xs text-muted-foreground">
-        * Todos los montos son en la moneda local
-      </div>
-    </CardContent>
-  </Card>
-);
 
 export default CreateVacanteForm;
