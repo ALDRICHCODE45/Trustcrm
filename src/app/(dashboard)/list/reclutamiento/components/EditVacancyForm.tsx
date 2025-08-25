@@ -50,6 +50,7 @@ import {
   SheetPortal,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ValidationErrorToast } from "@/components/ui/ValidationErrorToast";
 
 interface Props {
   open: boolean;
@@ -178,17 +179,31 @@ export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
 
       const result = await updateVacancy(updateData);
 
-      if (!result.ok) {
+      //Si es un error de validación, mostrar el toast de validación
+      if (!result.ok && result.reason) {
         toast.custom((t) => (
-          <ToastCustomMessage
-            title="Error"
+          <ValidationErrorToast
+            title="No se puede cambiar el estado"
             message={result.message || "Error al actualizar la vacante"}
-            type="error"
+            reason={result.reason}
             onClick={() => {
               toast.dismiss(t);
             }}
           />
         ));
+        //si no es un error de validacion mostrar el toast de error normal
+        if (!result.ok && !result.reason) {
+          toast.custom((t) => (
+            <ToastCustomMessage
+              title="Error"
+              message={result.message || "Error al actualizar la vacante"}
+              type="error"
+              onClick={() => {
+                toast.dismiss(t);
+              }}
+            />
+          ));
+        }
         return;
       }
 
@@ -298,20 +313,20 @@ export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
                               <SelectItem value={VacancyEstado.Hunting}>
                                 Hunting
                               </SelectItem>
-                              <SelectItem value={VacancyEstado.Cancelada}>
-                                Cancelada
-                              </SelectItem>
                               <SelectItem value={VacancyEstado.Entrevistas}>
-                                Entrevistas
-                              </SelectItem>
-                              <SelectItem value={VacancyEstado.Perdida}>
-                                Perdida
+                                Entrevistas con Cliente
                               </SelectItem>
                               <SelectItem value={VacancyEstado.Placement}>
                                 Placement
                               </SelectItem>
                               <SelectItem value={VacancyEstado.PrePlacement}>
                                 Pre Placement
+                              </SelectItem>
+                              <SelectItem value={VacancyEstado.Perdida}>
+                                Posición Perdida
+                              </SelectItem>
+                              <SelectItem value={VacancyEstado.Cancelada}>
+                                Posición Cancelada
                               </SelectItem>
                             </SelectContent>
                           </Select>

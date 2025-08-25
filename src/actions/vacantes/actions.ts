@@ -110,6 +110,23 @@ export const updateVacancy = async (data: UpdateVacancyFormData) => {
       };
     }
 
+    //buscar la vacante a actualizar
+    const vacancy = await prisma.vacancy.findUnique({
+      where: { id },
+    });
+
+    //validar si viene un nuevo estado
+    if (data.estado && vacancy?.estado !== data.estado) {
+      const result = await updateVacancyStatus(id, data.estado);
+      if (!result.ok) {
+        return {
+          ok: false,
+          message: result.message,
+          reason: result.reason,
+        };
+      }
+    }
+
     const updatedVacancy = await prisma.vacancy.update({
       where: { id },
       data: {

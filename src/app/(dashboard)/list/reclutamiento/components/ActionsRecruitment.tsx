@@ -34,10 +34,6 @@ export const ActionsRecruitment = ({
 }) => {
   const [openEdit, setOpenEdit] = useState<boolean>(false);
 
-  const handleEdit = () => {
-    setOpenEdit(true);
-  };
-
   const handleCloseEdit = () => {
     setOpenEdit(false);
   };
