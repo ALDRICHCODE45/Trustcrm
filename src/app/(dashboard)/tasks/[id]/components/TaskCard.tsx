@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Tooltip,
@@ -45,6 +46,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EditTaskDialog } from "./EditTaskDialog";
+import { useRouter } from "next/navigation";
 
 interface EditData {
   title?: string;
@@ -85,18 +87,13 @@ const FormattedDate = ({ dateString }: { dateString: string }) => {
 // Componente para las acciones de la tarea
 const TaskActions = ({ activity, onToggleStatus, onDelete, onEdit }: Props) => {
   const isTaskDone = activity.status === "Done";
-  const [alertOpen, setAlertOpen] = useState(false);
-  const [interactionDialogOpen, setInteractionDialogOpen] = useState(false);
   const [vacancyDialogOpen, setVacancyDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const router = useRouter();
 
   const handleToggleStatus = () => {
-    setAlertOpen(false);
     onToggleStatus(activity.id);
-  };
-
-  const handleViewInteraction = () => {
-    setInteractionDialogOpen(true);
+    router.refresh();
   };
 
   const handleViewVacancy = () => {
@@ -106,51 +103,6 @@ const TaskActions = ({ activity, onToggleStatus, onDelete, onEdit }: Props) => {
   return (
     <>
       {/* Dialog para ver interacción vinculada */}
-      <Dialog
-        open={interactionDialogOpen}
-        onOpenChange={setInteractionDialogOpen}
-      >
-        <DialogContent
-          className="sm:max-w-[425px]"
-          aria-describedby="interaction-dialog-description"
-        >
-          <DialogHeader>
-            <DialogTitle>Interacción Vinculada</DialogTitle>
-            <DialogDescription id="interaction-dialog-description">
-              Esta tarea está vinculada a la siguiente interacción
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4">
-            <div className="grid gap-3">
-              <Label htmlFor="contact-name">Contacto</Label>
-              <Input
-                id="contact-name"
-                value={
-                  activity.linkedInteraction?.contacto.name || "Sin contacto"
-                }
-                readOnly
-                className="bg-muted"
-                aria-label="Nombre del contacto"
-              />
-            </div>
-            <div className="grid gap-3">
-              <Label htmlFor="interaction-content">Contenido</Label>
-              <Textarea
-                id="interaction-content"
-                value={activity.linkedInteraction?.content || "Sin contenido"}
-                readOnly
-                className="bg-muted resize-none min-h-[100px]"
-                aria-label="Contenido de la interacción"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cerrar</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Dialog para ver vacante vinculada */}
       <Dialog open={vacancyDialogOpen} onOpenChange={setVacancyDialogOpen}>
@@ -231,39 +183,91 @@ const TaskActions = ({ activity, onToggleStatus, onDelete, onEdit }: Props) => {
         <DropdownMenuContent className="z-[50]" align="end">
           <DropdownMenuGroup>
             {/* Opción para cambiar estado */}
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.preventDefault();
-                setAlertOpen(true);
-              }}
-              className="cursor-pointer"
-            >
-              {isTaskDone ? (
-                <>
-                  <XCircle
-                    className="opacity-60 h-4 w-4 mr-2"
-                    aria-hidden="true"
-                  />
-                  Pendiente
-                </>
-              ) : (
-                <>
-                  <FolderCheck
-                    className="opacity-60 h-4 w-4 mr-2"
-                    aria-hidden="true"
-                  />
-                  Completar
-                </>
-              )}
-            </DropdownMenuItem>
+            {/* Dialog para confirmar cambio de estado */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" className="cursor-pointer">
+                  {isTaskDone ? (
+                    <>
+                      <XCircle
+                        className="opacity-60 h-4 w-4 mr-2"
+                        aria-hidden="true"
+                      />
+                      Pendiente
+                    </>
+                  ) : (
+                    <>
+                      <FolderCheck
+                        className="opacity-60 h-4 w-4 mr-2"
+                        aria-hidden="true"
+                      />
+                      Completar
+                    </>
+                  )}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>
+                    {isTaskDone
+                      ? "¿Marcar como pendiente?"
+                      : "¿Completar tarea?"}
+                  </DialogTitle>
+                </DialogHeader>
+                <DialogDescription>
+                  {isTaskDone
+                    ? "¿Estás seguro de que quieres marcar esta tarea como pendiente? Podrás volver a completarla más tarde."
+                    : "¿Estás seguro de que quieres marcar esta tarea como completada?"}
+                </DialogDescription>
+                <DialogFooter className="flex justify-end gap-2">
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancelar</Button>
+                  </DialogClose>
+                  <Button onClick={handleToggleStatus}>
+                    {isTaskDone ? "Marcar pendiente" : "Completar"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
-            <DropdownMenuItem
-              onClick={() => setDeleteDialogOpen(true)}
-              className="cursor-pointer text-destructive"
-            >
-              <Trash2 size={15} className="opacity-60 mr-2" />
-              Eliminar
-            </DropdownMenuItem>
+            {/* Dialog para confirmar eliminación */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  className="cursor-pointer text-destructive"
+                >
+                  <Trash2 size={15} className="opacity-60 mr-2" />
+                  Eliminar
+                </DropdownMenuItem>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                    <AlertTriangle className="h-5 w-5" />
+                    Confirmar eliminación
+                  </DialogTitle>
+                </DialogHeader>
+                <DialogDescription>
+                  ¿Estás seguro de que deseas eliminar esta tarea? Esta acción
+                  no se puede deshacer.
+                </DialogDescription>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancelar</Button>
+                  </DialogClose>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      onDelete(activity.id);
+                      setDeleteDialogOpen(false);
+                    }}
+                  >
+                    Eliminar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </DropdownMenuGroup>
 
           {/* Opción para editar */}
@@ -277,16 +281,64 @@ const TaskActions = ({ activity, onToggleStatus, onDelete, onEdit }: Props) => {
           <DropdownMenuGroup>
             {/* Opción para ver interacción */}
             {activity.linkedInteraction?.id && (
-              <DropdownMenuItem
-                onClick={handleViewInteraction}
-                className="cursor-pointer"
-              >
-                <MessageSquareReply
-                  className="opacity-60 h-4 w-4 mr-2"
-                  aria-hidden="true"
-                />
-                Ver Interacción
-              </DropdownMenuItem>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    className="cursor-pointer"
+                  >
+                    <MessageSquareReply
+                      className="opacity-60 h-4 w-4 mr-2"
+                      aria-hidden="true"
+                    />
+                    Ver Interacción
+                  </DropdownMenuItem>
+                </DialogTrigger>
+
+                <DialogContent
+                  className="sm:max-w-[425px]"
+                  aria-describedby="interaction-dialog-description"
+                >
+                  <DialogHeader>
+                    <DialogTitle>Interacción Vinculada</DialogTitle>
+                    <DialogDescription id="interaction-dialog-description">
+                      Esta tarea está vinculada a la siguiente interacción
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4">
+                    <div className="grid gap-3">
+                      <Label htmlFor="contact-name">Contacto</Label>
+                      <Input
+                        id="contact-name"
+                        value={
+                          activity.linkedInteraction?.contacto.name ||
+                          "Sin contacto"
+                        }
+                        readOnly
+                        className="bg-muted"
+                        aria-label="Nombre del contacto"
+                      />
+                    </div>
+                    <div className="grid gap-3">
+                      <Label htmlFor="interaction-content">Contenido</Label>
+                      <Textarea
+                        id="interaction-content"
+                        value={
+                          activity.linkedInteraction?.content || "Sin contenido"
+                        }
+                        readOnly
+                        className="bg-muted resize-none min-h-[100px]"
+                        aria-label="Contenido de la interacción"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="outline">Cerrar</Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             )}
 
             {/* Opción para ver vacante */}
@@ -305,68 +357,6 @@ const TaskActions = ({ activity, onToggleStatus, onDelete, onEdit }: Props) => {
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      {/* Dialog para confirmar cambio de estado */}
-      <Dialog open={alertOpen} onOpenChange={setAlertOpen}>
-        <DialogContent className="sm:max-w-[425px] z-[9999]">
-          <DialogHeader>
-            <DialogTitle>
-              {isTaskDone ? "¿Marcar como pendiente?" : "¿Completar tarea?"}
-            </DialogTitle>
-          </DialogHeader>
-          <DialogDescription>
-            {isTaskDone
-              ? "¿Estás seguro de que quieres marcar esta tarea como pendiente? Podrás volver a completarla más tarde."
-              : "¿Estás seguro de que quieres marcar esta tarea como completada?"}
-          </DialogDescription>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAlertOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => {
-                handleToggleStatus();
-                setAlertOpen(false);
-              }}
-            >
-              {isTaskDone ? "Marcar pendiente" : "Completar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog para confirmar eliminación */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] z-[9999]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
-              <AlertTriangle className="h-5 w-5" />
-              Confirmar eliminación
-            </DialogTitle>
-          </DialogHeader>
-          <DialogDescription>
-            ¿Estás seguro de que deseas eliminar esta tarea? Esta acción no se
-            puede deshacer.
-          </DialogDescription>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                onDelete(activity.id);
-                setDeleteDialogOpen(false);
-              }}
-            >
-              Eliminar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
