@@ -50,19 +50,18 @@ import { ToastCustomMessage } from "../ToastCustomMessage";
 interface NotificationDropdownProps {
   userId: string;
 }
-
 type NotificationWithTask = Prisma.NotificationGetPayload<{
   include: {
+    vacancy: {
+      include: {
+        cliente: true;
+        reclutador: true;
+      };
+    };
     task: {
       include: {
         assignedTo: true;
         notificationRecipients: true;
-        vacancy: {
-          include: {
-            cliente: true;
-            reclutador: true;
-          };
-        };
       };
     };
   };
@@ -351,19 +350,21 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                             {isDeleting ? "Eliminando..." : "Eliminar"}
                           </DropdownMenuItem>
 
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setSelectedTask(notification);
-                            }}
-                            className="gap-2 cursor-pointer"
-                            disabled={isDeleting || isMarkingRead}
-                          >
-                            <FileSymlink />
-                            Ver tarea
-                          </DropdownMenuItem>
+                          {notification.taskId && (
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setSelectedTask(notification);
+                              }}
+                              className="gap-2 cursor-pointer"
+                              disabled={isDeleting || isMarkingRead}
+                            >
+                              <FileSymlink />
+                              Ver tarea
+                            </DropdownMenuItem>
+                          )}
 
-                          {notification.task?.vacancy && (
+                          {notification.vacancyId && (
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.preventDefault();
@@ -377,31 +378,35 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                             </DropdownMenuItem>
                           )}
 
-                          <DropdownMenuItem
-                            className="gap-2 cursor-pointer"
-                            disabled={isDeleting || isMarkingRead}
-                          >
-                            <Link
-                              href={`/profile/${notification.task?.assignedTo.id}`}
-                              className="flex gap-2"
-                            >
-                              <UserSearch />
-                              Ver usuario
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleMarkAsRead(notification.id);
-                            }}
-                            className="gap-2 cursor-pointer"
-                            disabled={isMarkingRead || isDeleting}
-                          >
-                            <ListCheck />
-                            {isMarkingRead
-                              ? "Cargando..."
-                              : "Marcar como leído"}
-                          </DropdownMenuItem>
+                          {notification.vacancy?.reclutadorId && (
+                            <>
+                              <DropdownMenuItem
+                                className="gap-2 cursor-pointer"
+                                disabled={isDeleting || isMarkingRead}
+                              >
+                                <Link
+                                  href={`/profile/${notification.vacancy?.reclutadorId}`}
+                                  className="flex gap-2"
+                                >
+                                  <UserSearch />
+                                  Ver usuario
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleMarkAsRead(notification.id);
+                                }}
+                                className="gap-2 cursor-pointer"
+                                disabled={isMarkingRead || isDeleting}
+                              >
+                                <ListCheck />
+                                {isMarkingRead
+                                  ? "Cargando..."
+                                  : "Marcar como leído"}
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -485,13 +490,13 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle>Posición de Vacante</DialogTitle>
-              {selectedVacancy?.task?.vacancy && (
+              {selectedVacancy?.vacancy && (
                 <Badge variant="outline" className="gap-1.5">
                   <span
                     className="size-1.5 rounded-full bg-blue-500"
                     aria-hidden="true"
                   ></span>
-                  {selectedVacancy.task.vacancy.estado}
+                  {selectedVacancy.vacancy.estado}
                 </Badge>
               )}
             </div>
@@ -500,7 +505,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
             </DialogDescription>
           </DialogHeader>
 
-          {selectedVacancy?.task?.vacancy && (
+          {selectedVacancy?.vacancy && (
             <>
               <div className="flex flex-col gap-5">
                 <div className="space-y-2">
@@ -509,7 +514,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                   </label>
                   <Input
                     type="text"
-                    defaultValue={selectedVacancy.task.vacancy.posicion}
+                    defaultValue={selectedVacancy.vacancy.posicion}
                     readOnly
                     className="bg-muted"
                   />
@@ -522,7 +527,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                   <Input
                     type="text"
                     defaultValue={
-                      selectedVacancy.task.vacancy.cliente.cuenta ||
+                      selectedVacancy.vacancy.cliente.cuenta ||
                       "Sin especificar"
                     }
                     readOnly
@@ -537,7 +542,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                     </label>
                     <Input
                       type="text"
-                      defaultValue={selectedVacancy.task.vacancy.estado}
+                      defaultValue={selectedVacancy.vacancy.estado}
                       readOnly
                       className="bg-muted"
                     />
@@ -548,7 +553,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                     </label>
                     <Input
                       type="text"
-                      defaultValue={selectedVacancy.task.vacancy.prioridad}
+                      defaultValue={selectedVacancy.vacancy.prioridad}
                       readOnly
                       className="bg-muted"
                     />
@@ -564,19 +569,18 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                   <Image
                     className="ring-background rounded-full ring-2"
                     src={
-                      selectedVacancy.task.vacancy.reclutador.image ??
-                      "/default.png"
+                      selectedVacancy.vacancy.reclutador.image ?? "/default.png"
                     }
                     width={40}
                     height={40}
-                    alt={selectedVacancy.task.vacancy.reclutador.name}
+                    alt={selectedVacancy.vacancy.reclutador.name}
                   />
                   <div>
                     <p className="text-sm font-medium">
-                      {selectedVacancy.task.vacancy.reclutador.name}
+                      {selectedVacancy.vacancy.reclutador.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {selectedVacancy.task.vacancy.reclutador.email}
+                      {selectedVacancy.vacancy.reclutador.email}
                     </p>
                   </div>
                 </div>

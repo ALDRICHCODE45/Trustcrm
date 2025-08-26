@@ -73,7 +73,6 @@ export const createVacancyNotification = async ({
           message: `El usuario ${session.user.name} ${message} ${vacancy.posicion}`,
           recipientId: user.id,
           vacancyId,
-          taskId: null,
         },
       });
     }

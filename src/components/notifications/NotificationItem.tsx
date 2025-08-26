@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -44,16 +44,16 @@ import Image from "next/image";
 
 type NotificationWithTask = Prisma.NotificationGetPayload<{
   include: {
+    vacancy: {
+      include: {
+        cliente: true;
+        reclutador: true;
+      };
+    };
     task: {
       include: {
         assignedTo: true;
         notificationRecipients: true;
-        vacancy: {
-          include: {
-            cliente: true;
-            reclutador: true;
-          };
-        };
       };
     };
   };
@@ -126,6 +126,10 @@ export function NotificationItem({
     }
   };
 
+  useEffect(() => {
+    console.log("notificacion actual", notification);
+  }, []);
+
   return (
     <>
       <div
@@ -195,7 +199,7 @@ export function NotificationItem({
                 </DropdownMenuItem>
               )}
 
-              {notification.task && (
+              {notification.taskId && (
                 <DropdownMenuItem
                   onClick={() => setSelectedTask(notification)}
                   className="gap-2 cursor-pointer"
@@ -206,7 +210,7 @@ export function NotificationItem({
                 </DropdownMenuItem>
               )}
 
-              {notification.task?.vacancy && (
+              {notification.vacancyId && (
                 <DropdownMenuItem
                   onClick={() => setSelectedVacancy(notification)}
                   className="gap-2 cursor-pointer"
@@ -217,13 +221,13 @@ export function NotificationItem({
                 </DropdownMenuItem>
               )}
 
-              {notification.task?.assignedTo && (
+              {notification.vacancy?.reclutadorId && (
                 <DropdownMenuItem
                   className="gap-2 cursor-pointer"
                   disabled={isDeleting || isMarkingRead}
                 >
                   <Link
-                    href={`/profile/${notification.task.assignedTo.id}`}
+                    href={`/profile/${notification.vacancy?.reclutadorId}`}
                     className="flex gap-2 items-center"
                   >
                     <UserSearch className="h-4 w-4" />
@@ -329,13 +333,13 @@ export function NotificationItem({
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle>Posición de Vacante</DialogTitle>
-              {selectedVacancy?.task?.vacancy && (
+              {selectedVacancy?.vacancy && (
                 <Badge variant="outline" className="gap-1.5">
                   <span
                     className="size-1.5 rounded-full bg-blue-500"
                     aria-hidden="true"
                   ></span>
-                  {selectedVacancy.task.vacancy.estado}
+                  {selectedVacancy.vacancy.estado}
                 </Badge>
               )}
             </div>
@@ -344,7 +348,7 @@ export function NotificationItem({
             </DialogDescription>
           </DialogHeader>
 
-          {selectedVacancy?.task?.vacancy && (
+          {selectedVacancy?.vacancy && (
             <>
               <div className="flex flex-col gap-5">
                 <div className="space-y-2">
@@ -353,7 +357,7 @@ export function NotificationItem({
                   </label>
                   <Input
                     type="text"
-                    defaultValue={selectedVacancy.task.vacancy.posicion}
+                    defaultValue={selectedVacancy.vacancy.posicion}
                     readOnly
                     className="bg-muted"
                   />
@@ -366,7 +370,7 @@ export function NotificationItem({
                   <Input
                     type="text"
                     defaultValue={
-                      selectedVacancy.task.vacancy.cliente.cuenta ||
+                      selectedVacancy.vacancy.cliente.cuenta ||
                       "Sin especificar"
                     }
                     readOnly
@@ -381,7 +385,7 @@ export function NotificationItem({
                     </label>
                     <Input
                       type="text"
-                      defaultValue={selectedVacancy.task.vacancy.estado}
+                      defaultValue={selectedVacancy.vacancy.estado}
                       readOnly
                       className="bg-muted"
                     />
@@ -392,7 +396,7 @@ export function NotificationItem({
                     </label>
                     <Input
                       type="text"
-                      defaultValue={selectedVacancy.task.vacancy.prioridad}
+                      defaultValue={selectedVacancy.vacancy.prioridad}
                       readOnly
                       className="bg-muted"
                     />
@@ -408,19 +412,18 @@ export function NotificationItem({
                   <Image
                     className="ring-background rounded-full ring-2"
                     src={
-                      selectedVacancy.task.vacancy.reclutador.image ??
-                      "/default.png"
+                      selectedVacancy.vacancy.reclutador.image ?? "/default.png"
                     }
                     width={40}
                     height={40}
-                    alt={selectedVacancy.task.vacancy.reclutador.name}
+                    alt={selectedVacancy.vacancy.reclutador.name}
                   />
                   <div>
                     <p className="text-sm font-medium">
-                      {selectedVacancy.task.vacancy.reclutador.name}
+                      {selectedVacancy.vacancy.reclutador.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {selectedVacancy.task.vacancy.reclutador.email}
+                      {selectedVacancy.vacancy.reclutador.email}
                     </p>
                   </div>
                 </div>

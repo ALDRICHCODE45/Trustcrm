@@ -29,6 +29,13 @@ import { ToastCustomMessage } from "../ToastCustomMessage";
 
 type NotificationWithTask = Prisma.NotificationGetPayload<{
   include: {
+    vacancy: {
+      include: {
+        cliente: true;
+        reclutador: true;
+      };
+    };
+    recipient: true;
     task: {
       include: {
         assignedTo: true;

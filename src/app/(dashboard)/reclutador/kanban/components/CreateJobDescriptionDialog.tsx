@@ -62,7 +62,7 @@ export const CreateJobDescriptionDialog = ({
       const data = {
         file: fileState.files[0].file,
       };
-      createJobDescription(data as unknown as JobDescriptionData);
+      createJobDescription(data as JobDescriptionData);
       fetchDocuments();
       fileActions.clearFiles();
     } catch (error) {

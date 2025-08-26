@@ -59,16 +59,16 @@ export async function GET(request: Request) {
         createdAt: "desc",
       },
       include: {
+        vacancy: {
+          include: {
+            cliente: true,
+            reclutador: true,
+          },
+        },
         task: {
           include: {
             assignedTo: true,
             notificationRecipients: true,
-            vacancy: {
-              include: {
-                cliente: true,
-                reclutador: true,
-              },
-            },
           },
         },
       },
