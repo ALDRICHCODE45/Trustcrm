@@ -410,7 +410,7 @@ export const DocumentsSection = ({
                       Arrastra y suelta o haz clic para subir
                     </div>
                     <div className="text-muted-foreground/80 text-xs mt-1">
-                      PDF, DOCX, TXT, XLSX, PPTX (máx. 10MB)
+                      PDF, DOCX, TXT(máx. 30MB)
                     </div>
                   </div>
                 ) : (
