@@ -5,6 +5,7 @@ import {
   deleteFileFromVacancy,
   createJobDescriptionAction,
   getVacancyFilesDetailed,
+  createPerfilMuestraAction,
 } from "@/actions/vacantes/files/actions";
 
 interface AddDocumentData {
@@ -194,6 +195,36 @@ export const useDocuments = (vacancyId?: string) => {
         };
       } catch (e) {
         setError("No se pudo crear el JobDescription");
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [vacancyId]
+  );
+
+  interface PerfilMuestraData {
+    file: File;
+    name: string;
+  }
+
+  const createPerfilMuestra = useCallback(
+    async ({ file }: PerfilMuestraData) => {
+      setIsUploading(true);
+      setError(null);
+      try {
+        if (!vacancyId) {
+          setError("Datos incompletos");
+          return {
+            ok: false,
+          };
+        }
+
+        const response = await createPerfilMuestraAction({
+          file,
+          vacancyId,
+        });
+      } catch (e) {
+        setError("No se pudo crear el Perfil Muestra");
       } finally {
         setIsUploading(false);
       }
