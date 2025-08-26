@@ -358,7 +358,7 @@ export const DocumentsSection = ({
               <div className="text-center py-8">
                 <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-sm text-muted-foreground">
-                  No hay documentos asociados a esta vacante
+                  No hay documentos extra asociados a esta vacante
                 </p>
               </div>
             )}
