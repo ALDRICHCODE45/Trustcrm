@@ -11,9 +11,10 @@ import { VacancyWithRelations } from "../../components/ReclutadorColumns";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2 } from "lucide-react";
+import { MailCheck, Plus, Trash2 } from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
 import {
+  completeChecklistAndNotify,
   createChecklist,
   deleteChecklist,
 } from "@/actions/vacantes/checklist/actions";
@@ -111,6 +112,37 @@ export const VacancyDetailsChecklist = ({
           <ToastCustomMessage
             title="Error al agregar requisitos"
             message="No se pudieron agregar los nuevos requisitos"
+            type="error"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    }
+  };
+
+  const handleCompleteChecklistAndNotify = async () => {
+    try {
+      await completeChecklistAndNotify(vacante.id);
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Checklist completado y notificado"
+            message="El checklist se ha completado y notificado correctamente"
+            type="success"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    } catch (error) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error al completar el checklist y notificar"
+            message="No se pudo completar el checklist y notificar"
             type="error"
             onClick={() => {
               toast.dismiss(t);
@@ -282,6 +314,15 @@ export const VacancyDetailsChecklist = ({
             >
               <Plus className="h-4 w-4 mr-2" />
               Agregar requisito
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full mt-4"
+              onClick={handleCompleteChecklistAndNotify}
+            >
+              <MailCheck />
+              Notificar Checklist Completado
             </Button>
           </div>
 

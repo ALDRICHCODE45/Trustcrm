@@ -1,7 +1,9 @@
 "use server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
+import { NotificationVacancyType } from "@/types/vacancy-notifications";
 import { revalidatePath } from "next/cache";
+import { createVacancyNotification } from "../notifications/vacancies-notificactions";
 
 interface addCandidateFeedbackProps {
   feedback: string;
@@ -238,6 +240,29 @@ export const ValidatePerfilMuestraAction = async (vacancyId: string) => {
     return {
       ok: false,
       message: "Error al validar el perfil muestra",
+    };
+  }
+};
+
+export const completeChecklistAndNotify = async (vacancyId: string) => {
+  try {
+    const notification = await createVacancyNotification({
+      vacancyId,
+      type: NotificationVacancyType.Checklist,
+    });
+
+    if (!notification.ok) {
+      throw new Error(notification.message);
+    }
+
+    return {
+      ok: true,
+      message: "Checklist completado y notificado correctamente",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Error al completar el checklist y notificar",
     };
   }
 };

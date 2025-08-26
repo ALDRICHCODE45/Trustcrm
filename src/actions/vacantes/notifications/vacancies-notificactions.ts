@@ -55,7 +55,7 @@ export const createVacancyNotification = async ({
     let message: string;
     switch (type) {
       case NotificationVacancyType.Checklist:
-        message = "Ha subido un nuevo checklist para la posicion";
+        message = "Ha completado el checklist para la posicion";
         break;
       case NotificationVacancyType.JobDescription:
         message = "Ha subido un nuevo Job Description para la posicion";
