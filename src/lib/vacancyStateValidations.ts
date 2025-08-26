@@ -64,7 +64,7 @@ const stateValidationRules: StateValidationRule[] = [
           isValid: false,
           message: "No se puede cambiar al estado 'Entrevistas'",
           reason:
-            "Para pasar al estado 'Entrevistas' debe tener al menos un candidato validado. Por favor, valide un candidato antes de pasar al estado 'Entrevistas'.",
+            "Para pasar al estado 'Entrevistas con Cliente' debe tener al menos un candidato validado y comparado contra el checklist. Por favor, valide un candidato antes de pasar al estado 'Entrevistas'.",
         };
       }
       return { isValid: true };
