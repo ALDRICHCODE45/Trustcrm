@@ -846,7 +846,28 @@ export const NuevoComentarioForm = memo(
                 <FormControl>
                   <Switch
                     checked={field.value}
-                    onCheckedChange={field.onChange}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                      // Auto-llenar título y descripción con el contenido del comentario
+                      if (checked) {
+                        const comentarioTexto = form.getValues("texto");
+                        if (comentarioTexto && comentarioTexto.trim()) {
+                          // Solo auto-llenar si los campos están vacíos
+                          if (!form.getValues("tituloTarea")) {
+                            form.setValue(
+                              "tituloTarea",
+                              comentarioTexto.trim()
+                            );
+                          }
+                          if (!form.getValues("descripcionTarea")) {
+                            form.setValue(
+                              "descripcionTarea",
+                              comentarioTexto.trim()
+                            );
+                          }
+                        }
+                      }
+                    }}
                     disabled={isLoading}
                   />
                 </FormControl>
