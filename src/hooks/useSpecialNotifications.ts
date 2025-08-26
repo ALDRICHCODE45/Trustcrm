@@ -1,53 +1,12 @@
+import { Prisma } from "@prisma/client";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 // Tipos temporales hasta que se genere Prisma
-export interface SpecialNotificationWithRelations {
-  id: string;
-  type: string;
-  status: string;
-  priority: string;
-  title: string;
-  message: string;
-  metadata: any;
-  createdAt: string;
-  updatedAt: string;
-  expiresAt?: string;
-  recipient: {
-    id: string;
-    name: string;
-    email: string;
-    image?: string;
-  };
-  vacancy?: {
-    id: string;
-    posicion: string;
-    prioridad: string;
-    fechaEntrega?: string;
-    cliente: {
-      id: string;
-      cuenta: string;
-    };
-    reclutador: {
-      id: string;
-      name: string;
-    };
-  };
-  task?: {
-    id: string;
-    title: string;
-    description: string;
-    dueDate: string;
-    assignedTo: {
-      id: string;
-      name: string;
-    };
-  };
-  client?: {
-    id: string;
-    cuenta: string;
-  };
-}
+export type SpecialNotificationWithRelations =
+  Prisma.SpecialNotificationGetPayload<{
+    include: { recipient: true };
+  }>;
 
 interface UseSpecialNotificationsReturn {
   notifications: SpecialNotificationWithRelations[];
@@ -76,12 +35,17 @@ export function useSpecialNotifications(
 
     try {
       setIsLoading(true);
+      console.log("Fetching special notifications for userId:", userId);
+
       const response = await fetch(
         `/api/special-notifications?userId=${userId}`
       );
       const data = await response.json();
 
+      console.log("API Response:", { status: response.status, data });
+
       if (response.ok) {
+        console.log("Notificaciones especiales obtenidas:", data.notifications);
         setNotifications(data.notifications);
         // Resetear el índice si hay nuevas notificaciones
         if (data.notifications.length > 0) {

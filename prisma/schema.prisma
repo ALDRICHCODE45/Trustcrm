@@ -273,9 +273,7 @@ model Vacancy {
   tasks                Task[]
 
   //Relacion con notificaciones normal
-  Notification         Notification[]
-  // Relación con notificaciones especiales
-  specialNotifications SpecialNotification[]
+  Notification Notification[]
 }
 
 model InputChecklist {
@@ -388,9 +386,6 @@ model Client {
   usuarioId     String
   usuario       User        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   Vacancy       Vacancy[]
-
-  // Relación con notificaciones especiales
-  specialNotifications SpecialNotification[]
 }
 
 model Comment {
@@ -448,6 +443,8 @@ model Task {
   notifications          Notification[]
   notifyOnComplete       Boolean        @default(false)
   notificationRecipients User[]         @relation("TaskNotificationRecipients")
+  //valor para saber si es una tarea importante para el reclutador
+  isImportant            Boolean        @default(false)
 
   // Relación bidireccional con ContactInteraction
   // Una tarea solo puede estar vinculada a una interacción
@@ -457,9 +454,6 @@ model Task {
   // Nueva relación opcional con Vacancy
   vacancy   Vacancy? @relation(fields: [vacancyId], references: [id])
   vacancyId String?
-
-  // Relación con notificaciones especiales
-  specialNotifications SpecialNotification[]
 
   @@index([interactionId]) // Índice para optimizar consultas por interacción vinculada
   @@index([vacancyId]) // Índice para optimizar consultas por vacante vinculada
@@ -547,24 +541,12 @@ model SpecialNotification {
   priority SpecialNotificationPriority @default(MEDIUM)
   title    String
   message  String
-  metadata Json? // Para almacenar datos adicionales específicos del evento
 
   // Relación con el destinatario
   recipient   User   @relation(fields: [recipientId], references: [id], onDelete: Cascade)
   recipientId String
 
   // Relaciones opcionales con entidades específicas
-  vacancy   Vacancy? @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
-  vacancyId String?
-
-  task   Task?   @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  taskId String?
-
-  client   Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  clientId String?
-
-  // Configuración de expiración automática
-  expiresAt DateTime?
 
   // Auditoría
   createdAt DateTime @default(now())
@@ -573,5 +555,4 @@ model SpecialNotification {
   @@index([recipientId, status])
   @@index([type, status])
   @@index([priority, status])
-  @@index([expiresAt])
 }

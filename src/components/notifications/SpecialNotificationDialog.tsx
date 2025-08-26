@@ -10,20 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  CalendarDays,
-  Building2,
-  DollarSign,
-  Clock,
-  MapPin,
-  Users,
-  AlertTriangle,
-  CheckCircle,
-  X,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle, X, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { SpecialNotificationWithRelations } from "@/hooks/useSpecialNotifications";
@@ -82,95 +71,76 @@ export const SpecialNotificationDialog = ({
     }
   };
 
-  const renderVacancyDetails = () => {
-    if (!notification.vacancy) return null;
-
-    const { vacancy } = notification;
-
-    return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Detalles de la Vacante
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Posición:</span>
-                <span className="text-sm">{vacancy.posicion}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Cliente:</span>
-                <span className="text-sm">{vacancy.cliente.cuenta}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Prioridad:</span>
-                <Badge
-                  variant={
-                    vacancy.prioridad === "Alta" ? "destructive" : "secondary"
-                  }
-                >
-                  {vacancy.prioridad}
-                </Badge>
-              </div>
-            </div>
-            <div className="space-y-2">
-              {vacancy.fechaEntrega && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Fecha Entrega:</span>
-                  <span className="text-sm">
-                    {format(new Date(vacancy.fechaEntrega), "dd/MM/yyyy", {
-                      locale: es,
-                    })}
-                  </span>
-                </div>
-              )}
-              {notification.metadata?.salario && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Salario:</span>
-                  <span className="text-sm">
-                    ${notification.metadata.salario.toLocaleString("es-MX")}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
+  if (!notification) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] z-[9999]">
+      <DialogContent className="sm:max-w-[650px] z-[9999] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 {getPriorityIcon(notification.priority)}
-                <DialogTitle className="text-xl font-bold">
-                  {notification.title}
+                <DialogTitle className="text-2xl font-bold text-primary">
+                  🚀 {notification.title}
                 </DialogTitle>
               </div>
-              <Badge className={getPriorityColor(notification.priority)}>
-                {notification.priority}
-              </Badge>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
-          <DialogDescription className="text-base">
+          <DialogDescription className="text-lg font-medium text-foreground mt-2">
             {notification.message}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Mensaje destacado sobre documentos requeridos */}
+        <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30 border border-orange-200 dark:border-orange-800 rounded-lg p-4 my-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">
+                📋 Documentos Requeridos para Continuar
+              </h4>
+              <div className="space-y-2 text-sm text-orange-800 dark:text-orange-200">
+                <p className="font-medium">
+                  Para poder avanzar con esta vacante, es{" "}
+                  <span className="underline font-bold">OBLIGATORIO</span> que
+                  entregues los siguientes documentos:
+                </p>
+                <ul className="list-none space-y-1 ml-4">
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    <span className="font-medium">
+                      Checklist de requisitos
+                    </span>{" "}
+                    - Define los criterios de selección
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    <span className="font-medium">Perfil muestra</span> -
+                    Ejemplo del candidato ideal
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    <span className="font-medium">Job Description</span> -
+                    Descripción detallada del puesto
+                  </li>
+                </ul>
+                <div className="mt-3 p-3 bg-orange-100 dark:bg-orange-900/50 rounded-md border-l-4 border-orange-500">
+                  <p className="font-semibold text-orange-900 dark:text-orange-100">
+                    ⚠️ Sin estos documentos NO podrás proceder con el proceso de
+                    reclutamiento.
+                  </p>
+                  <p className="text-xs mt-1 text-orange-700 dark:text-orange-300">
+                    Entrega estos documentos lo antes posible para evitar
+                    retrasos en la vacante.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <Separator />
 
@@ -201,33 +171,28 @@ export const SpecialNotificationDialog = ({
           </div>
         </div>
 
-        {/* Detalles específicos según el tipo */}
-        {notification.type === "VACANCY_ASSIGNED" && renderVacancyDetails()}
-
         <Separator />
 
         {/* Acciones */}
-        <div className="flex gap-3 pt-4">
+        <div className="w-full flex justify-center">
           <Button
             onClick={handleAccept}
             disabled={isUpdating}
-            className="flex-1"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3"
+            size="lg"
           >
-            {isUpdating ? "Procesando..." : "Entendido"}
+            {isUpdating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Procesando...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                ¡Entendido! Entregaré los documentos
+              </>
+            )}
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleDismiss}
-            disabled={isUpdating}
-            className="flex-1"
-          >
-            {isUpdating ? "Procesando..." : "Descartar"}
-          </Button>
-        </div>
-
-        {/* Información adicional */}
-        <div className="text-xs text-muted-foreground text-center">
-          Esta notificación se marcará automáticamente como procesada
         </div>
       </DialogContent>
     </Dialog>

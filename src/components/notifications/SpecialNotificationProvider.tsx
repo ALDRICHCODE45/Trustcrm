@@ -19,7 +19,6 @@ export const SpecialNotificationProvider = ({
     markAsShown,
     dismissNotification,
     showNextNotification,
-    hasNotifications,
   } = useSpecialNotifications(userId);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);

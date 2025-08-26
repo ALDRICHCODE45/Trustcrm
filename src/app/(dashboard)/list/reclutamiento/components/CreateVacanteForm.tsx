@@ -235,7 +235,12 @@ function VacancyForm({
         requisitos: requisitosLimpios,
       };
 
+      //crear la vacante
       const result = await createVacancy(vacancyData);
+      //validar si el estado inicial es "Quick Meeting"
+      if (vacancyData.estado === VacancyEstado.QuickMeeting) {
+        //Crear tareas para completar el estado satisfactoriamente
+      }
 
       if (!result.ok) {
         toast.custom((t) => (

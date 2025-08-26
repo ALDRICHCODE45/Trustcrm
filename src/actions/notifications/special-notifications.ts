@@ -14,11 +14,6 @@ export interface CreateSpecialNotificationData {
   message: string;
   recipientId: string;
   priority?: SpecialNotificationPriority;
-  metadata?: any;
-  vacancyId?: string;
-  taskId?: string;
-  clientId?: string;
-  expiresAt?: Date;
 }
 
 // Crear una notificación especial
@@ -45,22 +40,9 @@ export const createSpecialNotification = async (
         message: data.message,
         recipientId: data.recipientId,
         priority: data.priority || SpecialNotificationPriority.MEDIUM,
-        metadata: data.metadata,
-        vacancyId: data.vacancyId,
-        taskId: data.taskId,
-        clientId: data.clientId,
-        expiresAt: data.expiresAt,
       },
       include: {
         recipient: true,
-        vacancy: {
-          include: {
-            cliente: true,
-            reclutador: true,
-          },
-        },
-        task: true,
-        client: true,
       },
     });
 
@@ -86,23 +68,10 @@ export const getPendingSpecialNotifications = async (userId: string) => {
       where: {
         recipientId: userId,
         status: SpecialNotificationStatus.PENDING,
-        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
       orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
       include: {
         recipient: true,
-        vacancy: {
-          include: {
-            cliente: true,
-            reclutador: true,
-          },
-        },
-        task: {
-          include: {
-            assignedTo: true,
-          },
-        },
-        client: true,
       },
     });
 
@@ -197,9 +166,7 @@ export const cleanupExpiredSpecialNotifications = async () => {
   try {
     const deletedCount = await prisma.specialNotification.deleteMany({
       where: {
-        expiresAt: {
-          lt: new Date(),
-        },
+        status: SpecialNotificationStatus.PENDING,
       },
     });
 
@@ -249,16 +216,7 @@ export const createVacancyAssignedNotification = async (
       };
     }
 
-    const metadata = {
-      vacancyId: vacancy.id,
-      posicion: vacancy.posicion,
-      cliente: vacancy.cliente.cuenta,
-      prioridad: vacancy.prioridad,
-      fechaEntrega: vacancy.fechaEntrega?.toISOString(),
-      salario: vacancy.salario,
-    };
-
-    return await createSpecialNotification({
+    const notificationData = {
       type: SpecialNotificationType.VACANCY_ASSIGNED,
       title: "Nueva Vacante Asignada",
       message: `Te han asignado la vacante "${vacancy.posicion}" para el cliente ${vacancy.cliente.cuenta}`,
@@ -269,10 +227,11 @@ export const createVacancyAssignedNotification = async (
           : vacancy.prioridad === "Normal"
           ? SpecialNotificationPriority.MEDIUM
           : SpecialNotificationPriority.LOW,
-      metadata,
-      vacancyId: vacancy.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Expira en 7 días
-    });
+    };
+
+    const result = await createSpecialNotification(notificationData);
+
+    return result;
   } catch (error) {
     console.error("Error creating vacancy assigned notification:", error);
     return {
