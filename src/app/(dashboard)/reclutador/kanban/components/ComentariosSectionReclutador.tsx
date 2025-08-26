@@ -53,7 +53,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import CustomToast from "@/components/Custom-toast";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { EditCommentDialog } from "./EditCommentDialog";
 
@@ -71,15 +70,12 @@ export const CommentsSectionReclutador: React.FC<CommentsSectionProps> = ({
     addComment,
     deleteComment,
     editCommentById,
-    fetchComments,
   } = useComments(vacante.id);
   const [commentToDelete, setCommentToDelete] =
     useState<CommentWithRelations | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [commentToEdit, setCommentToEdit] =
-    useState<CommentWithRelations | null>(null);
 
   const [filters, setFilters] = useState({
     dateRange: null as { from: Date; to: Date } | null,

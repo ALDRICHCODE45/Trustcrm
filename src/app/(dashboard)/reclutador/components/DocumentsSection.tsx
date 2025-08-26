@@ -1,4 +1,5 @@
 "use client";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   SheetTrigger,
   Sheet,
@@ -11,19 +12,14 @@ import { VacancyWithRelations } from "./ReclutadorColumns";
 import { Button } from "@/components/ui/button";
 import {
   File,
-  Plus,
   UploadIcon,
   FileText,
   X,
   CloudUpload,
-  CircleCheckIcon,
-  XIcon,
   MoreVertical,
-  Download,
-  Edit,
   Trash,
-  Eye,
-  ExternalLink,
+  Download,
+  FileSymlink,
 } from "lucide-react";
 import {
   Dialog,
@@ -42,18 +38,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useFileUpload } from "@/hooks/use-file-upload";
-import { toast, ToastT } from "sonner";
-import {
-  addFileToVacancy,
-  deleteFileFromVacancy,
-} from "@/actions/vacantes/files/actions";
+import { useDocuments } from "@/hooks/documents/use-documents";
+import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import {
+  AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
@@ -63,12 +56,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { AlertDialog } from "@/components/ui/alert-dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { CreateJobDescriptionDialog } from "../kanban/components/CreateJobDescriptionDialog";
+import { CreatePerfilMuestraDialog } from "../kanban/components/CreatePerfilMuestraDialog";
+import { deleteJobDescriptionAction } from "@/actions/vacantes/files/actions";
 
 // Función para formatear el tamaño del archivo
 const formatFileSize = (bytes: number): string => {
@@ -105,13 +100,45 @@ export const DocumentsSection = ({
   vacante: VacancyWithRelations;
 }) => {
   const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [documentTitle, setDocumentTitle] = useState("");
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openCreateJobDescriptionDialog, setOpenCreateJobDescriptionDialog] =
+    useState<boolean>(false);
+  const [openCreatePerfilMuestraDialog, setOpenCreatePerfilMuestraDialog] =
+    useState<boolean>(false);
+
+  // Usar useRef para mantener el vacancyId consistente
+  const vacancyIdRef = useRef<string>(vacante.id);
+  const reclutadorIdRef = useRef<string>(vacante.reclutador?.id || "");
+
+  // Efecto para actualizar el vacancyId solo cuando el sheet está cerrado
+  useEffect(() => {
+    if (!sheetOpen) {
+      vacancyIdRef.current = vacante.id;
+      reclutadorIdRef.current = vacante.reclutador?.id || "";
+    }
+  }, [vacante.id, vacante.reclutador?.id, sheetOpen]);
+
+  // Hook personalizado para manejar documentos usando el ID consistente
+  const {
+    documents,
+    perfilesMuestra,
+    isLoading,
+    error,
+    isUploading,
+    isDeleting,
+    addDocument,
+    deleteDocument,
+    createJobDescription,
+    downloadDocument,
+    fetchDocuments,
+    jobDescription,
+  } = useDocuments(vacancyIdRef.current);
 
   const [fileUploadState, fileUploadActions] = useFileUpload({
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 20 * 1024 * 1024, // 20MB
     accept: ".pdf,.docx,.doc,.txt,.xlsx,.xls,.pptx,.ppt",
     multiple: false,
   });
@@ -127,46 +154,47 @@ export const DocumentsSection = ({
     fileUploadActions.removeFile(fileId);
   };
 
-  const handleSubmit = async () => {
+  // Función de submit memoizada para evitar recreaciones y usar el ID consistente
+  const handleSubmit = useCallback(async () => {
     if (!documentTitle.trim()) {
-      toast.error("Por favor ingresa un título para el documento");
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error"
+          type="error"
+          message="Por favor ingresa un título para el documento"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
       return;
     }
 
     if (fileUploadState.files.length === 0) {
-      toast.error("Por favor selecciona un archivo para subir");
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error"
+          type="error"
+          message="Por favor selecciona un archivo para subir"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
       return;
     }
 
-    setIsSubmitting(true);
-
     try {
-      // Aquí irá la llamada al servidor - por ahora la dejo vacía
       const documentFile = fileUploadState.files[0]?.file as File;
-      const documentData = {
+
+      // Usar el vacancyId del ref para asegurar consistencia
+      await addDocument({
         title: documentTitle,
         file: documentFile,
-        vacancyId: vacante.id,
-        authorId: vacante.reclutador.id,
-      };
-      const response = await addFileToVacancy({
-        ...documentData,
-        name: documentData.title,
+        authorId: reclutadorIdRef.current,
       });
-
-      if (!response?.ok) {
-        toast.error(response?.message || "Error al subir el documento");
-        console.error("error", response);
-        return;
-      }
 
       toast.custom((t) => (
         <ToastCustomMessage
-          title={response.message || "Documento subido exitosamente"}
+          title="Documento subido exitosamente"
           type="success"
-          message={
-            response.message || "El documento ha sido subido exitosamente"
-          }
+          message="El documento ha sido subido exitosamente"
           onClick={() => toast.dismiss(t)}
         />
       ));
@@ -177,196 +205,618 @@ export const DocumentsSection = ({
       setOpen(false);
     } catch (error) {
       console.error("Error al subir documento:", error);
-      toast.error("Error al subir el documento");
-    } finally {
-      setIsSubmitting(false);
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error"
+          type="error"
+          message={
+            error instanceof Error
+              ? error.message
+              : "Error al subir el documento"
+          }
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
     }
-  };
+  }, [documentTitle, fileUploadState.files, addDocument, fileUploadActions]);
 
-  // Funciones para las acciones de los documentos (por implementar)
-  const handleDownloadDocument = (fileUrl: string, fileName: string) => {
-    // TODO: Implementar descarga de documento
-    console.log("Descargar:", fileName, fileUrl);
-    // Abrir en nueva pestaña por ahora
-    window.open(fileUrl, "_blank");
-  };
+  const handleDeleteDocument = useCallback(
+    async (fileId: string) => {
+      try {
+        await deleteDocument(fileId);
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Archivo eliminado correctamente"
+            type="success"
+            message="El documento ha sido eliminado exitosamente"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
+        setOpenDeleteDialog(false);
+      } catch (error) {
+        console.error(error);
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Error"
+            type="error"
+            message={
+              error instanceof Error
+                ? error.message
+                : "Error al eliminar el archivo"
+            }
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
+      }
+    },
+    [deleteDocument]
+  );
 
-  const handleEditDocument = (fileId: string) => {
-    // TODO: Implementar edición de documento
-    console.log("Editar documento:", fileId);
-    toast.info("Funcionalidad de edición en desarrollo");
-  };
-
-  const handleDeleteDocument = async (fileId: string) => {
+  const handleDeleteJobDescription = useCallback(async () => {
     try {
-      const response = await deleteFileFromVacancy(fileId);
-      if (!response?.ok) {
-        toast.error(response?.message || "Error al eliminar el archivo");
+      if (!jobDescription?.id) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Error"
+            type="error"
+            message="No se encontró el ID del JobDescription"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
+        return;
+      }
+      // Usar el vacancyId del ref para asegurar consistencia
+      const response = await deleteJobDescriptionAction(
+        vacancyIdRef.current,
+        jobDescription.id
+      );
+      if (!response.ok) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Error"
+            type="error"
+            message="Error al eliminar el JobDescription"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
         return;
       }
       toast.custom((t) => (
         <ToastCustomMessage
-          title={response.message}
+          title="JobDescription eliminado correctamente"
           type="success"
-          message={response.message}
+          message="El JobDescription ha sido eliminado correctamente"
           onClick={() => toast.dismiss(t)}
         />
       ));
-    } catch (error) {
-      console.error(error);
-      toast.error("Error al eliminar el archivo");
+      fetchDocuments();
+      setOpenDeleteDialog(false);
+    } catch (e) {
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error No controlado"
+          type="error"
+          message="Reinicie su sesion o hable con el area de TI para resolver el problema"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
     }
-  };
+  }, [jobDescription, fetchDocuments]);
 
-  return (
-    <>
+  const handleReplaceJobDescription = useCallback(() => {
+    setOpenCreateJobDescriptionDialog(true);
+  }, []);
+
+  const handleDeletePerfilMuestra = useCallback(
+    async (perfilMuestraId: string) => {
+      try {
+        if (!perfilMuestraId) {
+          toast.custom((t) => (
+            <ToastCustomMessage
+              title="Error"
+              type="error"
+              message="No se encontró el ID del perfil muestra"
+              onClick={() => toast.dismiss(t)}
+            />
+          ));
+          return;
+        }
+        await handleDeleteDocument(perfilMuestraId);
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Perfil muestra eliminado correctamente"
+            type="success"
+            message="El perfil muestra ha sido eliminado correctamente"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
+        fetchDocuments();
+      } catch (e) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Error No controlado"
+            type="error"
+            message="Reinicie su sesion o hable con el area de TI para resolver el problema"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
+      }
+    },
+    [handleDeleteDocument, fetchDocuments]
+  );
+
+  // Handlers memoizados para evitar recreaciones
+  const handleSheetOpenChange = useCallback((newOpen: boolean) => {
+    setSheetOpen(newOpen);
+    if (!newOpen) {
+      setOpen(false);
+      setOpenCreateJobDescriptionDialog(false);
+      setOpenCreatePerfilMuestraDialog(false);
+    }
+  }, []);
+
+  const handleDialogOpenChange = useCallback(
+    (newOpen: boolean) => {
+      setOpen(newOpen);
+      if (!newOpen) {
+        setDocumentTitle("");
+        fileUploadActions.clearFiles();
+      }
+    },
+    [fileUploadActions]
+  );
+
+  if (isLoading) {
+    return (
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon">
             <File className="text-gray-600" />
           </Button>
         </SheetTrigger>
-        <SheetContent className="w-[400px] sm:w-[540px]">
+        <SheetContent className="min-w-[26vw]">
           <SheetHeader>
-            <SheetTitle></SheetTitle>
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <CloudUpload className="text-gray-500" />
-                  Añadir documento
-                </Button>
-              </DialogTrigger>
-            </Dialog>
+            <SheetTitle>Documentos</SheetTitle>
+          </SheetHeader>
+          <div className="flex justify-center items-center py-8">
+            <div className="text-muted-foreground">Cargando documentos...</div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  if (error) {
+    return (
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="icon">
+            <File className="text-gray-600" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent className="min-w-[26vw]">
+          <SheetHeader>
+            <SheetTitle>Documentos</SheetTitle>
+          </SheetHeader>
+          <div className="flex justify-center items-center py-8">
+            <div className="text-destructive">Error: {error}</div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <>
+      <Sheet open={sheetOpen} onOpenChange={handleSheetOpenChange}>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="icon">
+            <File className="text-gray-600" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent className="min-w-[26vw]">
+          <SheetHeader>
+            <SheetTitle>Documentos</SheetTitle>
+            <div className="flex items-center gap-2 pt-4">
+              <CreateJobDescriptionDialog
+                fetchDocuments={fetchDocuments}
+                createJobDescription={createJobDescription}
+                isOpen={openCreateJobDescriptionDialog}
+                setIsOpen={setOpenCreateJobDescriptionDialog}
+              />
+              <CreatePerfilMuestraDialog
+                vacancyId={vacancyIdRef.current}
+                fetchDocuments={fetchDocuments}
+                isOpen={openCreatePerfilMuestraDialog}
+                setIsOpen={setOpenCreatePerfilMuestraDialog}
+              />
+              <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <CloudUpload />
+                    <span>Documento Extra</span>
+                  </Button>
+                </DialogTrigger>
+              </Dialog>
+            </div>
           </SheetHeader>
 
           {/* Documentos existentes */}
-          <div className="mt-6 space-y-4 overflow-y-auto h-[calc(100vh-200px)]">
-            {vacante.files && vacante.files.length > 0 ? (
-              vacante.files.map((file) => (
-                <Card
-                  key={file.id}
-                  className="group hover:shadow-md transition-all duration-200"
-                >
-                  <CardContent className="p-5">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex justify-between items-start">
-                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          <div className="mt-6 space-y-4 overflow-y-auto h-[calc(100vh-200px)] ">
+            {/* Job Description y Perfiles Muestra */}
+            {(jobDescription ||
+              (perfilesMuestra && perfilesMuestra.length > 0)) && (
+              <div className="mb-6 space-y-4">
+                {/* Job Description */}
+                {jobDescription && (
+                  <Card className="group hover:shadow-md transition-all duration-200 border-l-4 border-l-green-500">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex justify-between items-start">
+                          <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                            <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="z-[9999]"
+                            >
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={handleReplaceJobDescription}
+                              >
+                                <UploadIcon className="mr-2" />
+                                <span>Reemplazar</span>
+                              </DropdownMenuItem>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    className="text-red-500 cursor-pointer"
+                                    onSelect={(e) => e.preventDefault()}
+                                  >
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    <span>Eliminar</span>
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="z-[9999]">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      ¿Estás seguro de querer eliminar el Job
+                                      Description?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta acción no se puede deshacer. Se
+                                      eliminará el Job Description
+                                      permanentemente de esta vacante.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={handleDeleteJobDescription}
+                                      disabled={isDeleting}
+                                    >
+                                      {isDeleting
+                                        ? "Eliminando..."
+                                        : "Eliminar"}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="z-[9999]">
-                            <DropdownMenuItem
-                              className="cursor-pointer"
-                              onClick={() =>
-                                handleDownloadDocument(file.url, file.name)
-                              }
-                            >
-                              <Eye />
-                              <span>Ver</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="cursor-pointer"
-                              onClick={() => handleEditDocument(file.id)}
-                            >
-                              <Edit />
-                              <span>Editar</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-red-500 cursor-pointer"
-                              onClick={() => setOpenDeleteDialog(true)}
-                            >
-                              <Trash />
-                              <span>Eliminar</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
 
-                      <AlertDialog
-                        open={openDeleteDialog}
-                        onOpenChange={setOpenDeleteDialog}
-                      >
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              ¿Estás seguro de querer eliminar este documento?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta acción no se puede deshacer. Se eliminará el
-                              documento permanentemente.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteDocument(file.id)}
-                            >
-                              Eliminar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-
-                      <div>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <div className="font-medium text-lg mb-1 max-w-[130px] truncate">
-                              {file.name}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="text-sm">{file.name}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                        <div className="text-sm text-muted-foreground">
-                          Actualizado el {formatDate(file.updatedAt)}
+                        <div>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <div className="font-medium text-base mb-1 max-w-[200px] truncate">
+                                {jobDescription.name}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="z-[9999]">
+                              <p className="text-sm">{jobDescription.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <div className="text-sm text-muted-foreground">
+                            Actualizado el{" "}
+                            {formatDate(jobDescription.updatedAt)}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge
+                            variant="outline"
+                            className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+                          >
+                            JD •{" "}
+                            {getFileTypeFromMimeType(jobDescription.mimeType)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {formatFileSize(jobDescription.size)}
+                          </span>
+                        </div>
+
+                        <Button
                           variant="outline"
-                          className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+                          size="sm"
+                          onClick={() =>
+                            downloadDocument(
+                              jobDescription.url,
+                              jobDescription.name
+                            )
+                          }
                         >
-                          {getFileTypeFromMimeType(file.mimeType)}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {formatFileSize(file.size)}
-                        </span>
+                          <Download className="h-4 w-4 mr-2" />
+                          <span>Ver JD</span>
+                        </Button>
                       </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          handleDownloadDocument(file.url, file.name)
-                        }
-                      >
-                        <ExternalLink />
-                        <span>Visualizar</span>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-sm text-muted-foreground">
-                  No hay documentos extra asociados a esta vacante
-                </p>
+                {/* Perfiles Muestra */}
+                {perfilesMuestra &&
+                  perfilesMuestra.map((perfil: any) => (
+                    <Card
+                      key={perfil.id}
+                      className="group hover:shadow-md transition-all duration-200 border-l-4 border-l-purple-500"
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex flex-col gap-3">
+                          <div className="flex justify-between items-start">
+                            <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                              <FileText className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="end"
+                                className="z-[9999]"
+                              >
+                                <DropdownMenuItem
+                                  className="cursor-pointer"
+                                  onClick={() =>
+                                    downloadDocument(perfil.url, perfil.name)
+                                  }
+                                >
+                                  <FileSymlink className="mr-2" />
+                                  <span>Ver</span>
+                                </DropdownMenuItem>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem
+                                      className="text-red-500 cursor-pointer"
+                                      onSelect={(e) => e.preventDefault()}
+                                    >
+                                      <Trash className="h-4 w-4 mr-2" />
+                                      <span>Eliminar</span>
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent className="z-[9999]">
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        ¿Estás seguro de querer eliminar este
+                                        Perfil Muestra?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Esta acción no se puede deshacer. Se
+                                        eliminará el Perfil Muestra
+                                        permanentemente de esta vacante.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Cancelar
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() =>
+                                          handleDeletePerfilMuestra(perfil.id)
+                                        }
+                                        disabled={isDeleting}
+                                      >
+                                        {isDeleting
+                                          ? "Eliminando..."
+                                          : "Eliminar"}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+
+                          <div>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <div className="font-medium text-base mb-1 max-w-[200px] truncate">
+                                  {perfil.name}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="z-[9999]">
+                                <p className="text-sm">{perfil.name}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <div className="text-sm text-muted-foreground">
+                              Actualizado el {formatDate(perfil.updatedAt)}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge
+                              variant="outline"
+                              className="bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800"
+                            >
+                              PM • {getFileTypeFromMimeType(perfil.mimeType)}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {formatFileSize(perfil.size)}
+                            </span>
+                          </div>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              downloadDocument(perfil.url, perfil.name)
+                            }
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            <span>Ver Perfil</span>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
               </div>
             )}
+
+            {/* Documentos regulares */}
+            {documents && documents.length > 0
+              ? documents.map((file) => (
+                  <Card
+                    key={file.id}
+                    className="group hover:shadow-md transition-all duration-200"
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex justify-between items-start">
+                          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="z-[9999]"
+                            >
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() =>
+                                  downloadDocument(file.url, file.name)
+                                }
+                              >
+                                <FileSymlink className="mr-2" />
+                                <span>Ver</span>
+                              </DropdownMenuItem>
+                              <AlertDialog
+                                open={openDeleteDialog}
+                                onOpenChange={setOpenDeleteDialog}
+                              >
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    className="text-red-500 cursor-pointer"
+                                    onSelect={(e) => e.preventDefault()}
+                                  >
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    <span>Eliminar</span>
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="z-[9999]">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      ¿Estás seguro de querer eliminar este
+                                      documento?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta acción no se puede deshacer. Se
+                                      eliminará el documento permanentemente.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() =>
+                                        handleDeleteDocument(file.id)
+                                      }
+                                      disabled={isDeleting}
+                                    >
+                                      {isDeleting
+                                        ? "Eliminando..."
+                                        : "Eliminar"}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+
+                        <div>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <div className="font-medium text-base mb-1 max-w-[200px] truncate">
+                                {file.name}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-sm">{file.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <div className="text-sm text-muted-foreground">
+                            Actualizado el {formatDate(file.updatedAt)}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge
+                            variant="outline"
+                            className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+                          >
+                            {getFileTypeFromMimeType(file.mimeType)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {formatFileSize(file.size)}
+                          </span>
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadDocument(file.url, file.name)}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          <span>Descargar</span>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              : !jobDescription &&
+                (!perfilesMuestra || perfilesMuestra.length === 0) && (
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-sm text-muted-foreground">
+                      No hay documentos asociados a esta vacante
+                    </p>
+                  </div>
+                )}
           </div>
         </SheetContent>
       </Sheet>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="flex flex-col gap-0 overflow-y-visible p-0 sm:max-w-lg [&>button:last-child]:top-3.5">
           <DialogHeader className="contents space-y-0 text-left">
             <DialogTitle className="border-b px-6 py-4 text-base">
@@ -410,7 +860,7 @@ export const DocumentsSection = ({
                       Arrastra y suelta o haz clic para subir
                     </div>
                     <div className="text-muted-foreground/80 text-xs mt-1">
-                      PDF, DOCX, TXT(máx. 30MB)
+                      PDF, DOCX, TXT, XLSX, PPTX (máx. 20MB)
                     </div>
                   </div>
                 ) : (
@@ -470,16 +920,12 @@ export const DocumentsSection = ({
           </div>
           <DialogFooter className="border-t px-6 py-4">
             <DialogClose asChild>
-              <Button type="button" variant="outline" disabled={isSubmitting}>
+              <Button type="button" variant="outline" disabled={isUploading}>
                 Cancelar
               </Button>
             </DialogClose>
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Subiendo..." : "Subir documento"}
+            <Button type="button" onClick={handleSubmit} disabled={isUploading}>
+              {isUploading ? "Subiendo..." : "Subir documento"}
             </Button>
           </DialogFooter>
         </DialogContent>

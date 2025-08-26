@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { createLeadsColumns } from "../list/leads/leadsColumns";
 import { CommercialTable } from "./table/CommercialTable";
 import { CreateLeadForm } from "../list/leads/components/CreateLeadForm";

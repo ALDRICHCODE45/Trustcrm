@@ -460,37 +460,6 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
       </div>
     ),
   },
-
-  // {
-  //   accessorKey: "checklist",
-  //   header: "Checklist",
-  //   cell: ({ row }) => (
-  //     <a
-  //       href={row.original.checklist}
-  //       target="_blank"
-  //       rel="noopener noreferrer"
-  //     >
-  //       <Button variant="outline">
-  //         <BookCheck />
-  //       </Button>
-  //     </a>
-  //   ),
-  // },
-  // {
-  //   accessorKey: "muestraPerfil",
-  //   header: "Job Description",
-  //   cell: ({ row }) => (
-  //     <a
-  //       href={row.original.muestraPerfil}
-  //       target="_blank"
-  //       rel="noopener noreferrer"
-  //     >
-  //       <Button variant="outline">
-  //         <UserPen />
-  //       </Button>
-  //     </a>
-  //   ),
-  // },
   {
     accessorKey: "ternaFinal",
     header: "Candidatos",
