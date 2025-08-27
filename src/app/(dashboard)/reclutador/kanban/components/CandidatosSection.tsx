@@ -24,6 +24,7 @@ import {
   FileUser,
   FileCheck2,
   FolderCheck,
+  FolderX,
 } from "lucide-react";
 import { MoreVertical } from "lucide-react";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
@@ -86,6 +87,8 @@ export const CandidatesSectionReclutador = ({
     fetchCandidates,
     validateCandidate,
     desValidateCandidate,
+    validarTerna,
+    unvalidateTerna,
   } = useCandidates(vacancyId);
 
   const {
@@ -315,6 +318,94 @@ export const CandidatesSectionReclutador = ({
     }
   };
 
+  const handleValidateTerna = async () => {
+    try {
+      const response = await validarTerna(vacancyId);
+      if (!response.ok) {
+        toast.custom((t) => {
+          return (
+            <ToastCustomMessage
+              title="Error al validar la terna"
+              message={response.message || "Error al validar la terna"}
+              type="error"
+              onClick={() => toast.dismiss(t)}
+            />
+          );
+        });
+        return;
+      }
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Terna validada correctamente"
+            message="La terna ha sido validada correctamente"
+            type="success"
+            onClick={() => toast.dismiss(t)}
+          />
+        );
+      });
+      fetchVacancyDetails();
+    } catch (error) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error al validar la terna"
+            message={
+              error instanceof Error ? error.message : "Error desconocido"
+            }
+            type="error"
+            onClick={() => toast.dismiss(t)}
+          />
+        );
+      });
+    }
+  };
+
+  const handleUnvalidateTerna = async () => {
+    try {
+      const response = await unvalidateTerna(vacancyId);
+
+      if (!response.ok) {
+        toast.custom((t) => {
+          return (
+            <ToastCustomMessage
+              title="Error al desvalidar la terna"
+              message={response.message || "Error al desvalidar la terna"}
+              type="error"
+              onClick={() => toast.dismiss(t)}
+            />
+          );
+        });
+        return;
+      }
+
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Terna desvalidada correctamente"
+            message="La terna ha sido desvalidada correctamente"
+            type="success"
+            onClick={() => toast.dismiss(t)}
+          />
+        );
+      });
+      fetchVacancyDetails();
+    } catch (error) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error al desvalidar la terna"
+            message={
+              error instanceof Error ? error.message : "Error desconocido"
+            }
+            type="error"
+            onClick={() => toast.dismiss(t)}
+          />
+        );
+      });
+    }
+  };
+
   // Mostrar estado de carga
   if (isLoading || isLoadingVacancyDetails) {
     return (
@@ -368,12 +459,32 @@ export const CandidatesSectionReclutador = ({
               <Badge variant="outline" className="px-3 py-1 bg-background">
                 {candidates.length} candidato(s)
               </Badge>
-              {user_logged.role === Role.Admin && (
-                <Button size="sm" variant="outline" className="gap-1">
-                  <FolderCheck className="mr-1 text-gray-700" />
-                  Validar terna
-                </Button>
-              )}
+              {user_logged.role === Role.Admin &&
+                vacancyDetails?.fechaEntregaTerna === null && (
+                  <Button
+                    onClick={() => handleValidateTerna()}
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                  >
+                    <FolderCheck className="mr-1 text-gray-700" />
+                    Validar terna
+                  </Button>
+                )}
+
+              {user_logged.role === Role.Admin &&
+                vacancyDetails?.fechaEntregaTerna !== null && (
+                  <Button
+                    onClick={() => handleUnvalidateTerna()}
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                  >
+                    <FolderX className="mr-1 text-gray-700" />
+                    Desvalidar terna
+                  </Button>
+                )}
+
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm" variant="outline" className="gap-1">

@@ -10,6 +10,8 @@ import {
   deseleccionarCandidato,
   validateCandidateAction,
   unValidateCandidate,
+  validateTernaToVacancy,
+  unvalidateTernaAction,
 } from "@/actions/vacantes/actions";
 import { PersonWithRelations } from "@/app/(dashboard)/list/reclutamiento/components/FinalTernaSheet";
 import { CreateCandidateFormData } from "@/zod/createCandidateSchema";
@@ -227,6 +229,31 @@ export const useCandidates = (vacancyId?: string) => {
       throw new Error(errorMessage);
     }
   };
+
+  const validarTerna = async (vacancyId: string) => {
+    try {
+      const response = await validateTernaToVacancy(vacancyId);
+      if (!response.ok) {
+        throw new Error(response.message || "Error al validar la terna");
+      }
+      return response;
+    } catch (e) {
+      throw new Error("Error al validar la terna");
+    }
+  };
+
+  const unvalidateTerna = async (vacancyId: string) => {
+    try {
+      const response = await unvalidateTernaAction(vacancyId);
+      if (!response.ok) {
+        throw new Error(response.message || "Error al desvalidar la terna");
+      }
+      return response;
+    } catch (e) {
+      throw new Error("Error al desvalidar la terna");
+    }
+  };
+
   // Auto-fetch candidates when vacancyId changes
   useEffect(() => {
     fetchCandidates();
@@ -248,5 +275,7 @@ export const useCandidates = (vacancyId?: string) => {
     deselectCandidate,
     validateCandidate,
     desValidateCandidate,
+    validarTerna,
+    unvalidateTerna,
   };
 };

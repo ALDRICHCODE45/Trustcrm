@@ -393,14 +393,14 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
     accessorFn: (row) => row.tipo,
   },
   {
-    accessorKey: "fechaUltimaTerna",
+    accessorKey: "fechaEntregaTerna",
     header: ({ column }) => (
       <SortableHeader column={column} title="Fecha Terna" />
     ),
     cell: ({ row }) => {
       return (
         <ChangeDateComponent
-          fecha={row.original.fechaUltimaTerna}
+          fecha={row.original.fechaEntregaTerna}
           onFechaChange={(nuevaFecha) => {
             // Aquí implementarías la lógica para actualizar la fecha en tu fuente de datos
             console.log("Fecha actualizada:", nuevaFecha);

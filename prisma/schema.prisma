@@ -224,7 +224,7 @@ model Vacancy {
   Comments              Comment[]
   prioridad             VacancyPrioridad @default(Normal)
   fechaEntrega          DateTime?
-  fechaUltimaTerna      DateTime?
+  fechaEntregaTerna     DateTime?
   duracionTotal         Int?
   fechaOferta           DateTime?
   candidatoContratado   Person?          @relation("VacancyCandidatoContratado", fields: [candidatoContratadoId], references: [id])

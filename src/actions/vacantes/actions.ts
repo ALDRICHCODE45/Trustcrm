@@ -743,3 +743,57 @@ export const validateCandidateAction = async (candidateId: string) => {
     };
   }
 };
+
+export const validateTernaToVacancy = async (vacancyId: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    //actualizar la vacante para validar la terna
+    await prisma.vacancy.update({
+      where: { id: vacancyId },
+      data: { fechaEntregaTerna: new Date() },
+    });
+
+    revalidatePath("/reclutador");
+    revalidatePath("/reclutador/kanban");
+    return {
+      ok: true,
+      message: "Terna validada correctamente",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Error al validar la terna",
+    };
+  }
+};
+
+export const unvalidateTernaAction = async (vacancyId: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    //actualizar la vacante para desvalidar la terna
+    await prisma.vacancy.update({
+      where: { id: vacancyId },
+      data: { fechaEntregaTerna: null },
+    });
+
+    revalidatePath("/reclutador");
+    revalidatePath("/reclutador/kanban");
+    return {
+      ok: true,
+      message: "Terna desvalidada correctamente",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Error al desvalidar la terna",
+    };
+  }
+};
