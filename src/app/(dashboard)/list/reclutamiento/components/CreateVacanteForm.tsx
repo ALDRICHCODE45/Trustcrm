@@ -744,7 +744,7 @@ const BasicInformationTab = ({
 
             <SheetPortal>
               <SheetOverlay className="z-[999]" />
-              <VacancyDetails form={form} />
+              <VacancyDetails form={form} user_logged={user_logged} />
             </SheetPortal>
           </Sheet>
         </div>

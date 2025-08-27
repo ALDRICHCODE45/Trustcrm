@@ -17,12 +17,18 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Role } from "@prisma/client";
 
 interface Props {
   form: any; // FormReturn from react-hook-form
+  user_logged: {
+    id: string;
+    name: string;
+    role: string;
+  };
 }
 
-export const VacancyDetails = ({ form }: Props) => {
+export const VacancyDetails = ({ form, user_logged }: Props) => {
   return (
     <SheetContent className="min-w-[35vw] z-[9999] min-h-[500px] overflow-y-auto">
       <SheetHeader>
@@ -57,6 +63,81 @@ export const VacancyDetails = ({ form }: Props) => {
               </FormItem>
             )}
           />
+          {user_logged.role === Role.Admin && (
+            <>
+              <FormField
+                control={form.control}
+                name="fee"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fee</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Ej: 1.5%"
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(
+                            value === "" ? undefined : parseFloat(value)
+                          );
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="monto"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Monto</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Ej: 10000"
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(
+                            value === "" ? undefined : Number(value)
+                          );
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="valorFactura"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor factura</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Ej: 10000"
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(
+                            value === "" ? undefined : Number(value)
+                          );
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
 
           <FormField
             control={form.control}

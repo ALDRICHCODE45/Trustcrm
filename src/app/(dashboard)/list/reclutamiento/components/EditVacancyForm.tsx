@@ -43,7 +43,7 @@ import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { EditVacancyDetailt } from "../VacancyFormComponents/CreateVacancyComponents/EditVacancyComponent";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { Contact, SquarePen } from "lucide-react";
+import { Contact, Loader2, SquarePen } from "lucide-react";
 import {
   Sheet,
   SheetOverlay,
@@ -51,10 +51,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ValidationErrorToast } from "@/components/ui/ValidationErrorToast";
+import { useUsers } from "@/hooks/users/use-users";
 
 interface Props {
   open: boolean;
   setOpen: (open: boolean) => void;
+
   vacancy: VacancyWithRelations;
 }
 
@@ -110,6 +112,8 @@ type VacancyFormData = z.infer<typeof vacancySchema>;
 export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
   const [loading, setLoading] = useState(false);
 
+  const { loggedUser, fetchLoggedUser } = useUsers();
+
   const form = useForm<VacancyFormData>({
     resolver: zodResolver(vacancySchema),
     defaultValues: {
@@ -137,6 +141,10 @@ export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
       comentarios: vacancy.comentarios || undefined,
     },
   });
+
+  useEffect(() => {
+    fetchLoggedUser();
+  }, []);
 
   // Resetear el formulario cuando cambie la vacante
   useEffect(() => {
@@ -167,6 +175,17 @@ export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
       });
     }
   }, [vacancy, open, form]);
+
+  if (!loggedUser) {
+    return (
+      <div className="flex justify-center items-center h-full flex-col gap-4">
+        <Loader2 className="animate-spin" size={24} />
+        <p className="text-sm text-muted-foreground">
+          Cargando usuario logeado...
+        </p>
+      </div>
+    );
+  }
 
   const onSubmit = async (data: VacancyFormData) => {
     setLoading(true);
@@ -489,7 +508,11 @@ export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
                   </SheetTrigger>
                   <SheetPortal>
                     <SheetOverlay className="z-[9]" />
-                    <EditVacancyDetailt form={form} vacante={vacancy} />
+                    <EditVacancyDetailt
+                      form={form}
+                      vacante={vacancy}
+                      user_logged={loggedUser}
+                    />
                   </SheetPortal>
                 </Sheet>
               </Card>

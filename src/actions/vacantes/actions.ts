@@ -140,6 +140,9 @@ export const updateVacancy = async (data: UpdateVacancyFormData) => {
         psicometria: data.psicometria || undefined,
         ubicacion: data.ubicacion || undefined,
         comentarios: data.comentarios || undefined,
+        fee: data.fee || undefined,
+        monto: data.monto || undefined,
+        valorFactura: data.valorFactura || undefined,
       },
       include: {
         reclutador: true,

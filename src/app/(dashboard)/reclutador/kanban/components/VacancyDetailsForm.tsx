@@ -13,14 +13,15 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { updateVacancy } from "@/actions/vacantes/actions";
 import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { VacancyWithRelations } from "../../components/ReclutadorColumns";
 import { Separator } from "@/components/ui/separator";
-import { Save, X } from "lucide-react";
+import { Loader2, Save, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useUsers } from "@/hooks/users/use-users";
 
 // Esquema de validación para los detalles de la vacante
 const vacancyDetailsSchema = z.object({
@@ -35,6 +36,12 @@ const vacancyDetailsSchema = z.object({
   salario: z
     .number()
     .min(0, "El salario debe ser mayor o igual a 0")
+    .optional(),
+  fee: z.number().min(0, "El fee debe ser mayor o igual a 0").optional(),
+  monto: z.number().min(0, "El monto debe ser mayor o igual a 0").optional(),
+  valorFactura: z
+    .number()
+    .min(0, "El valor factura debe ser mayor o igual a 0")
     .optional(),
 });
 
@@ -67,14 +74,55 @@ export const VacancyDetailsForm = ({
       ubicacion: vacante.ubicacion || "",
       comentarios: vacante.comentarios || "",
       salario: vacante.salario || undefined,
+      fee: vacante.fee || undefined,
+      monto: vacante.monto || undefined,
+      valorFactura: vacante.valorFactura || undefined,
     },
   });
 
-  const details = [
+  const { loggedUser, fetchLoggedUser } = useUsers();
+
+  useEffect(() => {
+    fetchLoggedUser();
+  }, []);
+
+  if (!loggedUser) {
+    return (
+      <div className="flex justify-center items-center h-full flex-col gap-4">
+        <Loader2 className="animate-spin" size={24} />
+        <p className="text-sm text-muted-foreground">
+          Cargando usuario logeado...
+        </p>
+      </div>
+    );
+  }
+
+  // Función helper para verificar si el usuario es reclutador
+  const isRecruiter = loggedUser.role === "reclutador";
+
+  // Campos que NO pueden ver los reclutadores (solo roles superiores)
+  const restrictedForRecruiters = ["fee", "monto", "valorFactura"];
+
+  const allDetails = [
     {
       label: "Salario (bruto)",
       name: "salario" as const,
       value: vacante.salario || "No especificado",
+    },
+    {
+      label: "Fee",
+      name: "fee" as const,
+      value: vacante.fee || "No especificado",
+    },
+    {
+      label: "Monto",
+      name: "monto" as const,
+      value: vacante.monto || "No especificado",
+    },
+    {
+      label: "Valor factura",
+      name: "valorFactura" as const,
+      value: vacante.valorFactura || "No especificado",
     },
     {
       label: "Prestaciones",
@@ -113,6 +161,16 @@ export const VacancyDetailsForm = ({
       value: vacante.comentarios,
     },
   ];
+
+  // Filtrar los detalles basado en el rol del usuario
+  const details = allDetails.filter((detail) => {
+    // Si el usuario es reclutador, ocultar los campos restringidos
+    if (isRecruiter) {
+      return !restrictedForRecruiters.includes(detail.name);
+    }
+    // Si no es reclutador (GL, Admin, MK), mostrar todos los campos
+    return true;
+  });
 
   const onSubmit = async (data: VacancyDetailsFormData) => {
     setLoading(true);
@@ -198,17 +256,27 @@ export const VacancyDetailsForm = ({
                                   autoComplete="off"
                                   {...field}
                                 />
-                              ) : detail.name === "salario" ? (
+                              ) : detail.name === "salario" ||
+                                detail.name === "fee" ||
+                                detail.name === "valorFactura" ||
+                                detail.name === "monto" ? (
                                 <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
                                   placeholder={`Ingresa ${detail.label.toLowerCase()}`}
                                   className="w-full"
                                   autoComplete="off"
                                   value={field.value || ""}
                                   onChange={(e) => {
                                     const value = e.target.value;
-                                    field.onChange(
-                                      value === "" ? 0 : Number(value)
-                                    );
+                                    // Permitir valores vacíos y números decimales mientras se escribe
+                                    if (value === "") {
+                                      field.onChange(0);
+                                    } else if (!isNaN(parseFloat(value))) {
+                                      field.onChange(parseFloat(value));
+                                    }
+                                    // Si el valor no es un número válido, no hacer nada (mantener el valor anterior)
                                   }}
                                 />
                               ) : (
