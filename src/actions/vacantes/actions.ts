@@ -9,6 +9,7 @@ import {
   User,
   Role,
 } from "@prisma/client";
+import { differenceInCalendarDays } from "date-fns";
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
 
@@ -289,6 +290,15 @@ export const createVacancy = async (vacancy: VacancyFormData) => {
   }
 };
 
+const calculateDaysFromAssignment = (fechaAsignacion: Date): number => {
+  // Usar differenceInCalendarDays para días calendario reales
+  const diffDays = differenceInCalendarDays(
+    new Date(),
+    new Date(fechaAsignacion)
+  );
+  return Math.max(0, diffDays); // Nunca menos de 0 días transcurridos
+};
+
 export const updateVacancyStatus = async (
   vacancyId: string,
   status: VacancyEstado
@@ -380,6 +390,17 @@ export const updateVacancyStatus = async (
       where: { id: vacancyId },
       data: { estado: status },
     });
+
+    // si el estado es Placement, calcular el tiempo transcurrido
+    if (status === VacancyEstado.Placement) {
+      const daysTranscurred = calculateDaysFromAssignment(
+        vacancy.fechaAsignacion
+      );
+      await prisma.vacancy.update({
+        where: { id: vacancyId },
+        data: { tiempoTranscurrido: daysTranscurred },
+      });
+    }
 
     revalidatePath("/list/reclutamiento");
     revalidatePath("/reclutador");

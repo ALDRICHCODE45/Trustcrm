@@ -80,7 +80,6 @@ export const getPendingSpecialNotifications = async (userId: string) => {
       notifications,
     };
   } catch (error) {
-    console.error("Error fetching pending special notifications:", error);
     return {
       ok: false,
       message: "Error al obtener las notificaciones especiales",

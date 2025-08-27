@@ -35,27 +35,23 @@ export function useSpecialNotifications(
 
     try {
       setIsLoading(true);
-      console.log("Fetching special notifications for userId:", userId);
 
       const response = await fetch(
         `/api/special-notifications?userId=${userId}`
       );
       const data = await response.json();
 
-      console.log("API Response:", { status: response.status, data });
-
       if (response.ok) {
-        console.log("Notificaciones especiales obtenidas:", data.notifications);
         setNotifications(data.notifications);
         // Resetear el índice si hay nuevas notificaciones
         if (data.notifications.length > 0) {
           setCurrentNotificationIndex(0);
         }
       } else {
-        console.error("Error fetching special notifications:", data);
+        console.error("Error fetching special notifications:");
       }
     } catch (error) {
-      console.error("Error fetching special notifications:", error);
+      console.error("Error fetching special notifications:");
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +79,7 @@ export function useSpecialNotifications(
         toast.error("Error al procesar la notificación");
       }
     } catch (error) {
-      console.error("Error marking notification as shown:", error);
+      console.error("Error marking notification as shown:");
       toast.error("Error al procesar la notificación");
     } finally {
       setIsUpdating(false);
@@ -112,7 +108,7 @@ export function useSpecialNotifications(
         toast.error("Error al descartar la notificación");
       }
     } catch (error) {
-      console.error("Error dismissing notification:", error);
+      console.error("Error dismissing notification:");
       toast.error("Error al descartar la notificación");
     } finally {
       setIsUpdating(false);

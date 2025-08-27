@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { DocumentsSection } from "./DocumentsSection";
 import { CandidatoContratadoDrawer } from "./CandidatoContratadoDrawer";
 import { CandidatesTableSheet } from "../../list/reclutamiento/components/CandidatesTableSheet";
+import { calculateDaysFromAssignment } from "./kanbanReclutadorBoard";
 
 export type VacancyWithRelations = Prisma.VacancyGetPayload<{
   include: {
@@ -293,20 +294,29 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
   {
     id: "tiempoTranscurrido",
     header: ({ column }) => (
-      <SortableHeader column={column} title="Tiempo trranscurrido" />
+      <SortableHeader column={column} title="Tiempo transcurrido" />
     ),
+
     cell: ({ row }) => {
-      const tiempo = row.original.tiempoTranscurrido;
+      const fechaAsignacion = row.original.fechaAsignacion;
+      const tiempoTranscurrido = row.original.tiempoTranscurrido;
+
+      // si no hay tiempo trasncurrido calcularlo
+      if (!tiempoTranscurrido) {
+        const daysTranscurred = calculateDaysFromAssignment(fechaAsignacion);
+        return (
+          <div className="flex items-center justify-center">
+            <Button variant="outline" className="w-full">
+              <span>{daysTranscurred} días</span>
+            </Button>
+          </div>
+        );
+      }
+
       return (
         <div className="flex items-center justify-center">
           <Button variant="outline" className="w-full">
-            <p>
-              {tiempo ? (
-                <span>{tiempo} dias</span>
-              ) : (
-                <span className="text-red-500">N/A</span>
-              )}
-            </p>
+            <span>{tiempoTranscurrido} días</span>
           </Button>
         </div>
       );
@@ -484,54 +494,54 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
       />
     ),
   },
-  {
-    accessorKey: "duracionTotal",
+  // {
+  //   accessorKey: "duracionTotal",
 
-    header: ({ column }) => (
-      <SortableHeader column={column} title="Duración Total" />
-    ),
-    cell: ({ row }) => {
-      const fechaAsignacion = row.original.fechaAsignacion;
-      const estado = row.original.estado;
-      const fechaOferta = row.original.fechaOferta;
+  //   header: ({ column }) => (
+  //     <SortableHeader column={column} title="Duración Total" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const fechaAsignacion = row.original.fechaAsignacion;
+  //     const estado = row.original.estado;
+  //     const fechaOferta = row.original.fechaOferta;
 
-      if (!fechaAsignacion) {
-        return (
-          <div className="flex items-center justify-center">
-            <Button variant="outline" className="w-full">
-              <p>
-                <span className="text-red-500">N/A</span>
-              </p>
-            </Button>
-          </div>
-        );
-      }
+  //     if (!fechaAsignacion) {
+  //       return (
+  //         <div className="flex items-center justify-center">
+  //           <Button variant="outline" className="w-full">
+  //             <p>
+  //               <span className="text-red-500">N/A</span>
+  //             </p>
+  //           </Button>
+  //         </div>
+  //       );
+  //     }
 
-      // Calcular la fecha final según el estado
-      let fechaFinal: Date;
-      if (estado === "Placement" && fechaOferta) {
-        fechaFinal = fechaOferta;
-      } else {
-        fechaFinal = new Date();
-      }
+  //     // Calcular la fecha final según el estado
+  //     let fechaFinal: Date;
+  //     if (estado === "Placement" && fechaOferta) {
+  //       fechaFinal = fechaOferta;
+  //     } else {
+  //       fechaFinal = new Date();
+  //     }
 
-      // Calcular la diferencia en días
-      const tiempoTranscurrido = Math.floor(
-        (fechaFinal.getTime() - fechaAsignacion.getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
+  //     // Calcular la diferencia en días
+  //     const tiempoTranscurrido = Math.floor(
+  //       (fechaFinal.getTime() - fechaAsignacion.getTime()) /
+  //         (1000 * 60 * 60 * 24)
+  //     );
 
-      return (
-        <div className="flex items-center justify-center">
-          <Button variant="outline" className="w-full">
-            <p>
-              <span>{tiempoTranscurrido} días</span>
-            </p>
-          </Button>
-        </div>
-      );
-    },
-  },
+  //     return (
+  //       <div className="flex items-center justify-center">
+  //         <Button variant="outline" className="w-full">
+  //           <p>
+  //             <span>{tiempoTranscurrido} días</span>
+  //           </p>
+  //         </Button>
+  //       </div>
+  //     );
+  //   },
+  // },
   {
     id: "oficina",
     accessorKey: "oficina",
