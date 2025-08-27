@@ -102,6 +102,13 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
     header: ({ column }) => (
       <SortableHeader column={column} title="Reclutador" />
     ),
+    filterFn: (row, id, value) => {
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return true;
+      }
+      const cellValue = row.getValue(id);
+      return value.includes(cellValue);
+    },
     cell: ({ row }) => {
       return <RecruiterDropDown row={row} />;
     },
@@ -152,7 +159,13 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
     id: "estado",
     accessorKey: "estado",
     header: ({ column }) => <SortableHeader column={column} title="Estado" />,
-
+    filterFn: (row, id, value) => {
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return true;
+      }
+      const cellValue = row.getValue(id);
+      return value.includes(cellValue);
+    },
     cell: ({ row }) => {
       //return <StatusDropdown row={row} />;
       return (
