@@ -38,6 +38,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 
 export default function CreateProfile() {
   const [open, setOpen] = useState(false);
@@ -66,13 +67,29 @@ export default function CreateProfile() {
     if (!lastResult) return;
 
     if (lastResult.status === "error" && lastResult.error) {
-      toast.error("Error", { description: "Ocurrio un error" });
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error"
+          message="Ocurrio un error"
+          type="error"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
     }
 
     if (lastResult.status === "success" && !lastResult.error) {
-      toast.success("Operacion Exitosa", {
-        description: "Usuario creado correctamente",
-      });
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Operacion Exitosa"
+          message="Usuario creado correctamente"
+          type="success"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
     }
   }, [lastResult]);
 
@@ -296,8 +313,9 @@ export default function CreateProfile() {
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent side="top" className="z-[999999] w-full">
+                  <PopoverContent className="w-full">
                     <Calendar
+                      captionLayout="dropdown"
                       mode="single"
                       selected={selectedDate}
                       onSelect={setSelectedDate}
