@@ -9,6 +9,7 @@ import {
   seleccionarCandidato,
   deseleccionarCandidato,
   validateCandidateAction,
+  unValidateCandidate,
 } from "@/actions/vacantes/actions";
 import { PersonWithRelations } from "@/app/(dashboard)/list/reclutamiento/components/FinalTernaSheet";
 import { CreateCandidateFormData } from "@/zod/createCandidateSchema";
@@ -213,6 +214,19 @@ export const useCandidates = (vacancyId?: string) => {
     }
   };
 
+  const desValidateCandidate = async (candidateId: string) => {
+    try {
+      const response = await unValidateCandidate(candidateId);
+      if (!response.ok) {
+        throw new Error(response.message || "Error al desvalidar candidato");
+      }
+      return response;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Error al desvalidar candidato";
+      throw new Error(errorMessage);
+    }
+  };
   // Auto-fetch candidates when vacancyId changes
   useEffect(() => {
     fetchCandidates();
@@ -233,5 +247,6 @@ export const useCandidates = (vacancyId?: string) => {
     selectCandidate,
     deselectCandidate,
     validateCandidate,
+    desValidateCandidate,
   };
 };

@@ -23,6 +23,7 @@ import {
   Trash2,
   FileUser,
   FileCheck2,
+  FolderCheck,
 } from "lucide-react";
 import { MoreVertical } from "lucide-react";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
@@ -84,6 +85,7 @@ export const CandidatesSectionReclutador = ({
     deselectCandidate,
     fetchCandidates,
     validateCandidate,
+    desValidateCandidate,
   } = useCandidates(vacancyId);
 
   const {
@@ -227,9 +229,63 @@ export const CandidatesSectionReclutador = ({
     }
   };
 
+  const handleDesvalidateCandidate = async (candidateId: string) => {
+    try {
+      const response = await desValidateCandidate(candidateId);
+      if (!response.ok) {
+        toast.custom((t) => {
+          return (
+            <ToastCustomMessage
+              title="Error al desvalidar candidato"
+              message={response.message || "Error al desvalidar candidato"}
+              type="error"
+              onClick={() => toast.dismiss(t)}
+            />
+          );
+        });
+        return;
+      }
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Candidato desvalidado correctamente"
+            message="El candidato ha sido desvalidado correctamente"
+            type="success"
+            onClick={() => toast.dismiss(t)}
+          />
+        );
+      });
+      fetchCandidates();
+    } catch (e) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error al desvalidar candidato"
+            message={"Error desconocido"}
+            type="error"
+            onClick={() => toast.dismiss(t)}
+          />
+        );
+      });
+    }
+  };
+
   const handleValidateCandidate = async (candidateId: string) => {
     try {
-      await validateCandidate(candidateId);
+      const response = await validateCandidate(candidateId);
+      if (!response.ok) {
+        toast.custom((t) => {
+          return (
+            <ToastCustomMessage
+              title="Error al validar candidato"
+              message={response.message || "Error al validar candidato"}
+              type="error"
+              onClick={() => toast.dismiss(t)}
+            />
+          );
+        });
+        return;
+      }
       toast.custom((t) => {
         return (
           <ToastCustomMessage
@@ -240,6 +296,7 @@ export const CandidatesSectionReclutador = ({
           />
         );
       });
+      fetchCandidates();
     } catch (error) {
       toast.custom((t) => {
         return (
@@ -311,10 +368,16 @@ export const CandidatesSectionReclutador = ({
               <Badge variant="outline" className="px-3 py-1 bg-background">
                 {candidates.length} candidato(s)
               </Badge>
+              {user_logged.role === Role.Admin && (
+                <Button size="sm" variant="outline" className="gap-1">
+                  <FolderCheck className="mr-1 text-gray-700" />
+                  Validar terna
+                </Button>
+              )}
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm" variant="outline" className="gap-1">
-                    <Plus size={16} />
+                    <Plus size={16} className="text-gray-700" />
                     <span>Agregar</span>
                   </Button>
                 </DialogTrigger>
@@ -495,46 +558,85 @@ export const CandidatesSectionReclutador = ({
                           }}
                         />
                         <div className="flex items-center gap-3">
-                          {user_logged.role === Role.Admin && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="mt-4"
-                                >
-                                  <FileCheck2 className="h-4 w-4 mr-2 text-green-500" />
-                                  {candidato.IsCandidateValidated
-                                    ? "Candidato validado"
-                                    : "Validar candidato"}
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent className="z-[9999]">
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Validar candidato
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Esta acción permitirá que la vacante pueda
-                                    actualizarce.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>
-                                    Cancelar
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    onClick={() =>
-                                      handleValidateCandidate(candidato.id)
-                                    }
+                          {user_logged.role === Role.Admin &&
+                            !candidato.IsCandidateValidated && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-4"
                                   >
+                                    <UserCheck />
                                     Validar
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="z-[9999]">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Validar candidato
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta acción permitirá que la vacante pueda
+                                      actualizarce.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      onClick={() =>
+                                        handleValidateCandidate(candidato.id)
+                                      }
+                                    >
+                                      Validar
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          {user_logged.role === Role.Admin &&
+                            candidato.IsCandidateValidated && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-4"
+                                  >
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Validado
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="z-[9999]">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Deshacer validación
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta acción deshacerá la validación del
+                                      candidato.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      onClick={() =>
+                                        handleDesvalidateCandidate(candidato.id)
+                                      }
+                                    >
+                                      Deshacer validación
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+
                           <CandidateSheetDetails candidate={candidato} />
                         </div>
                       </div>

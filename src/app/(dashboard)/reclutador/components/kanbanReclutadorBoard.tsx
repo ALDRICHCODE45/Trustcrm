@@ -404,9 +404,11 @@ const DraggableVacanteCard: React.FC<VacanteCardProps> = ({
 
           {/* Barra de progreso visual */}
           {(() => {
-            const daysTranscurred = calculateDaysFromAssignment(
-              vacante.fechaAsignacion
-            );
+            const valueToUse = vacante.tiempoTranscurrido
+              ? vacante.tiempoTranscurrido
+              : calculateDaysFromAssignment(vacante.fechaAsignacion);
+
+            const daysTranscurred = valueToUse;
             const daysRemaining = calculateDaysToDelivery(vacante.fechaEntrega);
             const progressPercentage = getProgressPercentage(
               vacante.fechaAsignacion,

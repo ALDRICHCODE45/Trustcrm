@@ -688,6 +688,34 @@ export const getVacancies = async (): Promise<{
   }
 };
 
+export const unValidateCandidate = async (candidateId: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    //actualizar el candidato para desvalidarlo
+    await prisma.person.update({
+      where: { id: candidateId },
+      data: { IsCandidateValidated: false },
+    });
+
+    revalidatePath("/reclutador");
+    revalidatePath("/reclutador/kanban");
+
+    return {
+      ok: true,
+      message: "Candidato desvalidado correctamente",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Error al desvalidar el candidato",
+    };
+  }
+};
+
 export const validateCandidateAction = async (candidateId: string) => {
   try {
     const session = await auth();
