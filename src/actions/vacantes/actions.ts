@@ -8,10 +8,12 @@ import {
   VacancyPrioridad,
   User,
   Role,
+  TaskStatus,
 } from "@prisma/client";
 import { differenceInCalendarDays } from "date-fns";
 import { revalidatePath } from "next/cache";
 import * as z from "zod";
+import { createTask } from "../tasks/actions";
 
 //Schema para actualizar vacante optimizado
 const updateVacancySchema = z.object({
@@ -200,6 +202,21 @@ export const updateVacancy = async (data: UpdateVacancyFormData) => {
   }
 };
 
+const tasksOnCreationVacancy = [
+  {
+    title: "Subir Job description",
+    description: "Subir el job description de la vacante",
+  },
+  {
+    title: "Subir Perfil muestra",
+    description: "Subir el perfil muestra de la vacante",
+  },
+  {
+    title: "Realizar el checklist",
+    description: "Realizar el checklist de la vacante",
+  },
+];
+
 export const createVacancy = async (vacancy: VacancyFormData) => {
   try {
     if (!vacancy.reclutadorId) {
@@ -271,6 +288,9 @@ export const createVacancy = async (vacancy: VacancyFormData) => {
         ubicacion: vacancy.ubicacion,
         comentarios: vacancy.comentarios,
       },
+      include: {
+        reclutador: true,
+      },
     });
 
     // Crear el registro inicial en el historial de estados
@@ -295,6 +315,38 @@ export const createVacancy = async (vacancy: VacancyFormData) => {
             vacancyId: newVacancy.id,
           },
         });
+      }
+    }
+
+    //si el estado es QuickMeeting, crear tres tareas: Subir Job description, Subir Perfil muestra y Realizar el checklist
+    //obtener todos los administradores
+    const admins = await prisma.user.findMany({
+      where: {
+        role: Role.Admin,
+      },
+    });
+
+    const notificationRecipients = admins.map((admin) => admin.id);
+    //si el estado es QuickMeeting, crear tres tareas: Subir Job description, Subir Perfil muestra y Realizar el checklist
+    if (estadoInicial === VacancyEstado.QuickMeeting) {
+      for (const task of tasksOnCreationVacancy) {
+        const formData = new FormData();
+        formData.append("title", task.title);
+        formData.append("description", task.description);
+        formData.append("userId", vacancy.reclutadorId);
+        formData.append("status", TaskStatus.Pending);
+        formData.append(
+          "dueDate",
+          new Date(new Date().setDate(new Date().getDate() + 1)).toISOString()
+        );
+        formData.append("vacancyId", newVacancy.id);
+        formData.append(
+          "notificationRecipients",
+          notificationRecipients.join(",")
+        );
+        formData.append("notifyOnComplete", "true");
+        const tarea = await createTask(formData);
+        console.log("Tarea Creada", tarea);
       }
     }
 

@@ -100,6 +100,7 @@ export const createTask = async (formData: FormData) => {
   const description = formData.get("description") as string;
   const dueDate = formData.get("dueDate") as string;
   const notifyOnComplete = formData.get("notifyOnComplete") === "true";
+  const vacancyId = formData.get("vacancyId") as string;
   const notificationRecipients = formData.getAll(
     "notificationRecipients"
   ) as string[];
@@ -129,6 +130,7 @@ export const createTask = async (formData: FormData) => {
       // 1. Crear tarea
       const task = await tx.task.create({
         data: {
+          vacancyId: vacancyId ?? null,
           description,
           dueDate,
           title,
@@ -158,6 +160,7 @@ export const createTask = async (formData: FormData) => {
               message: `El usuario ${task.assignedTo.name} ha iniciado una tarea compartida`,
               taskId: task.id,
               recipientId: recipientId,
+              vacancyId: vacancyId ?? null,
             },
           });
         }

@@ -198,7 +198,7 @@ export default async function UserProfile({
               )}
 
               {/* Estadisticas para reclutadores*/}
-              {user.role === Role.reclutador && (
+              {user.role === Role.Admin && (
                 <Card className="border">
                   <CardHeader className="pb-2">
                     <Tabs defaultValue="placements" className="w-full">
@@ -220,7 +220,7 @@ export default async function UserProfile({
               )}
 
               {/* Estadisticas para reclutadores*/}
-              {user.role === Role.Admin && (
+              {user.role === Role.reclutador && (
                 <Card className="border">
                   <CardHeader className="pb-2">
                     <Tabs defaultValue="placements" className="w-full">
