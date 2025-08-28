@@ -11,6 +11,7 @@ import {
   Clock,
   FileCheck2,
   FileText,
+  History,
   ListCollapse,
 } from "lucide-react";
 import { Role } from "@prisma/client";
@@ -39,6 +40,7 @@ import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 import { useEffect } from "react";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { toast } from "sonner";
+import { VacancyStatusHistorySheet } from "./VacancyStatusHistorySheet";
 
 interface DetailsSectionProps {
   vacanteId: string;
@@ -308,6 +310,18 @@ export const DetailsSectionReclutador = ({
             Información financiera
           </h4>
           <div className="mb-2">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="mr-2">
+                  <History />
+                  Historial
+                </Button>
+              </SheetTrigger>
+              <SheetPortal>
+                <SheetOverlay className="z-[9999]" />
+                <VacancyStatusHistorySheet vacanteId={vacancyDetails.id} />
+              </SheetPortal>
+            </Sheet>
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm">

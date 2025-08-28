@@ -48,11 +48,12 @@ model User {
   Lead                 Lead[]
   Task                 Task[]
   LeadStatusHistory    LeadStatusHistory[] // Nueva relación
+  VacancyStatusHistory VacancyStatusHistory[] // Nueva relación para historial de vacantes
   ContactInteraction   ContactInteraction[] // Nueva relación para las interacciones con contactos
   Logs                 Log[]
   notifications        Notification[]
   specialNotifications SpecialNotification[]
-  taskNotifications    Task[]                @relation("TaskNotificationRecipients")
+  taskNotifications    Task[]                 @relation("TaskNotificationRecipients")
 
   // Relaciones específicas con nombres únicos para Vacancy
   vacanciesReclutador Vacancy[] @relation("VacancyReclutador")
@@ -79,6 +80,21 @@ model LeadStatusHistory {
   changedById String
 
   @@index([leadId, changedAt]) // Índice para optimizar consultas por lead y fecha
+}
+
+// Modelo para registrar historial de cambios de estado de vacantes
+model VacancyStatusHistory {
+  id        String        @id @default(cuid())
+  vacancy   Vacancy       @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  vacancyId String
+  status    VacancyEstado
+  changedAt DateTime      @default(now())
+
+  // Para auditoría
+  changedBy   User   @relation(fields: [changedById], references: [id], onDelete: Cascade)
+  changedById String
+
+  @@index([vacancyId, changedAt]) // Índice para optimizar consultas por vacante y fecha
 }
 
 model Sector {
@@ -274,6 +290,9 @@ model Vacancy {
 
   //Relacion con notificaciones normal
   Notification Notification[]
+
+  // Relación con historial de estados
+  statusHistory VacancyStatusHistory[]
 }
 
 model InputChecklist {

@@ -230,12 +230,22 @@ export const createVacancy = async (vacancy: VacancyFormData) => {
       };
     }
 
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        ok: false,
+        message: "No hay usuario logueado",
+      };
+    }
+
+    const estadoInicial = vacancy.estado || "QuickMeeting";
+
     const newVacancy = await prisma.vacancy.create({
       data: {
         fechaAsignacion: vacancy.fechaAsignacion,
         posicion: vacancy.posicion,
         tipo: vacancy.tipo || "Nueva",
-        estado: vacancy.estado || "Hunting",
+        estado: estadoInicial,
         prioridad: vacancy.prioridad || "Alta",
         fechaEntrega: vacancy.fechaEntrega,
         salario: vacancy.salario,
@@ -260,6 +270,15 @@ export const createVacancy = async (vacancy: VacancyFormData) => {
         psicometria: vacancy.psicometria,
         ubicacion: vacancy.ubicacion,
         comentarios: vacancy.comentarios,
+      },
+    });
+
+    // Crear el registro inicial en el historial de estados
+    await prisma.vacancyStatusHistory.create({
+      data: {
+        vacancyId: newVacancy.id,
+        status: estadoInicial,
+        changedById: session.user.id,
       },
     });
 
@@ -392,6 +411,15 @@ export const updateVacancyStatus = async (
     const vacancy = await prisma.vacancy.update({
       where: { id: vacancyId },
       data: { estado: status },
+    });
+
+    // Registrar el cambio de estado en el historial
+    await prisma.vacancyStatusHistory.create({
+      data: {
+        vacancyId: vacancyId,
+        status: status,
+        changedById: session.user.id,
+      },
     });
 
     // si el estado es Placement, calcular el tiempo transcurrido
@@ -797,6 +825,116 @@ export const unvalidateTernaAction = async (vacancyId: string) => {
     return {
       ok: false,
       message: "Error al desvalidar la terna",
+    };
+  }
+};
+
+//FUNCIONES PARA ESTADISTICAS DE LAS VACANTES
+
+/**
+ * Obtiene el historial de cambios de estado de una vacante específica
+ */
+export const getVacancyStatusHistory = async (vacancyId: string) => {
+  try {
+    const history = await prisma.vacancyStatusHistory.findMany({
+      where: { vacancyId },
+      include: {
+        changedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: {
+        changedAt: "desc",
+      },
+    });
+
+    return {
+      ok: true,
+      message: "Historial obtenido correctamente",
+      history,
+    };
+  } catch (error) {
+    console.error("Error al obtener el historial de la vacante:", error);
+    return {
+      ok: false,
+      message: "Error al obtener el historial de la vacante",
+      history: [],
+    };
+  }
+};
+
+/**
+ * Obtiene estadísticas del historial de estados para análisis
+ */
+export const getVacancyStatusStats = async (vacancyId?: string) => {
+  try {
+    const whereClause = vacancyId ? { vacancyId } : {};
+
+    const stats = await prisma.vacancyStatusHistory.groupBy({
+      by: ["status"],
+      where: whereClause,
+      _count: {
+        status: true,
+      },
+      orderBy: {
+        _count: {
+          status: "desc",
+        },
+      },
+    });
+
+    // Calcular tiempo promedio entre estados si se especifica una vacante
+    let averageTimeByStatus: Record<string, number> | null = null;
+    if (vacancyId) {
+      const history = await prisma.vacancyStatusHistory.findMany({
+        where: { vacancyId },
+        orderBy: { changedAt: "asc" },
+      });
+
+      if (history.length > 1) {
+        const timesByStatus: Record<string, number[]> = {};
+        for (let i = 1; i < history.length; i++) {
+          const currentStatus = history[i].status;
+          const timeDiff =
+            new Date(history[i].changedAt).getTime() -
+            new Date(history[i - 1].changedAt).getTime();
+          const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+          if (!timesByStatus[currentStatus]) {
+            timesByStatus[currentStatus] = [];
+          }
+          timesByStatus[currentStatus].push(daysDiff);
+        }
+
+        // Calcular promedio para cada estado
+        averageTimeByStatus = {};
+        Object.keys(timesByStatus).forEach((status) => {
+          const times = timesByStatus[status];
+          averageTimeByStatus![status] = Math.round(
+            times.reduce((sum, time) => sum + time, 0) / times.length
+          );
+        });
+      }
+    }
+
+    return {
+      ok: true,
+      message: "Estadísticas obtenidas correctamente",
+      stats,
+      averageTimeByStatus,
+    };
+  } catch (error) {
+    console.error("Error al obtener estadísticas del historial:", error);
+    return {
+      ok: false,
+      message: "Error al obtener estadísticas del historial",
+      stats: [],
+      averageTimeByStatus: null,
     };
   }
 };
