@@ -419,7 +419,7 @@ function TableFilters<TData, TValue>({
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-[200px] p-0 z-50"
+                className="w-[200px] p-0 z-50 max-h-[200px] overflow-y-scroll"
                 align="start"
                 side="bottom"
                 avoidCollisions={false}
@@ -537,7 +537,7 @@ function TableFilters<TData, TValue>({
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-[200px] p-0 z-50"
+                className="w-[200px] p-0 z-50 max-h-[200px] overflow-y-scroll"
                 align="start"
                 side="bottom"
                 avoidCollisions={false}
