@@ -11,29 +11,15 @@ import { UserProfileHeader } from "./components/UserProfileHeader";
 import { EventCalendar } from "@/components/EventCalendar";
 import prisma from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { Prisma, Role, TaskStatus } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 import { Metadata } from "next";
 import { AttendanceChart } from "@/components/AttendanceChart";
 import { LeadPerformanceChart } from "../components/PerformanceChart";
+import { RecruiterPlacementChart } from "@/components/RecruiterPlacementChart";
 import { unstable_noStore as noStore } from "next/cache";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TaskWithUsers } from "../../list/reclutamiento/components/ActivityProfileSheet";
 import { getTaskStatistics } from "@/actions/tasks/actions";
-
-const fetchDoneTasksByUserId = async (userId: string) => {
-  noStore();
-  try {
-    const tasks = await prisma.task.findMany({
-      where: {
-        assignedToId: userId,
-        status: TaskStatus.Done,
-      },
-    });
-    return tasks;
-  } catch (err) {
-    throw new Error("Error al traer las tareas");
-  }
-};
 
 const fetchUser = async (userId: string) => {
   noStore();
@@ -189,23 +175,69 @@ export default async function UserProfile({
                 </Card>
               </div>
 
-              {/* Gráficas con Tabs */}
-              <Card className="border">
-                <CardHeader className="pb-2">
-                  <Tabs defaultValue="performance" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="performance">Rendimiento</TabsTrigger>
-                      <TabsTrigger value="attendance">Asistencia</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="performance" className="mt-4">
-                      <LeadPerformanceChart />
-                    </TabsContent>
-                    <TabsContent value="attendance" className="mt-4">
-                      <AttendanceChart />
-                    </TabsContent>
-                  </Tabs>
-                </CardHeader>
-              </Card>
+              {/* Estadisticas para generadores de leads*/}
+              {user.role === Role.GL && (
+                <Card className="border">
+                  <CardHeader className="pb-2">
+                    <Tabs defaultValue="performance" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="performance">
+                          Rendimiento
+                        </TabsTrigger>
+                        <TabsTrigger value="attendance">Asistencia</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="performance" className="mt-4">
+                        <LeadPerformanceChart />
+                      </TabsContent>
+                      <TabsContent value="attendance" className="mt-4">
+                        <AttendanceChart />
+                      </TabsContent>
+                    </Tabs>
+                  </CardHeader>
+                </Card>
+              )}
+
+              {/* Estadisticas para reclutadores*/}
+              {user.role === Role.reclutador && (
+                <Card className="border">
+                  <CardHeader className="pb-2">
+                    <Tabs defaultValue="placements" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="placements">
+                          Generación de leads
+                        </TabsTrigger>
+                        <TabsTrigger value="attendance">Asistencia</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="placements" className="mt-4">
+                        <LeadPerformanceChart />
+                      </TabsContent>
+                      <TabsContent value="attendance" className="mt-4">
+                        <AttendanceChart />
+                      </TabsContent>
+                    </Tabs>
+                  </CardHeader>
+                </Card>
+              )}
+
+              {/* Estadisticas para reclutadores*/}
+              {user.role === Role.Admin && (
+                <Card className="border">
+                  <CardHeader className="pb-2">
+                    <Tabs defaultValue="placements" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="placements">Placements</TabsTrigger>
+                        <TabsTrigger value="attendance">Asistencia</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="placements" className="mt-4">
+                        <RecruiterPlacementChart recruiterId={user.id} />
+                      </TabsContent>
+                      <TabsContent value="attendance" className="mt-4">
+                        <AttendanceChart />
+                      </TabsContent>
+                    </Tabs>
+                  </CardHeader>
+                </Card>
+              )}
             </div>
 
             {/* Columna derecha - Calendario */}

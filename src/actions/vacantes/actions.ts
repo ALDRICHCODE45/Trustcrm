@@ -832,6 +832,364 @@ export const unvalidateTernaAction = async (vacancyId: string) => {
 //FUNCIONES PARA ESTADISTICAS DE LAS VACANTES
 
 /**
+ * Obtiene estadísticas de placements por reclutador para diferentes períodos
+ */
+export const getRecruiterPlacementStats = async (
+  recruiterId: string,
+  period: "last_month" | "last_6_months" | "year" | "quarter",
+  year?: number,
+  quarter?: 1 | 2 | 3 | 4
+) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        ok: false,
+        message: "No hay usuario logueado",
+        data: [],
+      };
+    }
+
+    let startDate: Date;
+    let endDate: Date;
+    const now = new Date();
+
+    // Definir rangos de fecha según el período
+    switch (period) {
+      case "last_month":
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+        break;
+
+      case "last_6_months":
+        startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        endDate = now;
+        break;
+
+      case "year":
+        const targetYear = year || now.getFullYear();
+        startDate = new Date(targetYear, 0, 1);
+        endDate = new Date(targetYear, 11, 31);
+        break;
+
+      case "quarter":
+        const targetYearQ = year || now.getFullYear();
+        const targetQuarter = quarter || Math.ceil((now.getMonth() + 1) / 3);
+        const quarterStartMonth = (targetQuarter - 1) * 3;
+        startDate = new Date(targetYearQ, quarterStartMonth, 1);
+        endDate = new Date(targetYearQ, quarterStartMonth + 3, 0);
+        break;
+
+      default:
+        return {
+          ok: false,
+          message: "Período no válido",
+          data: [],
+        };
+    }
+
+    // Obtener historial de vacantes que llegaron a Placement
+    const placementHistory = await prisma.vacancyStatusHistory.findMany({
+      where: {
+        status: VacancyEstado.Placement,
+        changedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+        vacancy: {
+          reclutadorId: recruiterId,
+        },
+      },
+      include: {
+        vacancy: {
+          include: {
+            cliente: true,
+          },
+        },
+        changedBy: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        changedAt: "asc",
+      },
+    });
+
+    // Procesar datos según el período
+    let processedData: Array<{
+      period: string;
+      placements: number;
+      label: string;
+    }> = [];
+
+    switch (period) {
+      case "last_month":
+        // Agrupar por semanas usando el primer día de la semana
+        const weekData = new Map<string, { count: number; label: string }>();
+
+        placementHistory.forEach((record) => {
+          const date = new Date(record.changedAt);
+
+          // Obtener el lunes de esa semana
+          const dayOfWeek = date.getDay();
+          const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Si es domingo (0), retroceder 6 días
+          const monday = new Date(date);
+          monday.setDate(date.getDate() + diffToMonday);
+
+          // Crear clave única para la semana
+          const weekKey = `${monday.getFullYear()}-${monday.getMonth()}-${monday.getDate()}`;
+
+          // Crear label de la semana (ej: "1-7 Ene")
+          const endOfWeek = new Date(monday);
+          endOfWeek.setDate(monday.getDate() + 6);
+
+          const weekLabel = `${monday.getDate()}-${endOfWeek.getDate()} ${monday.toLocaleDateString(
+            "es-ES",
+            { month: "short" }
+          )}`;
+
+          if (!weekData.has(weekKey)) {
+            weekData.set(weekKey, { count: 0, label: weekLabel });
+          }
+
+          weekData.get(weekKey)!.count += 1;
+        });
+
+        // Generar todas las semanas del mes, incluso si no tienen datos
+        const monthStart = new Date(startDate);
+        const monthEnd = new Date(endDate);
+
+        // Encontrar el primer lunes del rango
+        let currentMonday = new Date(monthStart);
+        const dayOfWeek = currentMonday.getDay();
+        const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+        currentMonday.setDate(currentMonday.getDate() + diffToMonday);
+
+        // Si el primer lunes está antes del inicio del mes, avanzar a la siguiente semana
+        if (currentMonday < monthStart) {
+          currentMonday.setDate(currentMonday.getDate() + 7);
+        }
+
+        // Generar todas las semanas
+        while (currentMonday <= monthEnd) {
+          const weekKey = `${currentMonday.getFullYear()}-${currentMonday.getMonth()}-${currentMonday.getDate()}`;
+          const endOfWeek = new Date(currentMonday);
+          endOfWeek.setDate(currentMonday.getDate() + 6);
+
+          const weekLabel = `${currentMonday.getDate()}-${endOfWeek.getDate()} ${currentMonday.toLocaleDateString(
+            "es-ES",
+            { month: "short" }
+          )}`;
+
+          processedData.push({
+            period: weekKey,
+            placements: weekData.get(weekKey)?.count || 0,
+            label: weekData.get(weekKey)?.label || weekLabel,
+          });
+
+          // Avanzar a la siguiente semana
+          currentMonday.setDate(currentMonday.getDate() + 7);
+        }
+        break;
+
+      case "last_6_months":
+        // Agrupar por meses (últimos 6)
+        const monthData = new Map<string, number>();
+
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+          monthData.set(monthKey, 0);
+        }
+
+        placementHistory.forEach((record) => {
+          const date = new Date(record.changedAt);
+          const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+          if (monthData.has(monthKey)) {
+            monthData.set(monthKey, monthData.get(monthKey)! + 1);
+          }
+        });
+
+        monthData.forEach((count, monthKey) => {
+          const [yearStr, monthStr] = monthKey.split("-");
+          const date = new Date(parseInt(yearStr), parseInt(monthStr), 1);
+          processedData.push({
+            period: monthKey,
+            placements: count,
+            label: date.toLocaleDateString("es-ES", {
+              month: "short",
+              year: "numeric",
+            }),
+          });
+        });
+        break;
+
+      case "year":
+        // Agrupar por meses del año
+        const yearMonthData = new Map<number, number>();
+
+        for (let month = 0; month < 12; month++) {
+          yearMonthData.set(month, 0);
+        }
+
+        placementHistory.forEach((record) => {
+          const date = new Date(record.changedAt);
+          const month = date.getMonth();
+          yearMonthData.set(month, yearMonthData.get(month)! + 1);
+        });
+
+        yearMonthData.forEach((count, month) => {
+          const date = new Date(year || now.getFullYear(), month, 1);
+          processedData.push({
+            period: `month_${month}`,
+            placements: count,
+            label: date.toLocaleDateString("es-ES", { month: "short" }),
+          });
+        });
+        break;
+
+      case "quarter":
+        // Agrupar por meses del cuatrimestre
+        const quarterMonthData = new Map<number, number>();
+        const quarterStartMonth =
+          ((quarter || Math.ceil((now.getMonth() + 1) / 3)) - 1) * 3;
+
+        for (let i = 0; i < 3; i++) {
+          quarterMonthData.set(quarterStartMonth + i, 0);
+        }
+
+        placementHistory.forEach((record) => {
+          const date = new Date(record.changedAt);
+          const month = date.getMonth();
+          if (quarterMonthData.has(month)) {
+            quarterMonthData.set(month, quarterMonthData.get(month)! + 1);
+          }
+        });
+
+        quarterMonthData.forEach((count, month) => {
+          const date = new Date(year || now.getFullYear(), month, 1);
+          processedData.push({
+            period: `quarter_month_${month}`,
+            placements: count,
+            label: date.toLocaleDateString("es-ES", { month: "long" }),
+          });
+        });
+        break;
+    }
+
+    return {
+      ok: true,
+      message: "Estadísticas obtenidas correctamente",
+      data: processedData,
+      totalPlacements: placementHistory.length,
+      period,
+      dateRange: {
+        start: startDate,
+        end: endDate,
+      },
+    };
+  } catch (error) {
+    console.error("Error al obtener estadísticas de placements:", error);
+    return {
+      ok: false,
+      message: "Error al obtener estadísticas de placements",
+      data: [],
+    };
+  }
+};
+
+/**
+ * Obtiene resumen de estadísticas generales del reclutador
+ */
+export const getRecruiterGeneralStats = async (recruiterId: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        ok: false,
+        message: "No hay usuario logueado",
+        stats: null,
+      };
+    }
+
+    // Obtener estadísticas generales
+    const totalVacancies = await prisma.vacancy.count({
+      where: { reclutadorId: recruiterId },
+    });
+
+    const totalPlacements = await prisma.vacancyStatusHistory.count({
+      where: {
+        status: VacancyEstado.Placement,
+        vacancy: { reclutadorId: recruiterId },
+      },
+    });
+
+    const activeVacancies = await prisma.vacancy.count({
+      where: {
+        reclutadorId: recruiterId,
+        estado: {
+          in: [
+            VacancyEstado.Hunting,
+            VacancyEstado.Entrevistas,
+            VacancyEstado.PrePlacement,
+            VacancyEstado.QuickMeeting,
+          ],
+        },
+      },
+    });
+
+    const placementRate =
+      totalVacancies > 0 ? (totalPlacements / totalVacancies) * 100 : 0;
+
+    // Obtener tiempo promedio para placement
+    const placementHistories = await prisma.vacancyStatusHistory.findMany({
+      where: {
+        status: VacancyEstado.Placement,
+        vacancy: { reclutadorId: recruiterId },
+      },
+      include: {
+        vacancy: true,
+      },
+    });
+
+    let averageDaysToPlacement = 0;
+    if (placementHistories.length > 0) {
+      const totalDays = placementHistories.reduce((sum, history) => {
+        const daysDiff = differenceInCalendarDays(
+          new Date(history.changedAt),
+          new Date(history.vacancy.fechaAsignacion)
+        );
+        return sum + Math.max(0, daysDiff);
+      }, 0);
+      averageDaysToPlacement = Math.round(
+        totalDays / placementHistories.length
+      );
+    }
+
+    return {
+      ok: true,
+      message: "Estadísticas generales obtenidas correctamente",
+      stats: {
+        totalVacancies,
+        totalPlacements,
+        activeVacancies,
+        placementRate: Math.round(placementRate * 100) / 100,
+        averageDaysToPlacement,
+      },
+    };
+  } catch (error) {
+    console.error("Error al obtener estadísticas generales:", error);
+    return {
+      ok: false,
+      message: "Error al obtener estadísticas generales",
+      stats: null,
+    };
+  }
+};
+
+/**
  * Obtiene el historial de cambios de estado de una vacante específica
  */
 export const getVacancyStatusHistory = async (vacancyId: string) => {
