@@ -319,16 +319,16 @@ export const createVacancy = async (vacancy: VacancyFormData) => {
     }
 
     //si el estado es QuickMeeting, crear tres tareas: Subir Job description, Subir Perfil muestra y Realizar el checklist
-    //obtener todos los administradores
-    const admins = await prisma.user.findMany({
-      where: {
-        role: Role.Admin,
-      },
-    });
-
-    const notificationRecipients = admins.map((admin) => admin.id);
-    //si el estado es QuickMeeting, crear tres tareas: Subir Job description, Subir Perfil muestra y Realizar el checklist
     if (estadoInicial === VacancyEstado.QuickMeeting) {
+      //obtener todos los administradores
+      const admins = await prisma.user.findMany({
+        where: {
+          role: Role.Admin,
+        },
+      });
+
+      const notificationRecipients = admins.map((admin) => admin.id);
+
       for (const task of tasksOnCreationVacancy) {
         const formData = new FormData();
         formData.append("title", task.title);
@@ -340,10 +340,12 @@ export const createVacancy = async (vacancy: VacancyFormData) => {
           new Date(new Date().setDate(new Date().getDate() + 1)).toISOString()
         );
         formData.append("vacancyId", newVacancy.id);
-        formData.append(
-          "notificationRecipients",
-          notificationRecipients.join(",")
-        );
+
+        // Agregar cada destinatario por separado en lugar de un string separado por comas
+        notificationRecipients.forEach((recipientId) => {
+          formData.append("notificationRecipients", recipientId);
+        });
+
         formData.append("notifyOnComplete", "true");
         const tarea = await createTask(formData);
         console.log("Tarea Creada", tarea);
