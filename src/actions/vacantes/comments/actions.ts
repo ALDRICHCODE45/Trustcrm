@@ -88,6 +88,7 @@ export async function CreateTask(
           message: `El usuario ${task.assignedTo.name} ha iniciado una tarea compartida`,
           taskId: task.id,
           recipientId: recipientId,
+          vacancyId: vacancyId,
         },
       });
     }
