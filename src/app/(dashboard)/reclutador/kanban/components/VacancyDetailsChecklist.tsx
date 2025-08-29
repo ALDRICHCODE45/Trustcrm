@@ -11,12 +11,13 @@ import { VacancyWithRelations } from "../../components/ReclutadorColumns";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { MailCheck, Plus, Trash2 } from "lucide-react";
+import { MailCheck, Plus, Trash2, Edit, Check, X } from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
 import {
   completeChecklistAndNotify,
   createChecklist,
   deleteChecklist,
+  updateChecklist,
 } from "@/actions/vacantes/checklist/actions";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
@@ -49,6 +50,8 @@ export const VacancyDetailsChecklist = ({
 }: Props) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [idToDelete, setIdToDelete] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState<string>("");
 
   // Inicializar el formulario solo para nuevos requisitos
   const { control, handleSubmit, reset } = useForm<ChecklistFormData>({
@@ -215,6 +218,70 @@ export const VacancyDetailsChecklist = ({
     }
   };
 
+  const handleStartEdit = (id: string, currentContent: string) => {
+    setEditingId(id);
+    setEditingValue(currentContent);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingValue("");
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      if (!editingId || !editingValue.trim()) return;
+
+      const response = await updateChecklist(editingId, editingValue);
+
+      if (!response.ok) {
+        toast.custom((t) => {
+          return (
+            <ToastCustomMessage
+              title="Error al actualizar el requisito"
+              message="El requisito no se ha actualizado correctamente"
+              type="error"
+              onClick={() => {
+                toast.dismiss(t);
+              }}
+            />
+          );
+        });
+        return;
+      }
+
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Requisito actualizado"
+            message="El requisito se ha actualizado correctamente"
+            type="success"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+
+      setEditingId(null);
+      setEditingValue("");
+      onSaveRequisitos?.();
+    } catch (error) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error al actualizar el requisito"
+            message="El requisito no se ha actualizado correctamente"
+            type="error"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    }
+  };
+
   return (
     <>
       <SheetContent className="z-[9999] min-w-[25vw]">
@@ -237,26 +304,84 @@ export const VacancyDetailsChecklist = ({
                     <Label htmlFor={`existente-${index}`}>
                       Requisito {index + 1}
                     </Label>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setIsDeleteDialogOpen(true);
-                        setIdToDelete(item.id);
-                      }}
-                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      {editingId === item.id ? (
+                        <>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleSaveEdit}
+                            disabled={!editingValue.trim()}
+                            className="h-6 w-6 p-0 text-green-500 hover:text-green-700"
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCancelEdit}
+                            className="h-6 w-6 p-0 text-gray-500 hover:text-gray-700"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleStartEdit(item.id, item.content)
+                            }
+                            className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setIsDeleteDialogOpen(true);
+                              setIdToDelete(item.id);
+                            }}
+                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                   <Input
                     id={`existente-${index}`}
-                    value={item.content}
-                    readOnly
+                    value={editingId === item.id ? editingValue : item.content}
+                    onChange={(e) => {
+                      if (editingId === item.id) {
+                        setEditingValue(e.target.value);
+                      }
+                    }}
+                    readOnly={editingId !== item.id}
                     placeholder="Requisito existente"
                     type="text"
-                    className="bg-muted"
+                    className={
+                      editingId === item.id
+                        ? "border-blue-300 focus:border-blue-500"
+                        : "bg-muted"
+                    }
+                    onKeyDown={(e) => {
+                      if (editingId === item.id && e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveEdit();
+                      }
+                      if (editingId === item.id && e.key === "Escape") {
+                        e.preventDefault();
+                        handleCancelEdit();
+                      }
+                    }}
                   />
                 </div>
               ))
@@ -326,12 +451,18 @@ export const VacancyDetailsChecklist = ({
             </Button>
           </div>
 
-          <SheetFooter className="mt-auto px-4">
-            {fields.length > 0 && (
-              <Button type="submit">Guardar nuevos requisitos</Button>
-            )}
+          <SheetFooter className="mt-auto px-4 gap-2">
+            <Button
+              type="submit"
+              disabled={fields.length === 0}
+              className="flex-1"
+            >
+              Guardar nuevos requisitos
+            </Button>
             <SheetClose asChild>
-              <Button variant="outline">Cerrar</Button>
+              <Button variant="outline" className="flex-1">
+                Cerrar
+              </Button>
             </SheetClose>
           </SheetFooter>
         </form>

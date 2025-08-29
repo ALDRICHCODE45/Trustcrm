@@ -4,6 +4,7 @@ import prisma from "@/lib/db";
 import { NotificationVacancyType } from "@/types/vacancy-notifications";
 import { revalidatePath } from "next/cache";
 import { createVacancyNotification } from "../notifications/vacancies-notificactions";
+import { NotificationType } from "@prisma/client";
 
 interface addCandidateFeedbackProps {
   feedback: string;
@@ -85,6 +86,47 @@ export const createChecklist = async (
     return {
       ok: false,
       message: "Error al crear el checklist",
+    };
+  }
+};
+
+//Editar requisito
+export const updateChecklist = async (id: string, content: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    //buscar el requisito
+    const requisito = await prisma.inputChecklist.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!requisito) {
+      throw new Error("Requisito no encontrado");
+    }
+
+    //actualizar el requisito
+    await prisma.inputChecklist.update({
+      where: { id },
+      data: { content: content.trim() },
+    });
+
+    revalidatePath(`/reclutador/kanban`);
+    revalidatePath(`/list/reclutamiento`);
+    revalidatePath(`/reclutamiento`);
+
+    return {
+      ok: true,
+      message: "Requisito actualizado correctamente",
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: "Error al actualizar el requisito",
     };
   }
 };
@@ -187,6 +229,15 @@ export const ValidateChecklistAction = async (vacancyId: string) => {
         IsChecklistValidated: true,
       },
     });
+    //crear una notificacion para el reclutador
+    await prisma.notification.create({
+      data: {
+        type: NotificationType.Vacancy,
+        message: `El checklist de la vacante ${vacancy.posicion} ha sido validado correctamente`,
+        vacancyId,
+        recipientId: vacancy.reclutadorId,
+      },
+    });
 
     revalidatePath(`/reclutador/kanban`);
     revalidatePath(`/list/reclutamiento`);
@@ -231,6 +282,16 @@ export const ValidatePerfilMuestraAction = async (vacancyId: string) => {
     revalidatePath(`/reclutador/kanban`);
     revalidatePath(`/list/reclutamiento`);
     revalidatePath(`/reclutamiento`);
+
+    //crear una notificacion para el reclutador
+    await prisma.notification.create({
+      data: {
+        type: NotificationType.Vacancy,
+        message: `El perfil muestra de la vacante ${vacancy.posicion} ha sido validado correctamente`,
+        vacancyId,
+        recipientId: vacancy.reclutadorId,
+      },
+    });
 
     return {
       ok: true,
