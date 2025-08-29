@@ -72,19 +72,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { z } from "zod";
 import { User } from "@prisma/client";
 import { toast } from "sonner";
 import { useComments } from "@/hooks/useComments";
-import {
-  CommentWithRelations,
-  CreateCommentData,
-  EditCommentData,
-} from "@/types/comment";
+import { CommentWithRelations, CreateCommentData } from "@/types/comment";
 import { Label } from "@/components/ui/label";
 
 // Schema para validación del formulario
@@ -144,6 +139,20 @@ export const CommentSheet = ({
   vacancyId: string;
   vacancyOwnerId: string;
 }) => {
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  // Usar useRef para mantener los IDs consistentes
+  const vacancyIdRef = useRef<string>(vacancyId);
+  const vacancyOwnerIdRef = useRef<string>(vacancyOwnerId);
+
+  // Efecto para actualizar los IDs solo cuando el sheet está cerrado
+  useEffect(() => {
+    if (!sheetOpen) {
+      vacancyIdRef.current = vacancyId;
+      vacancyOwnerIdRef.current = vacancyOwnerId;
+    }
+  }, [vacancyId, vacancyOwnerId, sheetOpen]);
+
   const {
     comments,
     isLoading,
@@ -151,7 +160,7 @@ export const CommentSheet = ({
     addComment,
     deleteComment,
     editCommentById,
-  } = useComments(vacancyId);
+  } = useComments(vacancyIdRef.current);
   const [commentToDelete, setCommentToDelete] =
     useState<CommentWithRelations | null>(null);
   const [commentToEdit, setCommentToEdit] =
@@ -259,8 +268,13 @@ export const CommentSheet = ({
   const hasActiveFilters =
     filters.dateRange || filters.month !== "all" || filters.type !== "all";
 
+  // Handler memoizado para evitar recreaciones
+  const handleSheetOpenChange = useCallback((newOpen: boolean) => {
+    setSheetOpen(newOpen);
+  }, []);
+
   return (
-    <Sheet>
+    <Sheet open={sheetOpen} onOpenChange={handleSheetOpenChange}>
       <SheetTrigger asChild>
         <div className="flex justify-center items-center">
           <Button variant="outline" className="" size="default">
@@ -297,8 +311,8 @@ export const CommentSheet = ({
                       <Separator />
                     </DialogHeader>
                     <NuevoComentarioForm
-                      vacancyId={vacancyId}
-                      vacancyOwnerId={vacancyOwnerId}
+                      vacancyId={vacancyIdRef.current}
+                      vacancyOwnerId={vacancyOwnerIdRef.current}
                       onAddComment={addComment}
                       onSubmitSuccess={() => {
                         // El hook ya maneja la actualización automática

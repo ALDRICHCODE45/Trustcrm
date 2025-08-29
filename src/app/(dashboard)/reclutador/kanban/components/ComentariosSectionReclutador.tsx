@@ -153,7 +153,20 @@ export const CommentsSectionReclutador: React.FC<CommentsSectionProps> = ({
     if (!commentToDelete) return;
 
     try {
-      await deleteComment(commentToDelete.id);
+      const result = await deleteComment(commentToDelete.id);
+      if (!result.ok) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Error al eliminar el comentario"
+            message={result.message || "Por favor, intenta nuevamente"}
+            type="error"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        ));
+        return;
+      }
       toast.custom((t) => (
         <ToastCustomMessage
           title="Comentario eliminado exitosamente"

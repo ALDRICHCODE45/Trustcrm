@@ -1,11 +1,13 @@
 "use server";
 
+import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 import {
   CreateCommentData,
   CreateTaskData,
   EditCommentData,
 } from "@/types/comment";
+import { Role } from "@prisma/client";
 
 export async function CreateTask(
   args: CreateTaskData & { vacancyId?: string }
@@ -141,6 +143,7 @@ export async function CreateComment(args: CreateCommentData) {
         return {
           ok: false,
           message: "Vacante no encontrada",
+          comment: null,
         };
       }
     }
@@ -160,7 +163,11 @@ export async function CreateComment(args: CreateCommentData) {
       });
 
       if (!taskResult.ok) {
-        return taskResult;
+        return {
+          ok: false,
+          message: taskResult.message || "Error al crear la tarea",
+          comment: null,
+        };
       }
 
       taskId = taskResult.taskId!;
@@ -189,7 +196,7 @@ export async function CreateComment(args: CreateCommentData) {
     return {
       ok: true,
       message: "Comentario creado exitosamente",
-      comment,
+      comment: comment,
     };
   } catch (error) {
     console.error("Error creating comment:", error);
@@ -236,6 +243,22 @@ export async function GetComments(vacancyId?: string) {
 
 export async function DeleteComment(commentId: string) {
   try {
+    const usuario = await auth();
+
+    if (!usuario?.user) {
+      return {
+        ok: false,
+        message: "No existe usuario logueado",
+      };
+    }
+
+    if (usuario.user.role != Role.Admin) {
+      return {
+        ok: false,
+        message: "No tienes permisos para eliminar comentarios",
+      };
+    }
+
     // Verificar que el comentario existe
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
@@ -279,6 +302,21 @@ export async function editComment(
   commentData: EditCommentData
 ) {
   try {
+    const usuario = await auth();
+
+    if (!usuario?.user) {
+      return {
+        ok: false,
+        message: "No existe usuario logueado",
+      };
+    }
+
+    if (usuario.user.role != Role.Admin) {
+      return {
+        ok: false,
+        message: "No tienes permisos para editar comentarios",
+      };
+    }
     const { content } = commentData;
 
     await prisma.comment.update({

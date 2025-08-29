@@ -4,7 +4,12 @@ import {
   CreateCommentData,
   EditCommentData,
 } from "@/types/comment";
-import { editComment } from "@/actions/vacantes/comments/actions";
+import {
+  CreateComment,
+  DeleteComment,
+  editComment,
+  GetComments,
+} from "@/actions/vacantes/comments/actions";
 
 export const useComments = (vacancyId?: string) => {
   const [comments, setComments] = useState<CommentWithRelations[]>([]);
@@ -18,18 +23,16 @@ export const useComments = (vacancyId?: string) => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/comments?vacancyId=${vacancyId}`);
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Error al obtener comentarios");
-      }
+      const result = await GetComments(vacancyId || undefined);
 
       if (!result.ok) {
-        throw new Error(result.message || "Error al obtener comentarios");
+        return {
+          ok: false,
+          message: result.message || "Error al obtener comentarios",
+        };
       }
 
-      setComments(result.comments);
+      setComments(result.comments || []);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error al obtener comentarios";
@@ -41,27 +44,21 @@ export const useComments = (vacancyId?: string) => {
 
   const addComment = async (commentData: CreateCommentData) => {
     try {
-      const response = await fetch("/api/comments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(commentData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Error al crear el comentario");
-      }
+      const result = await CreateComment(commentData);
 
       if (!result.ok) {
-        throw new Error(result.message || "Error al crear el comentario");
+        return {
+          ok: false,
+          message: result.message || "Error al crear el comentario",
+        };
       }
 
       // Agregar el nuevo comentario a la lista
-      setComments((prev) => [result.comment, ...prev]);
-      return result;
+      setComments((prev) => [result.comment! || [], ...prev]);
+      return {
+        ok: true,
+        message: "Comentario creado correctamente",
+      };
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error al crear el comentario";
@@ -71,23 +68,21 @@ export const useComments = (vacancyId?: string) => {
 
   const deleteComment = async (commentId: string) => {
     try {
-      const response = await fetch(`/api/comments?commentId=${commentId}`, {
-        method: "DELETE",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Error al eliminar el comentario");
-      }
+      const result = await DeleteComment(commentId);
 
       if (!result.ok) {
-        throw new Error(result.message || "Error al eliminar el comentario");
+        return {
+          ok: false,
+          message: result.message || "Error al eliminar el comentario",
+        };
       }
 
       // Remover el comentario de la lista
       setComments((prev) => prev.filter((comment) => comment.id !== commentId));
-      return result;
+      return {
+        ok: true,
+        message: "Comentario eliminado correctamente",
+      };
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error al eliminar el comentario";
