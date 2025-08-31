@@ -11,7 +11,7 @@ import { VacancyWithRelations } from "../../components/ReclutadorColumns";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { MailCheck, Plus, Trash2, Edit, Check, X } from "lucide-react";
+import { MailCheck, Plus, Trash2, Save } from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
 import {
   completeChecklistAndNotify,
@@ -20,7 +20,7 @@ import {
   updateChecklist,
 } from "@/actions/vacantes/checklist/actions";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogFooter,
@@ -44,16 +44,45 @@ interface ChecklistFormData {
   nuevosRequisitos: { valor: string }[];
 }
 
+interface ExistingChecklistFormData {
+  requisitosExistentes: { id: string; valor: string }[];
+}
+
 export const VacancyDetailsChecklist = ({
   vacante,
   onSaveRequisitos,
 }: Props) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [idToDelete, setIdToDelete] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingValue, setEditingValue] = useState<string>("");
 
-  // Inicializar el formulario solo para nuevos requisitos
+  // Formulario para requisitos existentes
+  const {
+    control: existingControl,
+    handleSubmit: handleExistingSubmit,
+    reset: resetExisting,
+  } = useForm<ExistingChecklistFormData>({
+    defaultValues: {
+      requisitosExistentes: [],
+    },
+  });
+
+  const { fields: existingFields, remove: removeExisting } = useFieldArray({
+    control: existingControl,
+    name: "requisitosExistentes",
+  });
+
+  // Inicializar formulario de requisitos existentes cuando cambie la vacante
+  useEffect(() => {
+    const existingRequisitos = vacante.InputChecklist.map((item) => ({
+      id: item.id,
+      valor: item.content,
+    }));
+    resetExisting({
+      requisitosExistentes: existingRequisitos,
+    });
+  }, [vacante.InputChecklist, resetExisting]);
+
+  // Formulario para nuevos requisitos
   const { control, handleSubmit, reset } = useForm<ChecklistFormData>({
     defaultValues: {
       nuevosRequisitos: [],
@@ -64,6 +93,64 @@ export const VacancyDetailsChecklist = ({
     control,
     name: "nuevosRequisitos",
   });
+
+  const handleExistingFormSubmit = async (data: ExistingChecklistFormData) => {
+    try {
+      // Actualizar cada requisito existente
+      const updatePromises = data.requisitosExistentes.map((req) =>
+        updateChecklist(req.id, req.valor.trim())
+      );
+
+      const responses = await Promise.all(updatePromises);
+
+      // Verificar si alguna actualización falló
+      const failedUpdates = responses.filter((response) => !response.ok);
+
+      if (failedUpdates.length > 0) {
+        toast.custom((t) => {
+          return (
+            <ToastCustomMessage
+              title="Error al actualizar algunos requisitos"
+              message="Algunos requisitos no se pudieron actualizar correctamente"
+              type="error"
+              onClick={() => {
+                toast.dismiss(t);
+              }}
+            />
+          );
+        });
+        return;
+      }
+
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Requisitos actualizados"
+            message="Todos los requisitos se han actualizado correctamente"
+            type="success"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+
+      onSaveRequisitos?.();
+    } catch (error) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error al actualizar requisitos"
+            message="No se pudieron actualizar los requisitos"
+            type="error"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    }
+  };
 
   const handleFormSubmit = async (data: ChecklistFormData) => {
     // Filtrar requisitos vacíos y extraer solo los valores
@@ -218,68 +305,10 @@ export const VacancyDetailsChecklist = ({
     }
   };
 
-  const handleStartEdit = (id: string, currentContent: string) => {
-    setEditingId(id);
-    setEditingValue(currentContent);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditingValue("");
-  };
-
-  const handleSaveEdit = async () => {
-    try {
-      if (!editingId || !editingValue.trim()) return;
-
-      const response = await updateChecklist(editingId, editingValue);
-
-      if (!response.ok) {
-        toast.custom((t) => {
-          return (
-            <ToastCustomMessage
-              title="Error al actualizar el requisito"
-              message="El requisito no se ha actualizado correctamente"
-              type="error"
-              onClick={() => {
-                toast.dismiss(t);
-              }}
-            />
-          );
-        });
-        return;
-      }
-
-      toast.custom((t) => {
-        return (
-          <ToastCustomMessage
-            title="Requisito actualizado"
-            message="El requisito se ha actualizado correctamente"
-            type="success"
-            onClick={() => {
-              toast.dismiss(t);
-            }}
-          />
-        );
-      });
-
-      setEditingId(null);
-      setEditingValue("");
-      onSaveRequisitos?.();
-    } catch (error) {
-      toast.custom((t) => {
-        return (
-          <ToastCustomMessage
-            title="Error al actualizar el requisito"
-            message="El requisito no se ha actualizado correctamente"
-            type="error"
-            onClick={() => {
-              toast.dismiss(t);
-            }}
-          />
-        );
-      });
-    }
+  const handleDeleteExistingRequisito = (index: number) => {
+    const requisito = existingFields[index];
+    setIdToDelete(requisito.id);
+    setIsDeleteDialogOpen(true);
   };
 
   return (
@@ -293,105 +322,46 @@ export const VacancyDetailsChecklist = ({
         </SheetHeader>
         <Separator orientation="horizontal" className="mb-2" />
 
-        {/* Sección de requisitos existentes - FUERA del formulario */}
-        <div className="mb-6">
-          <h3 className="text-sm font-medium mb-3">Requisitos existentes</h3>
-          <div className="grid auto-rows-min gap-4 max-h-[40vh] overflow-y-auto">
-            {vacante.InputChecklist.length > 0 ? (
-              vacante.InputChecklist.map((item, index) => (
-                <div key={item.id} className="grid gap-3 mr-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor={`existente-${index}`}>
-                      Requisito {index + 1}
-                    </Label>
-                    <div className="flex gap-1">
-                      {editingId === item.id ? (
-                        <>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleSaveEdit}
-                            disabled={!editingValue.trim()}
-                            className="h-6 w-6 p-0 text-green-500 hover:text-green-700"
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleCancelEdit}
-                            className="h-6 w-6 p-0 text-gray-500 hover:text-gray-700"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              handleStartEdit(item.id, item.content)
-                            }
-                            className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setIsDeleteDialogOpen(true);
-                              setIdToDelete(item.id);
-                            }}
-                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
+        {/* Formulario para requisitos existentes */}
+        {existingFields.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-medium mb-3">Requisitos existentes</h3>
+            <form onSubmit={handleExistingSubmit(handleExistingFormSubmit)}>
+              <div className="grid auto-rows-min gap-4 max-h-[40vh] overflow-y-auto mb-4">
+                {existingFields.map((field, index) => (
+                  <div key={field.id} className="grid gap-3 mr-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`existente-${index}`}>
+                        Requisito {index + 1}
+                      </Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteExistingRequisito(index)}
+                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
+                    <Input
+                      id={`existente-${index}`}
+                      {...existingControl.register(
+                        `requisitosExistentes.${index}.valor`
+                      )}
+                      placeholder="Requisito existente"
+                      type="text"
+                    />
                   </div>
-                  <Input
-                    id={`existente-${index}`}
-                    value={editingId === item.id ? editingValue : item.content}
-                    onChange={(e) => {
-                      if (editingId === item.id) {
-                        setEditingValue(e.target.value);
-                      }
-                    }}
-                    readOnly={editingId !== item.id}
-                    placeholder="Requisito existente"
-                    type="text"
-                    className={
-                      editingId === item.id
-                        ? "border-blue-300 focus:border-blue-500"
-                        : "bg-muted"
-                    }
-                    onKeyDown={(e) => {
-                      if (editingId === item.id && e.key === "Enter") {
-                        e.preventDefault();
-                        handleSaveEdit();
-                      }
-                      if (editingId === item.id && e.key === "Escape") {
-                        e.preventDefault();
-                        handleCancelEdit();
-                      }
-                    }}
-                  />
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No hay requisitos existentes
-              </p>
-            )}
+                ))}
+              </div>
+              <Button type="submit" className="w-full mb-4" variant="default">
+                <Save className="h-4 w-4 mr-2" />
+                Guardar cambios
+              </Button>
+            </form>
           </div>
-        </div>
+        )}
 
         <Separator orientation="horizontal" className="mb-4" />
 
