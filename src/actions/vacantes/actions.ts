@@ -881,6 +881,57 @@ export const unvalidateTernaAction = async (vacancyId: string) => {
   }
 };
 
+interface Args {
+  vacancyId: string;
+  salarioFinal: string;
+  fechaProximaEntrada: string;
+}
+
+export const updateSalarioFinalAndFechaProximaEntrada = async ({
+  fechaProximaEntrada,
+  salarioFinal,
+  vacancyId,
+}: Args) => {
+  try {
+    //buscar la vacante
+    const vacancy = await prisma.vacancy.findUnique({
+      where: {
+        id: vacancyId,
+      },
+    });
+
+    if (!vacancy) {
+      return {
+        ok: false,
+        message: "La vacante no existe",
+      };
+    }
+
+    //actualizar la vacante
+    await prisma.vacancy.update({
+      where: {
+        id: vacancyId,
+      },
+      data: {
+        salarioFinal,
+        fecha_proxima_entrada: fechaProximaEntrada,
+      },
+    });
+
+    return {
+      ok: true,
+      message:
+        "Salario final y fecha de proxima entrada actualizados correctamente",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message:
+        "Error al actualizar el salario final y la fecha de proxima entrada",
+    };
+  }
+};
+
 //FUNCIONES PARA ESTADISTICAS DE LAS VACANTES
 
 /**

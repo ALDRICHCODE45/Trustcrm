@@ -251,6 +251,9 @@ model Vacancy {
   valorFactura          Float?
   fee                   Float?
   ternaFinal            Person[]         @relation("VacancyTernaFinal")
+  //datos para pasar a preplacement o placement
+  salarioFinal          String?
+  fecha_proxima_entrada String?
 
   //Detalles de la vacante NO OBLIGATORIOS 
   prestaciones String?

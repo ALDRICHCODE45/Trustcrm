@@ -89,6 +89,7 @@ export default function KanbanReclutadorPage() {
         user_logged={user_logged_data}
         reclutadores={reclutadores}
         clientes={clients}
+        refreshVacancies={fetchAllVacancies}
       />
     </>
   );

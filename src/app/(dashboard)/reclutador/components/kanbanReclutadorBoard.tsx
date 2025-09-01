@@ -52,7 +52,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { VacancyWithRelations } from "./ReclutadorColumns";
-import { Role } from "@prisma/client";
+import { Role, VacancyEstado } from "@prisma/client";
 import { User, Client } from "@prisma/client";
 import { isToday, isPast, differenceInCalendarDays } from "date-fns";
 import { DetailsSectionReclutador } from "../kanban/components/detailsSection";
@@ -65,6 +65,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { PreplacementDialog } from "./PreplacementDialog";
 
 // Types
 interface ColumnProps {
@@ -578,6 +579,7 @@ interface KanbanBoardPageProps {
   };
   reclutadores: User[];
   clientes: Client[];
+  refreshVacancies: () => void;
 }
 
 export const KanbanBoardPage = ({
@@ -585,7 +587,14 @@ export const KanbanBoardPage = ({
   user_logged,
   reclutadores,
   clientes,
+  refreshVacancies,
 }: KanbanBoardPageProps) => {
+  //Dialogo para pedir el salario final y la fecha de proxima entrada
+  const [showPreplacementDialog, setShowPreplacementDialog] = useState(false);
+  const [preplacementVacanteId, setPreplacementVacanteId] = useState<
+    string | null
+  >(null);
+
   const [allVacantes, setAllVacantes] =
     useState<VacancyWithRelations[]>(initialVacantes);
   const [filteredVacantes, setFilteredVacantes] =
@@ -790,6 +799,20 @@ export const KanbanBoardPage = ({
       // Movimiento entre columnas
       try {
         setIsUpdating(true);
+
+        //validar si el nuevo status es Preplacement
+        //Para pedir el salario final y la fecha de proxima entrada
+        if (
+          (targetColumn.id === VacancyEstado.PrePlacement ||
+            targetColumn.id === VacancyEstado.Placement) &&
+          !activeVacante.salarioFinal &&
+          !activeVacante.fecha_proxima_entrada
+        ) {
+          //abrir dialogo para pedir el salario final y la fecha de proxima entrada
+          setPreplacementVacanteId(activeVacante.id);
+          setShowPreplacementDialog(true);
+          return;
+        }
 
         // Actualizar el estado en el backend
         const result = await updateVacancyStatus(
@@ -1124,6 +1147,14 @@ export const KanbanBoardPage = ({
           </DragOverlay>
         </DndContext>
       </div>
+      {preplacementVacanteId && (
+        <PreplacementDialog
+          open={showPreplacementDialog}
+          setOpen={setShowPreplacementDialog}
+          activeVacanteId={preplacementVacanteId}
+          refreshVacancies={refreshVacancies}
+        />
+      )}
     </>
   );
 };

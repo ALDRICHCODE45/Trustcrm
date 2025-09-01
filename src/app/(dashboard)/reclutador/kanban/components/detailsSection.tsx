@@ -17,7 +17,6 @@ import {
 import { Role } from "@prisma/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { VacancyWithRelations } from "../../components/ReclutadorColumns";
 import {
   calculateDaysFromAssignment,
   calculateDaysToDelivery,
@@ -35,17 +34,11 @@ import {
 } from "@/components/ui/sheet";
 import { VacancyDetailsChecklist } from "./VacancyDetailsChecklist";
 import { DrawerVacancyDetails } from "./DrawerVacancyDetails";
-import { useCandidates } from "@/hooks/candidates/use-candidates";
 import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 import { useEffect } from "react";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { toast } from "sonner";
 import { VacancyStatusHistorySheet } from "./VacancyStatusHistorySheet";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   Popover,
   PopoverContent,
@@ -476,10 +469,17 @@ export const DetailsSectionReclutador = ({
                 </div>
                 <div>
                   <h4 className="font-medium">Candidato contratado</h4>
-                  <p className="text-muted-foreground text-sm flex justify-center gap-2 items-center">
-                    {vacancyDetails.candidatoContratado.name} -{" "}
-                    {vacancyDetails.candidatoContratado.email}
-                  </p>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-muted-foreground text-sm flex justify-center gap-2 items-center">
+                      {vacancyDetails.candidatoContratado.name} -{" "}
+                      {vacancyDetails.candidatoContratado.email}
+                    </p>
+                    <p className="text-muted-foreground text-sm flex justify-center gap-2 items-center">
+                      {vacancyDetails.salarioFinal} -{" "}
+                      {vacancyDetails.fecha_proxima_entrada}
+                    </p>
+                    <p></p>
+                  </div>
                 </div>
               </div>
               <a

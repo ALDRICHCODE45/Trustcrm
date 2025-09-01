@@ -9,6 +9,8 @@ import {
   UserSearch,
   Settings,
   Building2,
+  User,
+  CircleUserRound,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,6 +48,23 @@ import { Badge } from "../ui/badge";
 import Image from "next/image";
 import { NotificationCenter } from "./NotificationCenter";
 import { ToastCustomMessage } from "../ToastCustomMessage";
+
+// Componente Dot para indicar notificaciones no leídas
+function Dot({ className }: { className?: string }) {
+  return (
+    <svg
+      width="6"
+      height="6"
+      fill="currentColor"
+      viewBox="0 0 6 6"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="3" cy="3" r="3" />
+    </svg>
+  );
+}
 
 interface NotificationDropdownProps {
   userId: string;
@@ -256,6 +275,67 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
     [isDeleting]
   );
 
+  const handleMarkAllAsRead = useCallback(async () => {
+    const unreadNotifications = notifications.filter(
+      (n) => n.status === "UNREAD"
+    );
+    if (unreadNotifications.length === 0) return;
+
+    try {
+      setIsMarkingRead(true);
+
+      // Marcar todas como leídas en paralelo
+      const promises = unreadNotifications.map((notification) =>
+        markAsReadNotification(notification.id)
+      );
+
+      await Promise.all(promises);
+
+      // Actualizar estado local
+      setNotifications((prevNotifications) =>
+        prevNotifications.map((n) => ({
+          ...n,
+          status: NotificationStatus.READ,
+        }))
+      );
+      setUnreadCount(0);
+
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Todas las notificaciones marcadas como leídas"
+          message="Todas las notificaciones marcadas como leídas"
+          type="success"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error al marcar todas como leídas"
+          message="Error al marcar todas como leídas"
+          type="error"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
+    } finally {
+      setIsMarkingRead(false);
+    }
+  }, [notifications, isMarkingRead]);
+
+  const handleNotificationClick = useCallback(
+    (notification: NotificationWithTask) => {
+      if (notification.status === "UNREAD") {
+        handleMarkAsRead(notification.id);
+      }
+    },
+    [handleMarkAsRead]
+  );
+
   return (
     <>
       <DropdownMenu>
@@ -265,9 +345,9 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
               <Button variant="outline" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] text-white flex items-center justify-center">
-                    {unreadCount}
-                  </span>
+                  <Badge className="absolute -top-2 left-full min-w-5 -translate-x-1/2 px-1">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </Badge>
                 )}
               </Button>
             </DropdownMenuTrigger>
@@ -293,48 +373,85 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
               Ver todas
             </Button>
           </div>
-          <ScrollArea className="h-[300px]">
+          <ScrollArea className="h-[300px] px-2">
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center gap-5 p-4 text-center mt-10 text-sm text-muted-foreground">
                 <Ban className="text-center text-gray-400" size={25} />
                 No hay notificaciones
               </div>
             ) : (
-              notifications.map((notification) => (
-                <div key={notification.id}>
-                  <DropdownMenuItem
+              notifications.map((notification) => {
+                const image =
+                  notification.vacancy?.reclutador.image ??
+                  notification.task?.assignedTo.image ??
+                  "/default.png";
+                return (
+                  <div
                     key={notification.id}
-                    className={`relative p-4 pr-12 cursor-pointer ${
-                      notification.status === "UNREAD"
-                        ? "border-l-4 border-blue-500 shadow"
-                        : ""
-                    }`}
+                    className="hover:bg-accent rounded-md px-3 py-2 text-sm transition-colors relative group"
                   >
-                    {/* Contenido de la notificación */}
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(notification.createdAt), {
-                          addSuffix: true,
-                          locale: es,
-                        })}
-                      </p>
+                    {/* Contenido de la notificación con nuevo diseño */}
+                    <div className="relative flex items-start gap-3 pe-3">
+                      {image ? (
+                        <Image
+                          className="size-9 rounded-md object-cover"
+                          src={image}
+                          width={36}
+                          height={36}
+                          alt={
+                            notification.vacancy?.reclutador.name ||
+                            notification.task?.assignedTo.name ||
+                            "Usuario"
+                          }
+                          quality={95}
+                          priority={false}
+                        />
+                      ) : (
+                        <CircleUserRound
+                          size={28}
+                          strokeWidth={1.6}
+                          absoluteStrokeWidth
+                          className="size-9 rounded-md object-cover text-muted-foreground"
+                        />
+                      )}
+                      <div className="flex-1 space-y-1">
+                        <button
+                          className="text-foreground/80 text-left after:absolute after:inset-0"
+                          onClick={() => handleNotificationClick(notification)}
+                        >
+                          <span className="text-foreground font-medium hover:underline">
+                            {notification.message}
+                          </span>
+                        </button>
+                        <div className="text-muted-foreground text-xs">
+                          {formatDistanceToNow(
+                            new Date(notification.createdAt),
+                            {
+                              addSuffix: true,
+                              locale: es,
+                            }
+                          )}
+                        </div>
+                      </div>
+                      {notification.status === "UNREAD" && (
+                        <div className="absolute end-0 self-center">
+                          <Dot />
+                        </div>
+                      )}
                     </div>
 
-                    {/* Menú de acciones en la esquina */}
-                    <div className="absolute top-2 right-2">
+                    {/* Menú de acciones */}
+                    <div className="absolute top-0 right-0 mt-1.5 mr-1.5">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                             disabled={isDeleting || isMarkingRead}
                           >
                             <span className="sr-only">Abrir Menú</span>
-                            <MoreVertical />
+                            <MoreVertical className="h-3 w-3" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -359,7 +476,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                               className="gap-2 cursor-pointer"
                               disabled={isDeleting || isMarkingRead}
                             >
-                              <FileSymlink />
+                              <FileSymlink className="h-4 w-4" />
                               Ver tarea
                             </DropdownMenuItem>
                           )}
@@ -373,7 +490,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                               className="gap-2 cursor-pointer"
                               disabled={isDeleting || isMarkingRead}
                             >
-                              <Building2 />
+                              <Building2 className="h-4 w-4" />
                               Vacante
                             </DropdownMenuItem>
                           )}
@@ -388,7 +505,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                                   href={`/profile/${notification.vacancy?.reclutadorId}`}
                                   className="flex gap-2"
                                 >
-                                  <UserSearch />
+                                  <UserSearch className="h-4 w-4" />
                                   Ver usuario
                                 </Link>
                               </DropdownMenuItem>
@@ -400,7 +517,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                                 className="gap-2 cursor-pointer"
                                 disabled={isMarkingRead || isDeleting}
                               >
-                                <ListCheck />
+                                <ListCheck className="h-4 w-4" />
                                 {isMarkingRead
                                   ? "Cargando..."
                                   : "Marcar como leído"}
@@ -410,15 +527,16 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                  </DropdownMenuItem>
-                </div>
-              ))
+                  </div>
+                );
+              })
             )}
           </ScrollArea>
         </DropdownMenuContent>
       </DropdownMenu>
 
       {/* Diálogo para mostrar detalles de la tarea */}
+
       <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
         <DialogContent>
           <DialogHeader>
@@ -566,15 +684,18 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                   Información del Reclutador
                 </DialogTitle>
                 <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-                  <Image
-                    className="ring-background rounded-full ring-2"
-                    src={
-                      selectedVacancy.vacancy.reclutador.image ?? "/default.png"
-                    }
-                    width={40}
-                    height={40}
-                    alt={selectedVacancy.vacancy.reclutador.name}
-                  />
+                  <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-background flex-shrink-0">
+                    <Image
+                      className="w-full h-full object-cover"
+                      src={
+                        selectedVacancy.vacancy.reclutador.image ??
+                        "/default.png"
+                      }
+                      width={40}
+                      height={40}
+                      alt={selectedVacancy.vacancy.reclutador.name}
+                    />
+                  </div>
                   <div>
                     <p className="text-sm font-medium">
                       {selectedVacancy.vacancy.reclutador.name}
