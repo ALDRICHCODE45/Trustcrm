@@ -16,8 +16,20 @@ import {
 } from "@/components/ui/sheet";
 import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 
-export const DrawerVacancyDetails = ({ vacanteId }: { vacanteId: string }) => {
+export const DrawerVacancyDetails = ({
+  vacanteId,
+  loggedUser,
+}: {
+  vacanteId: string;
+  loggedUser?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  } | null;
+}) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const {
     isLoading: IsVacancyLoading,
@@ -25,16 +37,19 @@ export const DrawerVacancyDetails = ({ vacanteId }: { vacanteId: string }) => {
     vacancyDetails,
   } = useVacancyDetails(vacanteId);
 
+  // Solo cargar datos cuando el Sheet se abre por primera vez
   useEffect(() => {
-    fetchVacancyDetails();
-  }, [fetchVacancyDetails]);
-
-  if (IsVacancyLoading || !vacancyDetails) {
-    return <Loader2 className="animate-spin" />;
-  }
+    if (isOpen && !vacancyDetails) {
+      fetchVacancyDetails();
+    }
+  }, [isOpen, vacancyDetails, fetchVacancyDetails]);
 
   return (
-    <SheetContent side="left" className="z-[99999] min-w-[25vw]">
+    <SheetContent
+      side="left"
+      className="z-[9999] min-w-[25vw]"
+      onOpenAutoFocus={() => setIsOpen(true)}
+    >
       <div className="mx-auto w-full max-w-4xl flex flex-col h-full">
         <SheetHeader className="pb-4 flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -48,7 +63,7 @@ export const DrawerVacancyDetails = ({ vacanteId }: { vacanteId: string }) => {
                   : "Información adicional sobre la posición"}
               </SheetDescription>
             </div>
-            {!isEditing && (
+            {!isEditing && vacancyDetails && (
               <Button
                 variant="outline"
                 size="sm"
@@ -62,14 +77,30 @@ export const DrawerVacancyDetails = ({ vacanteId }: { vacanteId: string }) => {
           </div>
         </SheetHeader>
 
-        <VacancyDetailsForm
-          vacante={vacancyDetails}
-          isEditing={isEditing}
-          onEditingChange={setIsEditing}
-          onVacancyUpdated={async () => {
-            await fetchVacancyDetails();
-          }}
-        />
+        {IsVacancyLoading ? (
+          <div className="flex justify-center items-center h-full flex-col gap-4">
+            <Loader2 className="animate-spin" size={24} />
+            <p className="text-sm text-muted-foreground">
+              Cargando detalles de la vacante...
+            </p>
+          </div>
+        ) : vacancyDetails ? (
+          <VacancyDetailsForm
+            vacante={vacancyDetails}
+            isEditing={isEditing}
+            onEditingChange={setIsEditing}
+            loggedUser={loggedUser}
+            onVacancyUpdated={async () => {
+              await fetchVacancyDetails();
+            }}
+          />
+        ) : (
+          <div className="flex justify-center items-center h-full flex-col gap-4">
+            <p className="text-sm text-muted-foreground">
+              No se pudieron cargar los detalles de la vacante
+            </p>
+          </div>
+        )}
       </div>
     </SheetContent>
   );

@@ -86,10 +86,7 @@ const vacancySchema = z.object({
     .optional(),
   fechaAsignacion: z.date().optional(),
   fechaEntrega: z.date().optional(),
-  salario: z
-    .number()
-    .min(0, "El salario debe ser mayor o igual a 0")
-    .optional(),
+  salario: z.string().optional(),
   valorFactura: z
     .number()
     .min(0, "El valor de factura debe ser mayor o igual a 0")

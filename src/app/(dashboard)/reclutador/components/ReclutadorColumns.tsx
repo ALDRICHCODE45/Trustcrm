@@ -21,6 +21,11 @@ import { DocumentsSection } from "./DocumentsSection";
 import { CandidatoContratadoDrawer } from "./CandidatoContratadoDrawer";
 import { CandidatesTableSheet } from "../../list/reclutamiento/components/CandidatesTableSheet";
 import { calculateDaysFromAssignment } from "./kanbanReclutadorBoard";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export type VacancyWithRelations = Prisma.VacancyGetPayload<{
   include: {
@@ -444,15 +449,30 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
       const salario = row.original.salario;
       return (
         <div className="flex items-center justify-center">
-          <Button variant="outline" className="w-full">
-            <p>
-              {salario ? (
-                <span>${salario}</span>
-              ) : (
-                <span className="text-red-500">N/A</span>
-              )}
-            </p>
-          </Button>
+          {salario ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline">
+                  <span className="max-w-[100px] truncate">{salario}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="max-w-[250px] z-[9999999] py-3 shadow-none"
+                side="top"
+              >
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-[15px] font-medium">
+                      Salario de la vacante
+                    </p>
+                    <p className="text-muted-foreground text-sm">{salario}</p>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <span>N/A</span>
+          )}
         </div>
       );
     },

@@ -61,7 +61,6 @@ import { toast } from "sonner";
 import { createVacancy } from "@/actions/vacantes/actions";
 import { ChecklistForm } from "../VacancyFormComponents/CreateVacancyComponents/ChecklistForm";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
-import { SelectNative } from "@/components/ui/select-native";
 import { VacancyDetails } from "../VacancyFormComponents/CreateVacancyComponents/VacancyDetails";
 import {
   Command,
@@ -111,7 +110,7 @@ const vacancySchema = z.object({
   reclutadorId: z.string().optional(),
 
   // Información financiera
-  salario: z.number().optional(),
+  salario: z.string().optional(),
   valorFactura: z.number().optional(),
   fee: z.number().optional(),
   monto: z.number().optional(),

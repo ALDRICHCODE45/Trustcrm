@@ -41,6 +41,16 @@ import { useEffect } from "react";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { toast } from "sonner";
 import { VacancyStatusHistorySheet } from "./VacancyStatusHistorySheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface DetailsSectionProps {
   vacanteId: string;
@@ -49,6 +59,7 @@ interface DetailsSectionProps {
     email: string;
     role: Role;
     image: string;
+    id: string;
   };
 }
 
@@ -331,7 +342,10 @@ export const DetailsSectionReclutador = ({
               </SheetTrigger>
               <SheetPortal>
                 <SheetOverlay className="z-[9999]" />
-                <DrawerVacancyDetails vacanteId={vacancyDetails.id} />
+                <DrawerVacancyDetails
+                  vacanteId={vacancyDetails.id}
+                  loggedUser={user_logged}
+                />
               </SheetPortal>
             </Sheet>
           </div>
@@ -342,9 +356,33 @@ export const DetailsSectionReclutador = ({
             <CardContent className="pt-4">
               <div className="text-sm text-muted-foreground">Salario</div>
               <div className="text-2xl font-semibold mt-1">
-                $
-                {vacancyDetails.salario?.toLocaleString() || (
-                  <span className="">N/A</span>
+                {vacancyDetails.salario ? (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline">
+                        <span className="max-w-[100px] truncate">
+                          {vacancyDetails.salario}
+                        </span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="max-w-[250px] z-[9999999] py-3 shadow-none"
+                      side="top"
+                    >
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <p className="text-[15px] font-medium">
+                            Salario de la vacante
+                          </p>
+                          <p className="text-muted-foreground text-sm">
+                            {vacancyDetails.salario}
+                          </p>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <span>N/A</span>
                 )}
               </div>
             </CardContent>

@@ -33,10 +33,7 @@ const vacancyDetailsSchema = z.object({
   psicometria: z.string().optional(),
   ubicacion: z.string().optional(),
   comentarios: z.string().optional(),
-  salario: z
-    .number()
-    .min(0, "El salario debe ser mayor o igual a 0")
-    .optional(),
+  salario: z.string().optional(),
   fee: z.number().min(0, "El fee debe ser mayor o igual a 0").optional(),
   monto: z.number().min(0, "El monto debe ser mayor o igual a 0").optional(),
   valorFactura: z
@@ -52,6 +49,12 @@ interface VacancyDetailsFormProps {
   isEditing: boolean;
   onEditingChange: (editing: boolean) => void;
   onVacancyUpdated: () => Promise<void>;
+  loggedUser?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  } | null;
 }
 
 export const VacancyDetailsForm = ({
@@ -59,6 +62,7 @@ export const VacancyDetailsForm = ({
   isEditing,
   onEditingChange,
   onVacancyUpdated,
+  loggedUser: propLoggedUser,
 }: VacancyDetailsFormProps) => {
   const [loading, setLoading] = useState(false);
 
@@ -80,11 +84,17 @@ export const VacancyDetailsForm = ({
     },
   });
 
-  const { loggedUser, fetchLoggedUser } = useUsers();
+  const { loggedUser: hookLoggedUser, fetchLoggedUser } = useUsers();
+
+  // Usar el usuario pasado por props o el del hook como fallback
+  const loggedUser = propLoggedUser || hookLoggedUser;
 
   useEffect(() => {
-    fetchLoggedUser();
-  }, []);
+    // Solo buscar usuario si no se pasó por props
+    if (!propLoggedUser && !hookLoggedUser) {
+      fetchLoggedUser();
+    }
+  }, [propLoggedUser, hookLoggedUser, fetchLoggedUser]);
 
   if (!loggedUser) {
     return (
@@ -256,8 +266,7 @@ export const VacancyDetailsForm = ({
                                   autoComplete="off"
                                   {...field}
                                 />
-                              ) : detail.name === "salario" ||
-                                detail.name === "fee" ||
+                              ) : detail.name === "fee" ||
                                 detail.name === "valorFactura" ||
                                 detail.name === "monto" ? (
                                 <Input

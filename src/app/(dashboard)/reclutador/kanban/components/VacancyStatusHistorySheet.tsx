@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   SheetContent,
   SheetDescription,
@@ -39,14 +39,15 @@ export const VacancyStatusHistorySheet = ({
 }: {
   vacanteId: string;
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const { isLoading, error, history, getVacancyHistory } =
     useVacancyStats(vacanteId);
 
   useEffect(() => {
-    if (vacanteId) {
+    if (isOpen && vacanteId && history.length === 0) {
       getVacancyHistory();
     }
-  }, [vacanteId, getVacancyHistory]);
+  }, [isOpen, vacanteId, history.length, getVacancyHistory]);
 
   if (isLoading) {
     return (
@@ -75,7 +76,10 @@ export const VacancyStatusHistorySheet = ({
   }
 
   return (
-    <SheetContent className="z-[99999] overflow-y-auto min-w-[30vw]">
+    <SheetContent
+      className="z-[99999] overflow-y-auto min-w-[30vw]"
+      onOpenAutoFocus={() => setIsOpen(true)}
+    >
       <SheetHeader>
         <SheetTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />

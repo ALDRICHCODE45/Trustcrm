@@ -27,7 +27,6 @@ import {
   AlertDialogDescription,
   AlertDialogHeader,
   AlertDialogContent,
-  AlertDialogTrigger,
   AlertDialogTitle,
   AlertDialogCancel,
   AlertDialogAction,

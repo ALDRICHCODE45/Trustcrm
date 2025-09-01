@@ -77,6 +77,7 @@ interface ColumnProps {
     email: string;
     role: Role;
     image: string;
+    id: string;
   };
 }
 
@@ -535,6 +536,7 @@ const VacanteTabs: React.FC<{
     email: string;
     role: Role;
     image: string;
+    id: string;
   };
 }> = ({ vacante, user_logged }) => (
   <Tabs defaultValue="detalles">
@@ -572,6 +574,7 @@ interface KanbanBoardPageProps {
     email: string;
     role: Role;
     image: string;
+    id: string;
   };
   reclutadores: User[];
   clientes: Client[];

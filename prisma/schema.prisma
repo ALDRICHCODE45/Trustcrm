@@ -245,7 +245,7 @@ model Vacancy {
   fechaOferta           DateTime?
   candidatoContratado   Person?          @relation("VacancyCandidatoContratado", fields: [candidatoContratadoId], references: [id])
   candidatoContratadoId String?
-  salario               Int?
+  salario               String?
   fechaComision         DateTime?
   monto                 Int?
   valorFactura          Float?

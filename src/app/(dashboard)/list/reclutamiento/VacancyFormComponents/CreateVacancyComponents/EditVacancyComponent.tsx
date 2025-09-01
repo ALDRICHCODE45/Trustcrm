@@ -45,26 +45,12 @@ export const EditVacancyDetailt = ({ form, vacante, user_logged }: Props) => {
             name="salario"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Salario (neto)</FormLabel>
+                <FormLabel>Salario (bruto)</FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder={`Ingresa salario neto`}
-                    className="w-full"
-                    autoComplete="off"
-                    value={field.value || ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Permitir valores vacíos y números decimales mientras se escribe
-                      if (value === "") {
-                        field.onChange(0);
-                      } else if (!isNaN(parseFloat(value))) {
-                        field.onChange(parseFloat(value));
-                      }
-                      // Si el valor no es un número válido, no hacer nada (mantener el valor anterior)
-                    }}
+                    defaultValue={vacante.salario || undefined}
+                    placeholder="Ej: De 10000 a 15000 brutos"
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />

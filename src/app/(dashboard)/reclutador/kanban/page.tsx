@@ -43,6 +43,7 @@ export default function KanbanReclutadorPage() {
     email: loggedUser?.email || "",
     role: loggedUser?.role as Role,
     image: loggedUser?.image || "",
+    id: loggedUser?.id || "",
   };
 
   const user_logged_data_form = {

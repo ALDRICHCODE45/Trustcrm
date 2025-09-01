@@ -42,10 +42,7 @@ const updateVacancySchema = z.object({
     .optional(),
   fechaAsignacion: z.date().optional(),
   fechaEntrega: z.date().optional(),
-  salario: z
-    .number()
-    .min(0, "El salario debe ser mayor o igual a 0")
-    .optional(),
+  salario: z.string().optional(),
   valorFactura: z
     .number()
     .min(0, "El valor de factura debe ser mayor o igual a 0")
@@ -73,7 +70,7 @@ interface VacancyFormData {
   fechaEntrega?: Date;
   reclutadorId?: string;
   clienteId: string; // Hacer requerido según el esquema
-  salario?: number;
+  salario?: string;
   valorFactura?: number;
   fee?: number;
   monto?: number;
@@ -145,6 +142,7 @@ export const updateVacancy = async (data: UpdateVacancyFormData) => {
         fee: data.fee || undefined,
         monto: data.monto || undefined,
         valorFactura: data.valorFactura || undefined,
+        salario: data.salario || undefined,
       },
       include: {
         reclutador: true,
@@ -265,7 +263,7 @@ export const createVacancy = async (vacancy: VacancyFormData) => {
         estado: estadoInicial,
         prioridad: vacancy.prioridad || "Alta",
         fechaEntrega: vacancy.fechaEntrega,
-        salario: vacancy.salario,
+        salario: vacancy.salario || undefined,
         valorFactura: vacancy.valorFactura,
         fee: vacancy.fee,
         monto: vacancy.monto,
