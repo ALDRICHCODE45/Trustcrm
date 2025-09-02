@@ -49,15 +49,7 @@ export const VacancyDetails = ({ form, user_logged }: Props) => {
               <FormItem>
                 <FormLabel>Salario (bruto)</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="Ej: 10000"
-                    {...field}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      field.onChange(value === "" ? undefined : Number(value));
-                    }}
-                  />
+                  <Input placeholder="De 25,000 a 30,000" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
