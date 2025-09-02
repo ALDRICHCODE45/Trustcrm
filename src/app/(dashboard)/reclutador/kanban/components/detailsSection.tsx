@@ -44,6 +44,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface DetailsSectionProps {
   vacanteId: string;
@@ -428,32 +429,45 @@ export const DetailsSectionReclutador = ({
         </div>
         <div className="flex gap-2">
           {user_logged.role === Role.Admin && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={handleValidatePerfilMuestra}
-              disabled={vacancyDetails.IsPerfilMuestraValidated}
-            >
-              <FileCheck2 className="h-4 w-4 mr-1 text-green-500" />
-              {vacancyDetails.IsPerfilMuestraValidated
-                ? "Perfil muestra validado"
-                : "Validar perfil muestra"}
-            </Button>
+            <ConfirmDialog
+              title="Validar perfil muestra"
+              description="¿Estás seguro de querer validar el perfil muestra?"
+              onConfirm={handleValidatePerfilMuestra}
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled={vacancyDetails.IsPerfilMuestraValidated}
+                >
+                  <FileCheck2 className="h-4 w-4 mr-1 text-green-500" />
+                  {vacancyDetails.IsPerfilMuestraValidated
+                    ? "Perfil muestra validado"
+                    : "Validar perfil muestra"}
+                </Button>
+              }
+            />
           )}
 
           {user_logged.role === Role.Admin && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleValidateChecklist}
-              disabled={vacancyDetails.IsChecklistValidated}
-            >
-              <ClipboardCheck className="text-green-500 h-4 w-4 mr-1" />
-              {vacancyDetails.IsChecklistValidated
-                ? "Checklist validado"
-                : "Validar checklist"}
-            </Button>
+            <ConfirmDialog
+              title="Validar checklist"
+              description="¿Estás seguro de querer validar el checklist?"
+              onConfirm={handleValidateChecklist}
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled={vacancyDetails.IsChecklistValidated}
+                >
+                  <ClipboardCheck className="text-green-500 h-4 w-4 mr-1" />
+                  {vacancyDetails.IsChecklistValidated
+                    ? "Checklist validado"
+                    : "Validar checklist"}
+                </Button>
+              }
+            />
           )}
         </div>
       </div>
