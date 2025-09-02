@@ -59,6 +59,7 @@ import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CreateCandidateFormData } from "@/zod/createCandidateSchema";
 import { Role } from "@prisma/client";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface CandidatesSectionProps {
   vacancyId: string;
@@ -603,36 +604,49 @@ export const CandidatesSectionReclutador = ({
                               >
                                 {candidato.vacanciesContratado &&
                                 candidato.vacanciesContratado.length > 0 ? (
-                                  <DropdownMenuItem
-                                    onClick={() =>
+                                  <ConfirmDialog
+                                    title="Deseleccionar candidato"
+                                    description="¿Estás seguro de querer deseleccionar este candidato?"
+                                    onConfirm={() =>
                                       handleDeseleccionarCandidato()
                                     }
-                                    className="cursor-pointer"
-                                  >
-                                    <UserRoundX className="h-4 w-4 mr-2" />
-                                    Deseleccionar
-                                  </DropdownMenuItem>
+                                    trigger={
+                                      <Button
+                                        variant="outline"
+                                        className="cursor-pointer w-full"
+                                      >
+                                        <UserRoundX className="h-4 w-4 mr-2" />
+                                        Deseleccionar
+                                      </Button>
+                                    }
+                                  />
                                 ) : (
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.preventDefault();
+                                  <ConfirmDialog
+                                    title="Seleccionar candidato"
+                                    description="¿Estás seguro de querer seleccionar este candidato?"
+                                    onConfirm={() =>
                                       handleMarkCandidateAsContratado(
                                         candidato.id
-                                      );
-                                    }}
-                                    className="cursor-pointer"
-                                  >
-                                    {isSelecting ? (
-                                      <LoaderCircleIcon
-                                        className="-ms-1 animate-spin"
-                                        size={16}
-                                        aria-hidden="true"
-                                      />
-                                    ) : (
-                                      <UserCheck className="h-4 w-4 mr-2" />
-                                    )}
-                                    Seleccionar
-                                  </DropdownMenuItem>
+                                      )
+                                    }
+                                    trigger={
+                                      <Button
+                                        variant="outline"
+                                        className="cursor-pointer w-full"
+                                      >
+                                        {isSelecting ? (
+                                          <LoaderCircleIcon
+                                            className="-ms-1 animate-spin"
+                                            size={16}
+                                            aria-hidden="true"
+                                          />
+                                        ) : (
+                                          <UserCheck className="h-4 w-4 mr-2" />
+                                        )}
+                                        Seleccionar
+                                      </Button>
+                                    }
+                                  />
                                 )}
                                 <DropdownMenuSeparator />
 
