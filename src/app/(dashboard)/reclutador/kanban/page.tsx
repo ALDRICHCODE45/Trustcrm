@@ -5,9 +5,10 @@ import QuickStatsDialog from "../components/QuickStatsDialog";
 import CreateVacanteForm from "../../list/reclutamiento/components/CreateVacanteForm";
 import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 import { useClients } from "@/hooks/clientes/use-clients";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useUsers } from "@/hooks/users/use-users";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function KanbanReclutadorPage() {
   //hook para vacantes
@@ -30,6 +31,9 @@ export default function KanbanReclutadorPage() {
     loggedUser,
     isLoading: isLoadingReclutadores,
   } = useUsers();
+
+  // Estado para controlar la visibilidad de los componentes superiores
+  const [showTopComponents, setShowTopComponents] = useState(true);
 
   useEffect(() => {
     fetchAllVacancies();
@@ -73,17 +77,45 @@ export default function KanbanReclutadorPage() {
     await fetchAllVacancies();
   };
 
+  const toggleTopComponents = () => {
+    setShowTopComponents(!showTopComponents);
+  };
+
   return (
     <>
-      <div className="flex justify-end mt-2 mb-4 w-full gap-2">
-        <QuickStatsDialog />
-        <CreateVacanteForm
-          clientes={clients}
-          reclutadores={reclutadores}
-          user_logged={user_logged_data_form}
-          onVacancyCreated={handleVacancyCreated}
-        />
+      <div className="flex justify-between items-center mt-2 mb-4 w-full">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleTopComponents}
+          className="flex items-center gap-2"
+        >
+          {showTopComponents ? (
+            <>
+              <EyeOff className="h-4 w-4" />
+              Ocultar controles
+            </>
+          ) : (
+            <>
+              <Eye className="h-4 w-4" />
+              Mostrar controles
+            </>
+          )}
+        </Button>
+
+        {showTopComponents && (
+          <div className="flex gap-2">
+            <QuickStatsDialog />
+            <CreateVacanteForm
+              clientes={clients}
+              reclutadores={reclutadores}
+              user_logged={user_logged_data_form}
+              onVacancyCreated={handleVacancyCreated}
+            />
+          </div>
+        )}
       </div>
+
       <KanbanBoardPage
         initialVacantes={vacancies}
         user_logged={user_logged_data}
