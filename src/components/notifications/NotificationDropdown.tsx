@@ -52,6 +52,7 @@ import { ToastCustomMessage } from "../ToastCustomMessage";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "../ConfirmDialog";
 import { VacanteTabs } from "@/app/(dashboard)/reclutador/components/kanbanReclutadorBoard";
+import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
 
 // Componente Dot para indicar notificaciones no leídas
 function Dot({ className }: { className?: string }) {
@@ -135,7 +136,7 @@ export function NotificationDropdown({
     null
   );
   const [selectedVacancy, setSelectedVacancy] =
-    useState<NotificationWithTask | null>(null);
+    useState<VacancyWithRelations | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showNotificationCenter, setShowNotificationCenter] = useState(false);
 
@@ -412,7 +413,7 @@ export function NotificationDropdown({
               Ver todas
             </Button>
           </div>
-          <ScrollArea className="h-[350px]  py-2 px-2">
+          <ScrollArea className="h-[350px]  py-2 px-3">
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center gap-5 p-4 text-center mt-10 text-sm text-muted-foreground">
                 <Ban className="text-center text-gray-400" size={25} />
@@ -427,7 +428,7 @@ export function NotificationDropdown({
                 return (
                   <Card
                     key={notification.id}
-                    className="hover:bg-accent rounded-md px-3 py-2 text-sm transition-colors relative group"
+                    className="hover:bg-accent rounded-md px-3 py-2 mb-3 text-sm transition-colors relative group"
                   >
                     {/* Contenido de la notificación con nuevo diseño */}
                     <div className="relative flex items-start gap-3 pe-3">
@@ -453,30 +454,33 @@ export function NotificationDropdown({
                           className="size-9 rounded-md object-cover text-muted-foreground"
                         />
                       )}
-                      <div className="flex-1 space-y-1 w-[80%]">
+                      <div className="flex-1 space-y-1 ">
                         <button
                           className="text-foreground/80 text-left after:absolute after:inset-0"
                           onClick={() => handleNotificationClick(notification)}
                         >
-                          <span className="text-foreground font-medium hover:underline">
+                          <p className=" w-[93%] text-foreground font-medium hover:underline">
                             {notification.message}
-                          </span>
+                          </p>
                         </button>
-                        <div className="text-muted-foreground text-xs">
-                          {formatDistanceToNow(
-                            new Date(notification.createdAt),
-                            {
-                              addSuffix: true,
-                              locale: es,
-                            }
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-muted-foreground text-xs">
+                            {formatDistanceToNow(
+                              new Date(notification.createdAt),
+                              {
+                                addSuffix: true,
+                                locale: es,
+                              }
+                            )}
+                          </div>
+
+                          {notification.status === "UNREAD" && (
+                            <div className="">
+                              <Dot />
+                            </div>
                           )}
                         </div>
                       </div>
-                      {notification.status === "UNREAD" && (
-                        <div className="absolute end-0 self-center">
-                          <Dot />
-                        </div>
-                      )}
                     </div>
 
                     {/* Menú de acciones */}
@@ -526,38 +530,16 @@ export function NotificationDropdown({
                           )}
 
                           {notification.vacancyId && (
-                            <>
-                              <Dialog
-                                open={!!selectedVacancy}
-                                onOpenChange={() => setSelectedVacancy(null)}
-                              >
-                                <DialogTrigger asChild>
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      setSelectedVacancy(notification);
-                                    }}
-                                    className="gap-2 cursor-pointer"
-                                    disabled={isDeleting || isMarkingRead}
-                                  >
-                                    <Building2 className="h-4 w-4" />
-                                    Vacante
-                                  </DropdownMenuItem>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-[730px] max-h-[90vh] overflow-y-auto z-[900]">
-                                  <DialogHeader>
-                                    <DialogTitle>Vacante</DialogTitle>
-                                    <DialogDescription>
-                                      Aqui va a ir el dialog del kanban
-                                    </DialogDescription>
-                                  </DialogHeader>
-                                  <VacanteTabs
-                                    vacante={selectedVacancy?.vacancy!}
-                                    user_logged={user_logged}
-                                  />
-                                </DialogContent>
-                              </Dialog>
-                            </>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                setSelectedVacancy(notification.vacancy);
+                              }}
+                              className="gap-2 cursor-pointer"
+                              disabled={isDeleting || isMarkingRead}
+                            >
+                              <Building2 className="h-4 w-4" />
+                              Vacante
+                            </DropdownMenuItem>
                           )}
 
                           {notification.vacancy?.reclutadorId && (
@@ -664,117 +646,22 @@ export function NotificationDropdown({
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo para mostrar detalles de la vacante */}
-      <Dialog
-        open={!!selectedVacancy}
-        onOpenChange={() => setSelectedVacancy(null)}
-      >
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle>Posición de Vacante</DialogTitle>
-              {selectedVacancy?.vacancy && (
-                <Badge variant="outline" className="gap-1.5">
-                  <span
-                    className="size-1.5 rounded-full bg-blue-500"
-                    aria-hidden="true"
-                  ></span>
-                  {selectedVacancy.vacancy.estado}
-                </Badge>
-              )}
-            </div>
-            <DialogDescription>
-              Detalles de la vacante vinculada a esta tarea
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedVacancy?.vacancy && (
-            <>
-              <div className="flex flex-col gap-5">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Posición
-                  </label>
-                  <Input
-                    type="text"
-                    defaultValue={selectedVacancy.vacancy.posicion}
-                    readOnly
-                    className="bg-muted"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Cliente
-                  </label>
-                  <Input
-                    type="text"
-                    defaultValue={
-                      selectedVacancy.vacancy.cliente.cuenta ||
-                      "Sin especificar"
-                    }
-                    readOnly
-                    className="bg-muted"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                      Estado
-                    </label>
-                    <Input
-                      type="text"
-                      defaultValue={selectedVacancy.vacancy.estado}
-                      readOnly
-                      className="bg-muted"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                      Prioridad
-                    </label>
-                    <Input
-                      type="text"
-                      defaultValue={selectedVacancy.vacancy.prioridad}
-                      readOnly
-                      className="bg-muted"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <DialogTitle className="text-lg mb-3">
-                  Información del Reclutador
-                </DialogTitle>
-                <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-                  <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-background flex-shrink-0">
-                    <Image
-                      className="w-full h-full object-cover"
-                      src={
-                        selectedVacancy.vacancy.reclutador.image ??
-                        "/default.png"
-                      }
-                      width={40}
-                      height={40}
-                      alt={selectedVacancy.vacancy.reclutador.name}
-                    />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {selectedVacancy.vacancy.reclutador.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedVacancy.vacancy.reclutador.email}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      {selectedVacancy && (
+        <Dialog
+          open={!!selectedVacancy}
+          onOpenChange={() => setSelectedVacancy(null)}
+        >
+          <DialogContent className="sm:max-w-[730px] max-h-[90vh] overflow-y-auto z-[900]">
+            <DialogHeader>
+              <DialogTitle>{selectedVacancy.posicion}</DialogTitle>
+              <DialogDescription>
+                Detalles de la vacante vinculada.
+              </DialogDescription>
+            </DialogHeader>
+            <VacanteTabs vacante={selectedVacancy} user_logged={user_logged} />
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Centro de Notificaciones */}
       <NotificationCenter
