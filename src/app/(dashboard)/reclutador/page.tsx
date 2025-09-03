@@ -105,20 +105,13 @@ export default async function VacantesPage({}: PageProps): Promise<ReactElement>
         <div className="col-span-1">
           {/* LIST */}
           <ToastAlerts />
-          <div className="flex justify-end mt-2 gap-2">
-            <QuickStatsDialog />
-            <CreateVacanteForm
-              reclutadores={reclutadores}
-              clientes={clientes}
-              user_logged={user_logged}
-            />
-          </div>
 
           <RecruiterTable
             columns={reclutadorColumns}
             clientes={clientes}
             data={vacantes}
             reclutadores={reclutadores}
+            user_logged={user_logged}
           />
         </div>
       </div>

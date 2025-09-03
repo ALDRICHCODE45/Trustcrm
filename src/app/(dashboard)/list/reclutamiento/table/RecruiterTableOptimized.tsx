@@ -62,6 +62,7 @@ import {
   X,
   SearchIcon,
   ChevronDown,
+  Maximize2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DateRange } from "react-day-picker";
@@ -81,6 +82,8 @@ import { es } from "date-fns/locale";
 import { Router } from "next/router";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
+import QuickStatsDialog from "@/app/(dashboard)/reclutador/components/QuickStatsDialog";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 
 // Función de filtro personalizada para rangos de fechas
 const dateRangeFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
@@ -153,6 +156,11 @@ export interface DataTableProps<TData, TValue> {
   filterPlaceholder?: string;
   reclutadores: User[];
   clientes: Client[];
+  user_logged: {
+    id: string;
+    name: string;
+    role: string;
+  };
 }
 
 // Componente de filtros integrado
@@ -174,6 +182,9 @@ interface TableFiltersProps<TData, TValue> {
   setCurrentOficina: (newOficina: Oficina | "all") => void;
   reclutadores: User[];
   clientes: Client[];
+  isCompact?: boolean;
+  showTopActions: boolean;
+  setShowTopActions: (show: boolean) => void;
 }
 
 function TableFilters<TData, TValue>({
@@ -194,6 +205,9 @@ function TableFilters<TData, TValue>({
   setCurrentOficina,
   reclutadores,
   clientes,
+  isCompact = false,
+  showTopActions,
+  setShowTopActions,
 }: TableFiltersProps<TData, TValue>) {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -349,33 +363,80 @@ function TableFilters<TData, TValue>({
   ];
 
   return (
-    <Card className="mb-6 border-0 shadow-md overflow-hidden">
-      <CardHeader className="pb-2 flex flex-row items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <Card
+      className={`mb-6 border-0 shadow-md overflow-hidden transition-all duration-300 ${
+        isCompact ? "shadow-sm" : ""
+      }`}
+    >
+      <CardHeader
+        className={`${
+          isCompact ? "pb-1 pt-3" : "pb-2"
+        } flex flex-row items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800`}
+      >
         <div className="flex items-center gap-2">
-          <Filter className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-medium">Filtros</h3>
-          <Badge variant="outline" className="ml-2">
+          <Filter
+            className={`${isCompact ? "h-4 w-4" : "h-5 w-5"} text-primary`}
+          />
+          <h3 className={`${isCompact ? "text-base" : "text-lg"} font-medium`}>
+            {isCompact ? "Filtros" : "Filtros"}
+          </h3>
+          <Badge
+            variant="outline"
+            className={`ml-2 ${isCompact ? "text-xs px-2 py-0" : ""}`}
+          >
             {table.getFilteredRowModel().rows.length} resultados
           </Badge>
+          {isCompact && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowTopActions(true)}
+              className="h-6 px-2 text-xs ml-2 hover:bg-primary/10"
+            >
+              <Maximize2 className="h-3 w-3 mr-1" />
+              Expandir
+            </Button>
+          )}
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={resetFilters}
-            className="h-8 px-3 flex items-center gap-1"
-          >
-            <RefreshCw />
-            <span>Limpiar</span>
-          </Button>
+          {!isCompact && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={resetFilters}
+              className="h-8 px-3 flex items-center gap-1"
+            >
+              <RefreshCw />
+              <span>Limpiar</span>
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 px-3">
-                <SlidersHorizontal size={16} className="mr-2" />
-                Acciones
+              <Button
+                variant="outline"
+                size="sm"
+                className={`${isCompact ? "h-7 px-2" : "h-8 px-3"}`}
+              >
+                <SlidersHorizontal
+                  size={isCompact ? 14 : 16}
+                  className="mr-2"
+                />
+                {isCompact ? "" : "Acciones"}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {isCompact && (
+                <>
+                  <DropdownMenuCheckboxItem
+                    className="flex items-center gap-2"
+                    onClick={resetFilters}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Limpiar filtros
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuCheckboxItem
                 className="flex items-center gap-2"
                 onClick={handleExport}
@@ -395,11 +456,22 @@ function TableFilters<TData, TValue>({
         </div>
       </CardHeader>
 
-      <CardContent className="pt-4 pb-3 px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <CardContent
+        className={`${isCompact ? "pt-2 pb-2 px-4" : "pt-4 pb-3 px-6"}`}
+      >
+        <div
+          className={`grid gap-${isCompact ? "2" : "4"} ${
+            isCompact
+              ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 xl:grid-cols-8"
+              : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
+          }`}
+        >
           {/* Filtro de Estado - Ahora con múltiple selección */}
-          <div className="space-y-2">
-            <Label htmlFor="status-filter" className="text-xs font-medium">
+          <div className={`space-y-${isCompact ? "1" : "2"}`}>
+            <Label
+              htmlFor="status-filter"
+              className={`text-xs font-medium ${isCompact ? "sr-only" : ""}`}
+            >
               Estados
             </Label>
             <Popover>
@@ -407,10 +479,14 @@ function TableFilters<TData, TValue>({
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="h-9 text-sm justify-between"
+                  className={`${
+                    isCompact ? "h-8 text-xs" : "h-9 text-sm"
+                  } justify-between`}
                 >
                   {currentStatus.length === 0
-                    ? "Todos los estados"
+                    ? isCompact
+                      ? "Estados"
+                      : "Todos los estados"
                     : currentStatus.length === 1
                     ? statusOptions.find((s) => s.value === currentStatus[0])
                         ?.label
@@ -473,13 +549,20 @@ function TableFilters<TData, TValue>({
           </div>
 
           {/* Filtro de Oficina */}
-          <div className="space-y-2">
-            <Label htmlFor="oficina-filter" className="text-xs font-medium">
+          <div className={`space-y-${isCompact ? "1" : "2"}`}>
+            <Label
+              htmlFor="oficina-filter"
+              className={`text-xs font-medium ${isCompact ? "sr-only" : ""}`}
+            >
               Oficina
             </Label>
             <Select value={currentOficina} onValueChange={setCurrentOficina}>
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Todas las oficinas" />
+              <SelectTrigger
+                className={`${isCompact ? "h-8 text-xs" : "h-9 text-sm"}`}
+              >
+                <SelectValue
+                  placeholder={isCompact ? "Oficina" : "Todas las oficinas"}
+                />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -492,13 +575,20 @@ function TableFilters<TData, TValue>({
           </div>
 
           {/* Filtro de Cliente */}
-          <div className="space-y-2">
-            <Label htmlFor="client-filter" className="text-xs font-medium">
+          <div className={`space-y-${isCompact ? "1" : "2"}`}>
+            <Label
+              htmlFor="client-filter"
+              className={`text-xs font-medium ${isCompact ? "sr-only" : ""}`}
+            >
               Cliente
             </Label>
             <Select value={currentClient} onValueChange={setCurrentClient}>
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Todos los clientes" />
+              <SelectTrigger
+                className={`${isCompact ? "h-8 text-xs" : "h-9 text-sm"}`}
+              >
+                <SelectValue
+                  placeholder={isCompact ? "Cliente" : "Todos los clientes"}
+                />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -516,8 +606,11 @@ function TableFilters<TData, TValue>({
           </div>
 
           {/* Filtro de Reclutador - Ahora con múltiple selección */}
-          <div className="space-y-2">
-            <Label htmlFor="recruiter-filter" className="text-xs font-medium">
+          <div className={`space-y-${isCompact ? "1" : "2"}`}>
+            <Label
+              htmlFor="recruiter-filter"
+              className={`text-xs font-medium ${isCompact ? "sr-only" : ""}`}
+            >
               Reclutadores
             </Label>
             <Popover>
@@ -525,10 +618,14 @@ function TableFilters<TData, TValue>({
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="h-9 text-sm justify-between"
+                  className={`${
+                    isCompact ? "h-8 text-xs" : "h-9 text-sm"
+                  } justify-between`}
                 >
                   {currentRecruiter.length === 0
-                    ? "Todos los reclutadores"
+                    ? isCompact
+                      ? "Reclutadores"
+                      : "Todos los reclutadores"
                     : currentRecruiter.length === 1
                     ? reclutadores.find((r) => r.id === currentRecruiter[0])
                         ?.name
@@ -598,13 +695,20 @@ function TableFilters<TData, TValue>({
           </div>
 
           {/* Filtro de Tipo */}
-          <div className="space-y-2">
-            <Label htmlFor="tipo-filter" className="text-xs font-medium">
+          <div className={`space-y-${isCompact ? "1" : "2"}`}>
+            <Label
+              htmlFor="tipo-filter"
+              className={`text-xs font-medium ${isCompact ? "sr-only" : ""}`}
+            >
               Tipo
             </Label>
             <Select value={currentTipo} onValueChange={setCurrentTipo}>
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Todos los tipos" />
+              <SelectTrigger
+                className={`${isCompact ? "h-8 text-xs" : "h-9 text-sm"}`}
+              >
+                <SelectValue
+                  placeholder={isCompact ? "Tipo" : "Todos los tipos"}
+                />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -618,37 +722,42 @@ function TableFilters<TData, TValue>({
           </div>
 
           {/* Filtro de Rango de Fechas */}
-          <div className="space-y-2">
-            <Label htmlFor="date-range-filter" className="text-xs font-medium">
+          <div className={`space-y-${isCompact ? "1" : "2"}`}>
+            <Label
+              htmlFor="date-range-filter"
+              className={`text-xs font-medium ${isCompact ? "sr-only" : ""}`}
+            >
               Fecha de Asignación
             </Label>
             <DateRangePicker
               value={dateRange}
               onChange={handleDateRangeChange}
-              placeholder="Seleccionar fechas"
-              className="h-9 text-sm"
+              placeholder={isCompact ? "Fechas" : "Seleccionar fechas"}
+              className={`${isCompact ? "h-8 text-xs" : "h-9 text-sm"}`}
             />
           </div>
         </div>
 
         {/* Indicadores de filtros activos */}
-        <div className="flex flex-wrap gap-2 mt-4">
-          {clearFilters.map((filter, index) =>
-            filter.condition ? (
-              <Badge
-                key={index}
-                variant="secondary"
-                className="flex items-center gap-1"
-              >
-                {filter.label}
-                <X
-                  className="h-3 w-3 ml-1 cursor-pointer"
-                  onClick={filter.clear}
-                />
-              </Badge>
-            ) : null
-          )}
-        </div>
+        {!isCompact && (
+          <div className="flex flex-wrap gap-2 mt-4">
+            {clearFilters.map((filter, index) =>
+              filter.condition ? (
+                <Badge
+                  key={index}
+                  variant="secondary"
+                  className="flex items-center gap-1"
+                >
+                  {filter.label}
+                  <X
+                    className="h-3 w-3 ml-1 cursor-pointer"
+                    onClick={filter.clear}
+                  />
+                </Badge>
+              ) : null
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -1012,6 +1121,7 @@ export function RecruiterTable<TData, TValue>({
   filterPlaceholder = "Buscar vacantes...",
   reclutadores,
   clientes,
+  user_logged,
 }: DataTableProps<TData, TValue>) {
   // Estados
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -1030,6 +1140,7 @@ export function RecruiterTable<TData, TValue>({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [showTopActions, setShowTopActions] = useState(true);
 
   // Memoizar los datos de la tabla para evitar re-renderizaciones innecesarias
   const memoizedData = useMemo(() => tableData, [tableData]);
@@ -1081,7 +1192,14 @@ export function RecruiterTable<TData, TValue>({
     try {
       setIsRefreshing(true);
       router.refresh();
-      toast.success("Datos actualizados correctamente");
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Datos actualizados correctamente"
+          message="Los datos se han actualizado correctamente"
+          type="success"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
     } catch (error) {
       console.error("Error al actualizar los datos:", error);
       toast.error("Error al actualizar los datos");
@@ -1181,37 +1299,81 @@ export function RecruiterTable<TData, TValue>({
   return (
     <div className="w-full max-w-[93vw] space-y-4">
       {/* Panel superior con acciones principales */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={refreshData}
-            disabled={isRefreshing}
-            className="flex items-center gap-2"
-          >
-            {isRefreshing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            {isRefreshing ? "Actualizando..." : "Actualizar datos"}
-          </Button>
-        </div>
-      </div>
+      {showTopActions && (
+        <Card className="border-0 shadow-sm ">
+          <CardContent className="p-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+              {/* Sección izquierda - Acciones y búsqueda */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={refreshData}
+                    disabled={isRefreshing}
+                    className="flex items-center gap-2 hover:bg-primary/5 transition-colors"
+                  >
+                    {isRefreshing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                    {isRefreshing ? "Actualizando..." : "Actualizar"}
+                  </Button>
 
-      {/* Componente de filtros optimizado */}
-      <div className="flex items-center pb-4">
-        <Input
-          placeholder="Buscar por nombre de posición"
-          value={
-            (table.getColumn("posicion")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn("posicion")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-      </div>
+                  <div className="hidden sm:block h-6 w-px bg-border" />
+
+                  <Badge
+                    variant="secondary"
+                    className="flex items-center gap-2"
+                  >
+                    <span className="text-xs font-medium">
+                      {table.getFilteredRowModel().rows.length} vacantes
+                    </span>
+                  </Badge>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <SearchIcon className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nombre de posición..."
+                    value={
+                      (table
+                        .getColumn("posicion")
+                        ?.getFilterValue() as string) ?? ""
+                    }
+                    onChange={(event) =>
+                      table
+                        .getColumn("posicion")
+                        ?.setFilterValue(event.target.value)
+                    }
+                    className="w-full sm:w-80 "
+                  />
+                </div>
+              </div>
+
+              {/* Sección derecha - Acciones principales */}
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowTopActions(false)}
+                  className="h-8 px-2 text-xs hover:bg-muted/50"
+                  title="Contraer panel"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                <div className="h-6 w-px bg-border" />
+                <QuickStatsDialog />
+                <CreateVacanteForm
+                  reclutadores={reclutadores}
+                  clientes={clientes}
+                  user_logged={user_logged}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <TableFilters
         reclutadores={reclutadores}
         clientes={clientes}
@@ -1230,14 +1392,10 @@ export function RecruiterTable<TData, TValue>({
         setDateRange={handleDateRangeChange}
         currentOficina={currentOficina}
         setCurrentOficina={handleOficinaChange}
+        isCompact={!showTopActions}
+        showTopActions={showTopActions}
+        setShowTopActions={setShowTopActions}
       />
-
-      {/* Indicador de resultados */}
-      <div className="mb-5">
-        <Badge variant="outline" className="text-xs">
-          {table.getFilteredRowModel().rows.length} vacantes
-        </Badge>
-      </div>
 
       {/* Componente de tabla optimizado */}
       <DataGrid table={table} columns={columns} />

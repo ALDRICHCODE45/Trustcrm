@@ -119,6 +119,7 @@ export default async function ReclutamientoPage({}: pageProps): Promise<ReactEle
               data={vacantes}
               reclutadores={reclutadores}
               clientes={clientes}
+              user_logged={user_logged}
             />
           </div>
         </div>
