@@ -20,6 +20,7 @@ import {
 import { PersonWithRelations } from "./CandidatesTableSheet";
 import { CompareChecklistForm } from "../VacancyFormComponents/CreateVacancyComponents/CompareChecklistForm";
 import { VacancyWithRelations } from "../../../reclutador/components/ReclutadorColumns";
+import { CandidateSheetDetails } from "@/app/(dashboard)/reclutador/kanban/components/CandidateSheetDetails";
 
 interface OptimizedCandidateCardProps {
   candidate: PersonWithRelations;
@@ -129,6 +130,7 @@ export const OptimizedCandidateCard = memo(
               candidateId={candidate.id}
               refreshCandidates={refreshCandidates}
             />
+            <CandidateSheetDetails candidate={candidate} side="left" />
           </div>
         </CardContent>
       </Card>

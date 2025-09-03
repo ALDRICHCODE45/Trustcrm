@@ -346,7 +346,6 @@ export const createVacancy = async (vacancy: VacancyFormData) => {
 
         formData.append("notifyOnComplete", "true");
         const tarea = await createTask(formData);
-        console.log("Tarea Creada", tarea);
       }
     }
 

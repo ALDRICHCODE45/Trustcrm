@@ -14,8 +14,10 @@ import { FileUser } from "lucide-react";
 
 export const CandidateSheetDetails = ({
   candidate,
+  side = "right",
 }: {
   candidate: PersonWithRelations;
+  side?: "bottom" | "top" | "left" | "right";
 }) => {
   return (
     <Sheet>
@@ -26,7 +28,7 @@ export const CandidateSheetDetails = ({
         </Button>
       </SheetTrigger>
 
-      <SheetContent className="min-w-[27vw] z-[9999]">
+      <SheetContent className="min-w-[27vw] z-[9999]" side={side}>
         <ScrollArea className="h-full pr-4">
           <SheetHeader className="mb-6">
             <SheetTitle className="text-lg">{candidate.name}</SheetTitle>

@@ -380,17 +380,39 @@ export const CandidatesTableSheet = memo(
         const result = await createCandidate(dataWithFile, vacancyId);
 
         if (!result.ok) {
-          toast.error(result.message || "Error al crear candidato");
+          toast.custom((t) => (
+            <ToastCustomMessage
+              title="Error al crear candidato"
+              message="El candidato no pudo ser agregado"
+              type="error"
+              onClick={() => toast.dismiss(t)}
+            />
+          ));
           return;
         }
 
-        toast.success("Candidato agregado exitosamente");
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Candidato agregado exitosamente"
+            message="El candidato ha sido agregado exitosamente"
+            type="success"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
+
         form.reset();
         fileUploadActions.clearFiles();
         setIsDialogOpen(false);
       } catch (error) {
         console.error("Error al crear candidato:", error);
-        toast.error("Error al crear candidato");
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Error al crear candidato"
+            message="El candidato no pudo ser agregado"
+            type="error"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
       } finally {
         setIsSubmitting(false);
       }
@@ -864,7 +886,7 @@ export const CandidatesTableSheet = memo(
                 <CardHeader className="flex items-center justify-center">
                   <Ban size={40} className="text-gray-500" />
                   <CardTitle className="text-sm text-gray-400 text-center">
-                    No hay terna disponible.
+                    No hay candidatos disponibles.
                   </CardTitle>
                 </CardHeader>
               </Card>

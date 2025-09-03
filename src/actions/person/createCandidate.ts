@@ -75,6 +75,10 @@ export async function createCandidate(
           cv: true,
         },
       });
+
+      revalidatePath("/list/reclutamiento");
+      revalidatePath("/reclutador/kanban");
+      revalidatePath("/reclutador");
       return {
         ok: true,
         message: "Candidato creado exitosamente",
@@ -111,6 +115,9 @@ export async function createCandidate(
         },
       });
 
+      revalidatePath("/list/reclutamiento");
+      revalidatePath("/reclutador/kanban");
+      revalidatePath("/reclutador");
       return {
         ok: true,
         message: "Candidato creado exitosamente sin CV",
