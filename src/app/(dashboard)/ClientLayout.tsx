@@ -99,7 +99,15 @@ export function ClientLayout({ children, user }: ClientLayoutProps) {
         </div>
         {/* Right side of navbar - add user profile or actions */}
         <div className="flex gap-5 items-center">
-          <NotificationDropdown userId={user.id} />
+          <NotificationDropdown
+            user_logged={{
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              image: user.image || "",
+              id: user.id,
+            }}
+          />
           <Separator orientation="vertical" className="h-6" />
           <div className="flex items-center">
             <Image

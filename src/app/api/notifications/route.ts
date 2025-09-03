@@ -61,8 +61,35 @@ export async function GET(request: Request) {
       include: {
         vacancy: {
           include: {
-            cliente: true,
+            InputChecklist: {
+              include: {
+                InputChecklistFeedback: {
+                  include: {
+                    candidate: true,
+                  },
+                },
+              },
+            },
             reclutador: true,
+            cliente: true,
+            candidatoContratado: {
+              include: {
+                cv: true,
+                vacanciesContratado: true,
+              },
+            },
+            ternaFinal: {
+              include: {
+                cv: true,
+                vacanciesContratado: true,
+              },
+            },
+            files: true,
+            Comments: {
+              include: {
+                author: true,
+              },
+            },
           },
         },
         task: {

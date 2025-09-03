@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCallback, useEffect, useState } from "react";
-import { Notification, NotificationStatus, Prisma } from "@prisma/client";
+import { Notification, NotificationStatus, Prisma, Role } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +49,9 @@ import { Badge } from "../ui/badge";
 import Image from "next/image";
 import { NotificationCenter } from "./NotificationCenter";
 import { ToastCustomMessage } from "../ToastCustomMessage";
+import { Card } from "@/components/ui/card";
+import { ConfirmDialog } from "../ConfirmDialog";
+import { VacanteTabs } from "@/app/(dashboard)/reclutador/components/kanbanReclutadorBoard";
 
 // Componente Dot para indicar notificaciones no leídas
 function Dot({ className }: { className?: string }) {
@@ -67,14 +71,47 @@ function Dot({ className }: { className?: string }) {
 }
 
 interface NotificationDropdownProps {
-  userId: string;
+  user_logged: {
+    name: string;
+    email: string;
+    role: Role;
+    image: string;
+    id: string;
+  };
 }
 type NotificationWithTask = Prisma.NotificationGetPayload<{
   include: {
     vacancy: {
       include: {
-        cliente: true;
+        InputChecklist: {
+          include: {
+            InputChecklistFeedback: {
+              include: {
+                candidate: true;
+              };
+            };
+          };
+        };
         reclutador: true;
+        cliente: true;
+        candidatoContratado: {
+          include: {
+            cv: true;
+            vacanciesContratado: true;
+          };
+        };
+        ternaFinal: {
+          include: {
+            cv: true;
+            vacanciesContratado: true;
+          };
+        };
+        files: true;
+        Comments: {
+          include: {
+            author: true;
+          };
+        };
       };
     };
     task: {
@@ -86,7 +123,9 @@ type NotificationWithTask = Prisma.NotificationGetPayload<{
   };
 }>;
 
-export function NotificationDropdown({ userId }: NotificationDropdownProps) {
+export function NotificationDropdown({
+  user_logged,
+}: NotificationDropdownProps) {
   const [isMarkingRead, setIsMarkingRead] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<NotificationWithTask[]>(
     []
@@ -103,7 +142,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
   const fetchNotifications = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/notifications?userId=${userId}&limit=10`
+        `/api/notifications?userId=${user_logged.id}&limit=10`
       );
       const data = await response.json();
       setNotifications(data.notifications);
@@ -114,14 +153,14 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
     } catch (error) {
       console.error("Error fetching notifications:", error);
     }
-  }, [userId]);
+  }, [user_logged.id]);
 
   useEffect(() => {
     fetchNotifications();
     // Configurar polling cada 30 segundos
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
-  }, [userId, fetchNotifications]);
+  }, [user_logged.id, fetchNotifications]);
 
   const markAsRead = useCallback(
     async (notificationId: string) => {
@@ -360,7 +399,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
             <span>Notificaciones</span>
           </TooltipContent>
         </Tooltip>
-        <DropdownMenuContent align="end" className="w-80">
+        <DropdownMenuContent align="end" className="w-96">
           <div className="flex items-center justify-between p-2 border-b">
             <span className="text-sm font-medium">Notificaciones</span>
             <Button
@@ -373,7 +412,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
               Ver todas
             </Button>
           </div>
-          <ScrollArea className="h-[300px] px-2">
+          <ScrollArea className="h-[350px]  py-2 px-2">
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center gap-5 p-4 text-center mt-10 text-sm text-muted-foreground">
                 <Ban className="text-center text-gray-400" size={25} />
@@ -386,7 +425,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                   notification.task?.assignedTo.image ??
                   "/default.png";
                 return (
-                  <div
+                  <Card
                     key={notification.id}
                     className="hover:bg-accent rounded-md px-3 py-2 text-sm transition-colors relative group"
                   >
@@ -414,7 +453,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                           className="size-9 rounded-md object-cover text-muted-foreground"
                         />
                       )}
-                      <div className="flex-1 space-y-1">
+                      <div className="flex-1 space-y-1 w-[80%]">
                         <button
                           className="text-foreground/80 text-left after:absolute after:inset-0"
                           onClick={() => handleNotificationClick(notification)}
@@ -455,17 +494,22 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleDeleteNotification(notification.id);
+                          <ConfirmDialog
+                            title="Eliminar notificacion"
+                            description="¿Estás seguro de querer eliminar esta notificacion?"
+                            onConfirm={async () => {
+                              await handleDeleteNotification(notification.id);
                             }}
-                            className="gap-2 text-red-600 hover:bg-red-50 focus:bg-red-100 cursor-pointer"
-                            disabled={isDeleting || isMarkingRead}
-                          >
-                            <Trash className="h-4 w-4" />
-                            {isDeleting ? "Eliminando..." : "Eliminar"}
-                          </DropdownMenuItem>
+                            trigger={
+                              <DropdownMenuItem
+                                className="gap-2 text-red-600 hover:bg-red-50 focus:bg-red-100 cursor-pointer"
+                                disabled={isDeleting || isMarkingRead}
+                              >
+                                <Trash className="h-4 w-4" />
+                                {isDeleting ? "Eliminando..." : "Eliminar"}
+                              </DropdownMenuItem>
+                            }
+                          />
 
                           {notification.taskId && (
                             <DropdownMenuItem
@@ -482,17 +526,38 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                           )}
 
                           {notification.vacancyId && (
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setSelectedVacancy(notification);
-                              }}
-                              className="gap-2 cursor-pointer"
-                              disabled={isDeleting || isMarkingRead}
-                            >
-                              <Building2 className="h-4 w-4" />
-                              Vacante
-                            </DropdownMenuItem>
+                            <>
+                              <Dialog
+                                open={!!selectedVacancy}
+                                onOpenChange={() => setSelectedVacancy(null)}
+                              >
+                                <DialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setSelectedVacancy(notification);
+                                    }}
+                                    className="gap-2 cursor-pointer"
+                                    disabled={isDeleting || isMarkingRead}
+                                  >
+                                    <Building2 className="h-4 w-4" />
+                                    Vacante
+                                  </DropdownMenuItem>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[730px] max-h-[90vh] overflow-y-auto z-[900]">
+                                  <DialogHeader>
+                                    <DialogTitle>Vacante</DialogTitle>
+                                    <DialogDescription>
+                                      Aqui va a ir el dialog del kanban
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <VacanteTabs
+                                    vacante={selectedVacancy?.vacancy!}
+                                    user_logged={user_logged}
+                                  />
+                                </DialogContent>
+                              </Dialog>
+                            </>
                           )}
 
                           {notification.vacancy?.reclutadorId && (
@@ -527,7 +592,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                  </div>
+                  </Card>
                 );
               })
             )}
@@ -713,7 +778,7 @@ export function NotificationDropdown({ userId }: NotificationDropdownProps) {
 
       {/* Centro de Notificaciones */}
       <NotificationCenter
-        userId={userId}
+        userId={user_logged.id}
         isOpen={showNotificationCenter}
         onClose={() => setShowNotificationCenter(false)}
       />

@@ -530,7 +530,7 @@ const DroppableColumn: React.FC<ColumnProps> = ({
   );
 };
 
-const VacanteTabs: React.FC<{
+export const VacanteTabs: React.FC<{
   vacante: VacancyWithRelations;
   user_logged: {
     name: string;
