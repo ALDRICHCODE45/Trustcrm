@@ -18,6 +18,13 @@ export const markAsReadNotification = async (notificationId: string) => {
       };
     }
 
+    if (existsNotification.status === NotificationStatus.READ) {
+      return {
+        ok: false,
+        message: "La notificacion ya esta marcada como leida",
+      };
+    }
+
     //Actualizar notification
     await prisma.notification.update({
       where: {

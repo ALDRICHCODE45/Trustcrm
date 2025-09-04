@@ -53,6 +53,7 @@ import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "../ConfirmDialog";
 import { VacanteTabs } from "@/app/(dashboard)/reclutador/components/kanbanReclutadorBoard";
 import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
+import { NotificationCard } from "./NotificationCard";
 
 // Componente Dot para indicar notificaciones no leídas
 function Dot({ className }: { className?: string }) {
@@ -80,7 +81,7 @@ interface NotificationDropdownProps {
     id: string;
   };
 }
-type NotificationWithTask = Prisma.NotificationGetPayload<{
+export type NotificationWithTask = Prisma.NotificationGetPayload<{
   include: {
     vacancy: {
       include: {
@@ -203,7 +204,6 @@ export function NotificationDropdown({
 
   const handleMarkAsRead = useCallback(
     async (notificationId: string) => {
-      console.log("Reading Notification...", { notificationId });
       if (isMarkingRead) return;
 
       try {
@@ -214,7 +214,7 @@ export function NotificationDropdown({
           toast.custom((t) => (
             <ToastCustomMessage
               title="Error al marcar como leida la notificacion"
-              message="Error al marcar como leida la notificacion"
+              message={message ?? "Error al marcar como leida la notificacion"}
               type="error"
               onClick={() => {
                 toast.dismiss(t);
@@ -276,8 +276,8 @@ export function NotificationDropdown({
           setUnreadCount((prev) => Math.max(0, prev - 1));
           toast.custom((t) => (
             <ToastCustomMessage
-              title="Notificacion Eliminada"
-              message="Notificacion Eliminada"
+              title="Operacion exitosa"
+              message="Notificacion eliminada correctamente"
               type="success"
               onClick={() => {
                 toast.dismiss(t);
@@ -421,160 +421,18 @@ export function NotificationDropdown({
               </div>
             ) : (
               notifications.map((notification) => {
-                const image =
-                  notification.vacancy?.reclutador.image ??
-                  notification.task?.assignedTo.image ??
-                  "/default.png";
                 return (
-                  <Card
+                  <NotificationCard
                     key={notification.id}
-                    className="hover:bg-accent rounded-md px-3 py-2 mb-3 text-sm transition-colors relative group"
-                  >
-                    {/* Contenido de la notificación con nuevo diseño */}
-                    <div className="relative flex items-start gap-3 pe-3">
-                      {image ? (
-                        <Image
-                          className="size-9 rounded-md object-cover"
-                          src={image}
-                          width={36}
-                          height={36}
-                          alt={
-                            notification.vacancy?.reclutador.name ||
-                            notification.task?.assignedTo.name ||
-                            "Usuario"
-                          }
-                          quality={95}
-                          priority={false}
-                        />
-                      ) : (
-                        <CircleUserRound
-                          size={28}
-                          strokeWidth={1.6}
-                          absoluteStrokeWidth
-                          className="size-9 rounded-md object-cover text-muted-foreground"
-                        />
-                      )}
-                      <div className="flex-1 space-y-1 ">
-                        <button
-                          className="text-foreground/80 text-left after:absolute after:inset-0"
-                          onClick={() => handleNotificationClick(notification)}
-                        >
-                          <p className=" w-[93%] text-foreground font-medium hover:underline">
-                            {notification.message}
-                          </p>
-                        </button>
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-muted-foreground text-xs">
-                            {formatDistanceToNow(
-                              new Date(notification.createdAt),
-                              {
-                                addSuffix: true,
-                                locale: es,
-                              }
-                            )}
-                          </div>
-
-                          {notification.status === "UNREAD" && (
-                            <div className="">
-                              <Dot />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Menú de acciones */}
-                    <div className="absolute top-0 right-0 mt-1.5 mr-1.5">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            disabled={isDeleting || isMarkingRead}
-                          >
-                            <span className="sr-only">Abrir Menú</span>
-                            <MoreVertical className="h-3 w-3" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <ConfirmDialog
-                            title="Eliminar notificacion"
-                            description="¿Estás seguro de querer eliminar esta notificacion?"
-                            onConfirm={async () => {
-                              await handleDeleteNotification(notification.id);
-                            }}
-                            trigger={
-                              <DropdownMenuItem
-                                className="gap-2 text-red-600 hover:bg-red-50 focus:bg-red-100 cursor-pointer"
-                                disabled={isDeleting || isMarkingRead}
-                              >
-                                <Trash className="h-4 w-4" />
-                                {isDeleting ? "Eliminando..." : "Eliminar"}
-                              </DropdownMenuItem>
-                            }
-                          />
-
-                          {notification.taskId && (
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setSelectedTask(notification);
-                              }}
-                              className="gap-2 cursor-pointer"
-                              disabled={isDeleting || isMarkingRead}
-                            >
-                              <FileSymlink className="h-4 w-4" />
-                              Ver tarea
-                            </DropdownMenuItem>
-                          )}
-
-                          {notification.vacancyId && (
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                setSelectedVacancy(notification.vacancy);
-                              }}
-                              className="gap-2 cursor-pointer"
-                              disabled={isDeleting || isMarkingRead}
-                            >
-                              <Building2 className="h-4 w-4" />
-                              Vacante
-                            </DropdownMenuItem>
-                          )}
-
-                          {notification.vacancy?.reclutadorId && (
-                            <>
-                              <DropdownMenuItem
-                                className="gap-2 cursor-pointer"
-                                disabled={isDeleting || isMarkingRead}
-                              >
-                                <Link
-                                  href={`/profile/${notification.vacancy?.reclutadorId}`}
-                                  className="flex gap-2"
-                                >
-                                  <UserSearch className="h-4 w-4" />
-                                  Ver usuario
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleMarkAsRead(notification.id);
-                                }}
-                                className="gap-2 cursor-pointer"
-                                disabled={isMarkingRead || isDeleting}
-                              >
-                                <ListCheck className="h-4 w-4" />
-                                {isMarkingRead
-                                  ? "Cargando..."
-                                  : "Marcar como leído"}
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </Card>
+                    notification={notification}
+                    handleNotificationClick={handleNotificationClick}
+                    handleDeleteNotification={handleDeleteNotification}
+                    isDeleting={isDeleting}
+                    isMarkingRead={isMarkingRead}
+                    setSelectedTask={setSelectedTask}
+                    setSelectedVacancy={setSelectedVacancy}
+                    handleMarkAsRead={handleMarkAsRead}
+                  />
                 );
               })
             )}
