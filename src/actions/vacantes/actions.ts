@@ -58,6 +58,7 @@ const updateVacancySchema = z.object({
   psicometria: z.string().optional(),
   ubicacion: z.string().optional(),
   comentarios: z.string().optional(),
+  tiempoTranscurrido: z.number().optional(),
 });
 
 type UpdateVacancyFormData = z.infer<typeof updateVacancySchema>;
@@ -144,6 +145,7 @@ export const updateVacancy = async (data: UpdateVacancyFormData) => {
         monto: data.monto || undefined,
         valorFactura: data.valorFactura || undefined,
         salario: data.salario || undefined,
+        tiempoTranscurrido: data.tiempoTranscurrido,
       },
       include: {
         reclutador: true,

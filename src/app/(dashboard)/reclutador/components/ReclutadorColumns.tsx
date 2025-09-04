@@ -2,11 +2,10 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp, SortAsc } from "lucide-react";
+import { ChevronDown, ChevronDownIcon, ChevronUp, SortAsc } from "lucide-react";
 import { ChangeDateComponent } from "../../list/reclutamiento/components/AsignacionDatePickerComponent";
 import { RecruiterDropDown } from "../../list/reclutamiento/components/RecruiterDropdown";
 import { CommentSheet } from "../../list/reclutamiento/components/CommentSheet";
-import { FinalTernaSheet } from "../../list/reclutamiento/components/FinalTernaSheet";
 import { ActionsRecruitment } from "../../list/reclutamiento/components/ActionsRecruitment";
 import { Prisma } from "@prisma/client";
 import {
@@ -14,7 +13,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { format } from "date-fns";
+import { differenceInDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { DocumentsSection } from "./DocumentsSection";
@@ -26,6 +25,87 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useState } from "react";
+import { Calendar } from "@/components/ui/calendar";
+import { updateVacancy } from "@/actions/vacantes/actions";
+import { toast } from "sonner";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
+
+// Componente para manejar el tiempo transcurrido con calendario
+const TiempoTranscurridoCell = ({ row }: { row: any }) => {
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [days, setDays] = useState<number | undefined>(
+    row.original.tiempoTranscurrido
+      ? row.original.tiempoTranscurrido
+      : calculateDaysFromAssignment(row.original.fechaAsignacion)
+  );
+  const fechaAsignacion = row.original.fechaAsignacion;
+
+  const handleDateChange = async (date: Date) => {
+    if (date) {
+      const days = differenceInDays(date, fechaAsignacion);
+      setDays(days);
+      const { message, ok } = await updateVacancy({
+        id: row.original.id,
+        tiempoTranscurrido: days,
+      });
+      if (!ok) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            message={message || "Error al actualizar el tiempo transcurrido"}
+            title="Error al actualizar el tiempo transcurrido"
+            type="success"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        ));
+        return;
+      }
+      toast.custom((t) => (
+        <ToastCustomMessage
+          message={message || "Operacion realizada correctamente"}
+          title="Tiempo transcurrido actualizado"
+          type="success"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            id="date"
+            className="w-48 justify-between font-normal"
+          >
+            {days} días
+            <ChevronDownIcon />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={date}
+            captionLayout="dropdown"
+            onSelect={(date) => {
+              if (date) {
+                handleDateChange(date);
+              }
+              setOpen(false);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
 
 export type VacancyWithRelations = Prisma.VacancyGetPayload<{
   include: {
@@ -301,31 +381,7 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
     header: ({ column }) => (
       <SortableHeader column={column} title="Tiempo transcurrido" />
     ),
-
-    cell: ({ row }) => {
-      const fechaAsignacion = row.original.fechaAsignacion;
-      const tiempoTranscurrido = row.original.tiempoTranscurrido;
-
-      // si no hay tiempo trasncurrido calcularlo
-      if (!tiempoTranscurrido) {
-        const daysTranscurred = calculateDaysFromAssignment(fechaAsignacion);
-        return (
-          <div className="flex items-center justify-center">
-            <Button variant="outline" className="w-full">
-              <span>{daysTranscurred} días</span>
-            </Button>
-          </div>
-        );
-      }
-
-      return (
-        <div className="flex items-center justify-center">
-          <Button variant="outline" className="w-full">
-            <span>{tiempoTranscurrido} días</span>
-          </Button>
-        </div>
-      );
-    },
+    cell: ({ row }) => <TiempoTranscurridoCell row={row} />,
   },
   {
     id: "prioridad",
