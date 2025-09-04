@@ -763,6 +763,7 @@ export const KanbanBoardPage = ({
     { id: "Entrevistas", title: "Entrevistas Con Cliente" },
     { id: "PrePlacement", title: "Pre Placement" },
     { id: "Placement", title: "Placement" },
+    { id: "StandBy", title: "Stand By" },
     { id: "Perdida", title: "Posición perdida" },
     { id: "Cancelada", title: "Cancelada" },
   ];

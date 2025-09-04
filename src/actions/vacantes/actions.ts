@@ -30,6 +30,7 @@ const updateVacancySchema = z.object({
       VacancyEstado.PrePlacement,
       VacancyEstado.QuickMeeting,
       VacancyEstado.Placement,
+      VacancyEstado.StandBy,
     ])
     .optional(),
   posicion: z.string().min(1, "Posición es requerida").optional(),

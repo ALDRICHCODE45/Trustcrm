@@ -218,6 +218,7 @@ enum VacancyEstado {
   Perdida
   PrePlacement
   Placement
+  StandBy
 }
 
 enum VacancyPrioridad {

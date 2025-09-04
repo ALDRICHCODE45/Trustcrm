@@ -74,6 +74,7 @@ const vacancySchema = z.object({
       VacancyEstado.Placement,
       VacancyEstado.QuickMeeting,
       VacancyEstado.PrePlacement,
+      VacancyEstado.StandBy,
     ])
     .optional(),
   posicion: z.string().optional(),
@@ -343,6 +344,9 @@ export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
                               </SelectItem>
                               <SelectItem value={VacancyEstado.Cancelada}>
                                 Posición Cancelada
+                              </SelectItem>
+                              <SelectItem value={VacancyEstado.StandBy}>
+                                Stand By
                               </SelectItem>
                             </SelectContent>
                           </Select>
