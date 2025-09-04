@@ -1,3 +1,4 @@
+"use client";
 import { Card } from "@/components/ui/card";
 import {
   Dialog,
@@ -13,30 +14,37 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Edit3 } from "lucide-react";
 import { NuevoComentarioForm } from "@/app/(dashboard)/list/reclutamiento/components/CommentSheet";
-import { Prisma, Role } from "@prisma/client";
+import { Role } from "@prisma/client";
+import { EditClientForm } from "@/app/(dashboard)/list/clientes/components/EditClientForm";
+import { notFound } from "next/navigation";
+import { useState } from "react";
+import { ClientWithRelations } from "@/app/(dashboard)/list/clientes/columns";
 // import CreateVacanteForm from "../../../list/reclutamiento/components/CreateVacanteForm";
-
-type ClienteWithRelatin = Prisma.ClientGetPayload<{
-  include: {
-    usuario: true;
-  };
-}>;
 
 export const ClientProfileHeader = ({
   client,
   user,
 }: {
-  client: ClienteWithRelatin;
+  client: ClientWithRelations;
   user: {
     name: string;
     id: string;
     role: string;
   };
 }) => {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const getClientStatus = () => {
     if (client.placements && client.placements > 5) return "outline";
     if (client.placements && client.placements > 2) return "destructive";
     return "default";
+  };
+
+  if (!client) {
+    notFound();
+  }
+
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
   };
 
   return (
@@ -45,13 +53,23 @@ export const ClientProfileHeader = ({
         <div className="h-32 bg-gradient-to-r from-primary/10 to-primary/5 relative">
           {user?.role === Role.Admin && (
             <div className="absolute top-4 right-4">
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditDialogOpen(true)}
+              >
                 <Edit3 className="h-4 w-4" />
                 Editar Cliente
               </Button>
             </div>
           )}
         </div>
+        {/* DIALOG CON EL FORMULARIO PARA EDITAR AL CLIENTE */}
+        <EditClientForm
+          clientData={client}
+          isOpen={isEditDialogOpen}
+          onClose={handleCloseEditDialog}
+        />
 
         <div className="px-6 pb-6 relative">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center -mt-12">

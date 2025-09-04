@@ -36,6 +36,7 @@ import { getLeadsUsers } from "@/actions/users/create-user";
 import { getAllOrigenes } from "@/actions/sectores/actions";
 import { toast } from "sonner";
 import { ClienteEtiqueta } from "@prisma/client";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 
 interface EditClientFormProps {
   clientData: ClientWithRelations;
@@ -93,7 +94,14 @@ export const EditClientForm = ({
         setOrigenes(origenesData);
       } catch (error) {
         console.error("Error cargando datos:", error);
-        toast.error("Error al cargar los datos del formulario");
+        toast.custom((t) => (
+          <ToastCustomMessage
+            message="Error al cargar los datos del formulario"
+            title="Error"
+            type="error"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
       }
     };
 
@@ -107,11 +115,25 @@ export const EditClientForm = ({
     setIsLoading(true);
     try {
       await updateClientById(data);
-      toast.success("Cliente actualizado exitosamente");
+      toast.custom((t) => (
+        <ToastCustomMessage
+          message="Cliente actualizado exitosamente"
+          title="Success"
+          type="success"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
       onClose();
     } catch (error) {
       console.error("Error actualizando cliente:", error);
-      toast.error("Error al actualizar el cliente");
+      toast.custom((t) => (
+        <ToastCustomMessage
+          message="Error al actualizar el cliente"
+          title="Error"
+          type="error"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
     } finally {
       setIsLoading(false);
     }

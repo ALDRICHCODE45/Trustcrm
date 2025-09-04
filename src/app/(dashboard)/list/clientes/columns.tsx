@@ -2,15 +2,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { RazonSocialPopOver } from "./components/RazonSocialPopOver";
 import { ContactosSheet } from "./components/ContactosSheet";
-import {
-  ArrowDownToLine,
-  ArrowRightToLine,
-  CircleCheck,
-  CircleOff,
-  HandCoins,
-  Link as LinkIcon,
-  ThumbsUp,
-} from "lucide-react";
+import { HandCoins, Link as LinkIcon, ThumbsUp } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ComentariosSheet } from "../../cliente/[id]/components/ComentariosSheet";
 import { FacturacionSheet } from "./components/Facturacion_instrucciones";
