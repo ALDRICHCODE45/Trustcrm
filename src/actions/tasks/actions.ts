@@ -332,6 +332,7 @@ export const toggleTaskStatus = async (userId: string, taskId: string) => {
             message: `El usuario ${existingTask.assignedTo.name} ha cambiado el status de una tarea compartida`,
             taskId: existingTask.id,
             recipientId: recipientId.id,
+            vacancyId: existingTask.vacancyId,
           },
         });
       }
