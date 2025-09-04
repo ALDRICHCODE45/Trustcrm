@@ -33,6 +33,7 @@ interface Props {
   setSelectedTask: (task: NotificationWithTask) => void;
   setSelectedVacancy: (vacancy: VacancyWithRelations) => void;
   handleMarkAsRead: (id: string) => Promise<void>;
+  textWith?: "small" | "full";
 }
 
 export const NotificationCard = ({
@@ -44,6 +45,7 @@ export const NotificationCard = ({
   setSelectedTask,
   setSelectedVacancy,
   handleMarkAsRead,
+  textWith = "small",
 }: Props) => {
   const image =
     notification.vacancy?.reclutador.image ??
@@ -85,7 +87,11 @@ export const NotificationCard = ({
               className="text-foreground/80 text-left after:absolute after:inset-0"
               onClick={() => handleNotificationClick(notification.id)}
             >
-              <p className=" w-[93%] text-foreground font-medium hover:underline">
+              <p
+                className={` w-[${
+                  textWith === "small" ? "85%" : "100%"
+                }] text-foreground font-medium hover:underline`}
+              >
                 {notification.message}
               </p>
             </button>

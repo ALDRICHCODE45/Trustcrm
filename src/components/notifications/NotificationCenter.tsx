@@ -493,6 +493,7 @@ export function NotificationCenter({
                         setSelectedTask={setSelectedTask}
                         setSelectedVacancy={setSelectedVacancy}
                         handleMarkAsRead={handleMarkAsRead}
+                        textWith="full"
                       />
                     ))}
                   </div>
