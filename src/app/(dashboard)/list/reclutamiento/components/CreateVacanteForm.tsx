@@ -15,14 +15,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  FileText,
   UserIcon,
   CircleOff,
   ChevronDownIcon,
   CheckIcon,
   BriefcaseBusiness,
   Contact,
-  Megaphone,
   BellRing,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -137,18 +135,9 @@ const vacancySchema = z.object({
 
 type VacancyFormData = z.infer<typeof vacancySchema>;
 
-// Datos de ejemplo para archivos (manteniendo los originales)
-interface File {
-  id: number;
-  name: string;
-  type: string;
-  size: string;
-  lastUpdated: string;
-  icon: React.ReactNode;
-}
-
 interface Props {
   reclutadores: User[];
+  clientDefaultId?: string;
 
   clientes: Client[];
   user_logged: {
@@ -192,6 +181,7 @@ function VacancyForm({
   clientes,
   user_logged,
   onVacancyCreated,
+  clientDefaultId = "",
 }: Props) {
   const form = useForm<VacancyFormData>({
     resolver: zodResolver(vacancySchema),
@@ -203,7 +193,7 @@ function VacancyForm({
       fechaAsignacion: new Date(),
       fechaEntrega: undefined,
       reclutadorId: user_logged.role === "Admin" ? "" : user_logged.id,
-      clienteId: "",
+      clienteId: clientDefaultId,
       salario: undefined,
       valorFactura: undefined,
       fee: undefined,
@@ -658,6 +648,7 @@ const BasicInformationTab = ({
               </FormItem>
             )}
           />
+          {}
           <FormField
             control={form.control}
             name="clienteId"

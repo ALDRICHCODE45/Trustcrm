@@ -8,7 +8,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-// import { ClientEditForm } from "./EditCliente";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,9 +16,11 @@ import { NuevoComentarioForm } from "@/app/(dashboard)/list/reclutamiento/compon
 import { Role } from "@prisma/client";
 import { EditClientForm } from "@/app/(dashboard)/list/clientes/components/EditClientForm";
 import { notFound } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ClientWithRelations } from "@/app/(dashboard)/list/clientes/columns";
-// import CreateVacanteForm from "../../../list/reclutamiento/components/CreateVacanteForm";
+import CreateVacanteForm from "@/app/(dashboard)/list/reclutamiento/components/CreateVacanteForm";
+import { useUsers } from "@/hooks/users/use-users";
+import { useClients } from "@/hooks/clientes/use-clients";
 
 export const ClientProfileHeader = ({
   client,
@@ -41,6 +42,45 @@ export const ClientProfileHeader = ({
 
   if (!client) {
     notFound();
+  }
+
+  const { users, isLoading, error, fetchReclutadores } = useUsers();
+
+  const {
+    clients,
+    isLoading: isLoadingClients,
+    error: errorClients,
+    fetchAllClients,
+  } = useClients();
+
+  useEffect(() => {
+    fetchAllClients();
+    fetchReclutadores();
+  }, [fetchAllClients, fetchReclutadores]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64 w-full">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary"></div>
+        <span className="ml-4 text-lg text-muted-foreground">Cargando...</span>
+      </div>
+    );
+  }
+  if (error) {
+    throw new Error("Error al cargar los reclutadores");
+  }
+
+  if (isLoadingClients) {
+    return (
+      <div className="flex items-center justify-center h-64 w-full">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary"></div>
+        <span className="ml-4 text-lg text-muted-foreground">Cargando...</span>
+      </div>
+    );
+  }
+
+  if (errorClients) {
+    throw new Error("Error al cargar los clientes");
   }
 
   const handleCloseEditDialog = () => {
@@ -109,6 +149,12 @@ export const ClientProfileHeader = ({
                 </DialogContent>
               </Dialog>
 
+              <CreateVacanteForm
+                user_logged={user}
+                clientDefaultId={client.id}
+                reclutadores={users}
+                clientes={clients}
+              />
               <Button variant="outline" size="sm">
                 <PlusCircle />
                 Nueva Vacante

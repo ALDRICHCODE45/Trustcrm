@@ -1,5 +1,5 @@
 import { getLoggedUser, getReclutadores } from "@/actions/users/actions";
-import { Role, User } from "@prisma/client";
+import { User } from "@prisma/client";
 import { useCallback, useState } from "react";
 
 export const useUsers = () => {
