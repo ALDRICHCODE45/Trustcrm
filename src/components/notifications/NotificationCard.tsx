@@ -26,7 +26,7 @@ import Link from "next/link";
 
 interface Props {
   notification: NotificationWithTask;
-  handleNotificationClick: (notification: NotificationWithTask) => void;
+  handleNotificationClick: (id: string) => Promise<void>;
   handleDeleteNotification: (id: string) => Promise<void>;
   isDeleting: boolean;
   isMarkingRead: boolean;
@@ -83,7 +83,7 @@ export const NotificationCard = ({
           <div className="flex-1 space-y-1 ">
             <button
               className="text-foreground/80 text-left after:absolute after:inset-0"
-              onClick={() => handleNotificationClick(notification)}
+              onClick={() => handleNotificationClick(notification.id)}
             >
               <p className=" w-[93%] text-foreground font-medium hover:underline">
                 {notification.message}

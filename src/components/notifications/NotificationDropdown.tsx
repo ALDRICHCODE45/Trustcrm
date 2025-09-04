@@ -1,29 +1,14 @@
 "use client";
-import {
-  Ban,
-  Bell,
-  FileSymlink,
-  ListCheck,
-  MoreVertical,
-  Trash,
-  UserSearch,
-  Settings,
-  Building2,
-  User,
-  CircleUserRound,
-} from "lucide-react";
+import { Ban, Bell, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCallback, useEffect, useState } from "react";
 import { Notification, NotificationStatus, Prisma, Role } from "@prisma/client";
-import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
 import { toast } from "sonner";
 import {
   deleteNotification,
@@ -36,7 +21,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,28 +33,9 @@ import { Badge } from "../ui/badge";
 import Image from "next/image";
 import { NotificationCenter } from "./NotificationCenter";
 import { ToastCustomMessage } from "../ToastCustomMessage";
-import { Card } from "@/components/ui/card";
-import { ConfirmDialog } from "../ConfirmDialog";
 import { VacanteTabs } from "@/app/(dashboard)/reclutador/components/kanbanReclutadorBoard";
 import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
 import { NotificationCard } from "./NotificationCard";
-
-// Componente Dot para indicar notificaciones no leídas
-function Dot({ className }: { className?: string }) {
-  return (
-    <svg
-      width="6"
-      height="6"
-      fill="currentColor"
-      viewBox="0 0 6 6"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <circle cx="3" cy="3" r="3" />
-    </svg>
-  );
-}
 
 interface NotificationDropdownProps {
   user_logged: {
@@ -367,15 +332,6 @@ export function NotificationDropdown({
     }
   }, [notifications, isMarkingRead]);
 
-  const handleNotificationClick = useCallback(
-    (notification: NotificationWithTask) => {
-      if (notification.status === "UNREAD") {
-        handleMarkAsRead(notification.id);
-      }
-    },
-    [handleMarkAsRead]
-  );
-
   return (
     <>
       <DropdownMenu>
@@ -425,7 +381,7 @@ export function NotificationDropdown({
                   <NotificationCard
                     key={notification.id}
                     notification={notification}
-                    handleNotificationClick={handleNotificationClick}
+                    handleNotificationClick={handleMarkAsRead}
                     handleDeleteNotification={handleDeleteNotification}
                     isDeleting={isDeleting}
                     isMarkingRead={isMarkingRead}
@@ -526,6 +482,7 @@ export function NotificationDropdown({
         userId={user_logged.id}
         isOpen={showNotificationCenter}
         onClose={() => setShowNotificationCenter(false)}
+        user_logged={user_logged}
       />
     </>
   );

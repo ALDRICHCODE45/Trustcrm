@@ -8,12 +8,13 @@ import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Bell, Ban, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { NotificationStatus, Prisma } from "@prisma/client";
+import { NotificationStatus, Prisma, Role } from "@prisma/client";
 import {
   NotificationFilters,
   NotificationFilters as NotificationFiltersType,
@@ -26,42 +27,41 @@ import {
   deleteAllRead,
 } from "@/actions/notifications/actions";
 import { ToastCustomMessage } from "../ToastCustomMessage";
-
-type NotificationWithTask = Prisma.NotificationGetPayload<{
-  include: {
-    vacancy: {
-      include: {
-        cliente: true;
-        reclutador: true;
-      };
-    };
-    recipient: true;
-    task: {
-      include: {
-        assignedTo: true;
-        notificationRecipients: true;
-        vacancy: {
-          include: {
-            cliente: true;
-            reclutador: true;
-          };
-        };
-      };
-    };
-  };
-}>;
+import { NotificationWithTask } from "./NotificationDropdown";
+import { NotificationCard } from "./NotificationCard";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import Link from "next/link";
+import Image from "next/image";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
+import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
+import { VacanteTabs } from "@/app/(dashboard)/reclutador/components/kanbanReclutadorBoard";
 
 interface NotificationCenterProps {
   userId: string;
   isOpen: boolean;
   onClose: () => void;
+  user_logged: {
+    name: string;
+    email: string;
+    role: Role;
+    image: string;
+    id: string;
+  };
 }
 
 export function NotificationCenter({
   userId,
   isOpen,
   onClose,
+  user_logged,
 }: NotificationCenterProps) {
+  const [selectedVacancy, setSelectedVacancy] =
+    useState<VacancyWithRelations | null>(null);
+  const [selectedTask, setSelectedTask] = useState<NotificationWithTask | null>(
+    null
+  );
+
   const [notifications, setNotifications] = useState<NotificationWithTask[]>(
     []
   );
@@ -414,89 +414,172 @@ export function NotificationCenter({
   }, [isOpen, fetchNotifications]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="min-w-[800px] max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 py-4 border-b">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Centro de Notificaciones
-              {stats && (
-                <Badge variant="secondary" className="ml-2">
-                  {stats.total}
-                </Badge>
-              )}
-            </DialogTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchNotifications}
-              disabled={isLoading}
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="min-w-[800px] max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Centro de Notificaciones
+                {stats && (
+                  <Badge variant="secondary" className="ml-2">
+                    {stats.total}
+                  </Badge>
+                )}
+              </DialogTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchNotifications}
+                disabled={isLoading}
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+                />
+              </Button>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Filtros */}
+            <div className="px-6 py-4">
+              <NotificationFilters
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                onMarkAllAsRead={handleMarkAllAsRead}
+                onDeleteAllRead={handleDeleteAllRead}
+                isMarkingAllAsRead={isMarkingAllAsRead}
+                isDeletingAllRead={isDeletingAllRead}
+                stats={stats || undefined}
               />
-            </Button>
-          </div>
-        </DialogHeader>
+            </div>
 
-        <div className="flex-1 flex flex-col min-h-0">
-          {/* Filtros */}
-          <div className="px-6 py-4">
-            <NotificationFilters
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              onMarkAllAsRead={handleMarkAllAsRead}
-              onDeleteAllRead={handleDeleteAllRead}
-              isMarkingAllAsRead={isMarkingAllAsRead}
-              isDeletingAllRead={isDeletingAllRead}
-              stats={stats || undefined}
-            />
-          </div>
+            <Separator />
 
-          <Separator />
-
-          {/* Lista de notificaciones */}
-          <div className="flex-1 min-h-0 px-6 py-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <span className="ml-2">Cargando notificaciones...</span>
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center gap-4 py-8 text-center text-muted-foreground">
-                <Ban className="h-12 w-12" />
-                <div>
-                  <p className="text-lg font-medium">No hay notificaciones</p>
-                  <p className="text-sm">
-                    {filters.status !== "ALL" ||
-                    filters.type !== "ALL" ||
-                    filters.search ||
-                    filters.dateRange
-                      ? "No se encontraron notificaciones con los filtros aplicados"
-                      : "No tienes notificaciones por el momento"}
-                  </p>
+            {/* Lista de notificaciones */}
+            <div className="flex-1 min-h-0 px-6 py-4">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                  <span className="ml-2">Cargando notificaciones...</span>
                 </div>
+              ) : notifications.length === 0 ? (
+                <div className="flex flex-col items-center gap-4 py-8 text-center text-muted-foreground">
+                  <Ban className="h-12 w-12" />
+                  <div>
+                    <p className="text-lg font-medium">No hay notificaciones</p>
+                    <p className="text-sm">
+                      {filters.status !== "ALL" ||
+                      filters.type !== "ALL" ||
+                      filters.search ||
+                      filters.dateRange
+                        ? "No se encontraron notificaciones con los filtros aplicados"
+                        : "No tienes notificaciones por el momento"}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <ScrollArea className="h-[500px] w-full">
+                  <div className="space-y-2 pr-4">
+                    {notifications.map((notification) => (
+                      <NotificationCard
+                        key={notification.id}
+                        notification={notification}
+                        handleNotificationClick={handleMarkAsRead}
+                        handleDeleteNotification={handleDelete}
+                        isDeleting={isDeleting}
+                        isMarkingRead={isMarkingRead}
+                        setSelectedTask={setSelectedTask}
+                        setSelectedVacancy={setSelectedVacancy}
+                        handleMarkAsRead={handleMarkAsRead}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle>Tarea Compartida</DialogTitle>
+              <Badge variant="outline" className="gap-1.5 mr-3">
+                <span
+                  className="size-1.5 rounded-full bg-emerald-500"
+                  aria-hidden="true"
+                ></span>
+                {selectedTask?.task?.status}
+              </Badge>
+            </div>
+            <DialogDescription>
+              Detalles de tu tarea compartida
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTask?.task && (
+            <>
+              <div className="flex flex-col gap-5">
+                <Input
+                  type="text"
+                  placeholder="Título"
+                  defaultValue={selectedTask.task.title}
+                  readOnly
+                />
+
+                <Textarea
+                  placeholder="Descripción"
+                  defaultValue={selectedTask.task.description}
+                  readOnly
+                />
               </div>
-            ) : (
-              <ScrollArea className="h-[500px] w-full">
-                <div className="space-y-2 pr-4">
-                  {notifications.map((notification) => (
-                    <NotificationItem
-                      key={notification.id}
-                      notification={notification}
-                      onMarkAsRead={handleMarkAsRead}
-                      onDelete={handleDelete}
-                      isMarkingRead={isMarkingRead}
-                      isDeleting={isDeleting}
-                    />
+
+              <div>
+                <DialogTitle>Usuarios Involucrados</DialogTitle>
+                <div className="ml-3 flex -space-x-[0.675rem] mt-3">
+                  {selectedTask.task.notificationRecipients.map((user) => (
+                    <Tooltip key={user.id}>
+                      <TooltipTrigger>
+                        <Link href={`/profile/${user.id}`}>
+                          <Image
+                            className="ring-background rounded-full ring-2"
+                            src={user.image ?? "/default.png"}
+                            width={35}
+                            height={35}
+                            alt={user.name}
+                          />
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <span>{user.name}</span>
+                      </TooltipContent>
+                    </Tooltip>
                   ))}
                 </div>
-              </ScrollArea>
-            )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+      {selectedVacancy && (
+        <Dialog
+          open={!!selectedVacancy}
+          onOpenChange={() => setSelectedVacancy(null)}
+        >
+          <DialogContent className="sm:max-w-[730px] max-h-[90vh] overflow-y-auto z-[900]">
+            <DialogHeader>
+              <DialogTitle>{selectedVacancy.posicion}</DialogTitle>
+              <DialogDescription>
+                Detalles de la vacante vinculada.
+              </DialogDescription>
+            </DialogHeader>
+            <VacanteTabs vacante={selectedVacancy} user_logged={user_logged} />
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
