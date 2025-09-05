@@ -9,8 +9,6 @@ import { checkRoleRedirect } from "../../helpers/checkRoleRedirect";
 import { auth } from "@/lib/auth";
 import { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
-import CreateVacanteForm from "../list/reclutamiento/components/CreateVacanteForm";
-import QuickStatsDialog from "./components/QuickStatsDialog";
 import prisma from "@/lib/db";
 
 export interface PageProps {}

@@ -10,6 +10,7 @@ import {
   Building2,
   UserSearch,
   ListCheck,
+  ClipboardPenLine,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -138,7 +139,7 @@ export const NotificationCard = ({
                     onSelect={(e) => {
                       e.preventDefault();
                     }}
-                    className="gap-2 text-red-600 hover:bg-red-50 focus:bg-red-100 cursor-pointer"
+                    className="gap-2 text-red-600 cursor-pointer"
                   >
                     <Trash className="h-4 w-4" />
                     {isDeleting ? "Eliminando..." : "Eliminar"}
@@ -168,7 +169,7 @@ export const NotificationCard = ({
                   className="gap-2 cursor-pointer"
                   disabled={isDeleting || isMarkingRead}
                 >
-                  <Building2 className="h-4 w-4" />
+                  <ClipboardPenLine />
                   Vacante
                 </DropdownMenuItem>
               )}

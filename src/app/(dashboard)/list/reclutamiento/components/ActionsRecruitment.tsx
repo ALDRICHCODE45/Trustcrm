@@ -90,7 +90,7 @@ export const ActionsRecruitment = ({
         <DropdownMenuContent align="end">
           <DropdownMenuItem className="cursor-pointer">
             <Clipboard />
-            Copiar Usuario
+            Copiar
           </DropdownMenuItem>
 
           <EditVacancyForm
