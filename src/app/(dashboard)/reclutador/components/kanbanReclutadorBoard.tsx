@@ -24,6 +24,8 @@ import {
   AlertCircle,
   Loader2,
   Filter,
+  Minimize2,
+  Maximize2,
 } from "lucide-react";
 import { KanbanFilters, FilterState } from "./KanbanFilters";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -66,6 +68,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { PreplacementDialog } from "./PreplacementDialog";
+import { cn } from "@/lib/utils";
+import QuickStatsDialog from "./QuickStatsDialog";
+import CreateVacanteForm from "../../list/reclutamiento/components/CreateVacanteForm";
 
 // Types
 interface ColumnProps {
@@ -473,7 +478,7 @@ const DroppableColumn: React.FC<ColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`w-[320px] flex-shrink-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-3 h-full flex flex-col border-2 transition-all duration-200 ${
+      className={`w-[320px] flex-shrink-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-3 min-h-full flex flex-col border-2 transition-all duration-200 ${
         isOver
           ? "border-blue-400 bg-blue-50/50 dark:bg-blue-900/20"
           : "border-slate-200 dark:border-gray-700"
@@ -580,6 +585,7 @@ interface KanbanBoardPageProps {
   reclutadores: User[];
   clientes: Client[];
   refreshVacancies: () => void;
+  onVacancyCreated?: () => void;
 }
 
 export const KanbanBoardPage = ({
@@ -588,6 +594,7 @@ export const KanbanBoardPage = ({
   reclutadores,
   clientes,
   refreshVacancies,
+  onVacancyCreated,
 }: KanbanBoardPageProps) => {
   //Dialogo para pedir el salario final y la fecha de proxima entrada
   const [showPreplacementDialog, setShowPreplacementDialog] = useState(false);
@@ -605,6 +612,7 @@ export const KanbanBoardPage = ({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isFilteringVacantes, setIsFilteringVacantes] = useState(false);
+  const [isMinimalistView, setIsMinimalistView] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     searchTerm: "",
     reclutadorId: null,
@@ -755,6 +763,22 @@ export const KanbanBoardPage = ({
     setAllVacantes(updatedVacantes);
     const filtered = applyFilters(updatedVacantes, filters);
     setFilteredVacantes(filtered);
+  };
+
+  // Función para manejar la creación de vacantes
+  const handleVacancyCreated = async () => {
+    if (onVacancyCreated) {
+      await onVacancyCreated();
+    }
+    refreshVacancies();
+  };
+
+  // Datos del usuario para el formulario de creación
+  const user_logged_data_form = {
+    id: user_logged.id,
+    name: user_logged.name,
+    email: user_logged.email,
+    role: user_logged.role,
   };
 
   const columns = [
@@ -1032,16 +1056,69 @@ export const KanbanBoardPage = ({
 
   return (
     <>
+      {/* Toggle para vista minimalista y controles */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg sm:text-xl font-semibold text-foreground">
+            Kanban Board
+          </h1>
+        </div>
+
+        <div className="flex flex-row items-stretch xs:items-center gap-2 w-full sm:w-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsMinimalistView(!isMinimalistView)}
+            className="flex items-center gap-2 w-full xs:w-auto"
+          >
+            {isMinimalistView ? (
+              <>
+                <Maximize2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Vista completa</span>
+                <span className="sm:hidden">Completa</span>
+              </>
+            ) : (
+              <>
+                <Minimize2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Vista minimalista</span>
+                <span className="sm:hidden">Minimalista</span>
+              </>
+            )}
+          </Button>
+
+          {/* Componentes que se ocultan en vista minimalista */}
+          {!isMinimalistView && (
+            <div className="flex items-center gap-2">
+              <QuickStatsDialog />
+              <CreateVacanteForm
+                clientes={clientes}
+                reclutadores={reclutadores}
+                user_logged={user_logged_data_form}
+                onVacancyCreated={handleVacancyCreated}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
       <KanbanFilters
         reclutadores={reclutadores}
         clientes={clientes}
         vacantes={allVacantes}
         onFilterChange={handleFilterChange}
+        isMinimalistView={isMinimalistView}
       />
-      <div className="flex flex-col h-[calc(100vh-200px)]">
+      <div
+        className={cn(
+          "flex flex-col",
+          isMinimalistView
+            ? "h-[calc(100vh-120px)] sm:h-[calc(100vh-130px)]"
+            : "h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] md:h-[calc(100vh-200px)]"
+        )}
+      >
         {/* Filter status indicator */}
         {isAnyFilterApplied && (
-          <div className="px-6 py-3 flex flex-wrap gap-2 text-sm items-center border-b bg-muted/30">
+          <div className="px-3 sm:px-6 py-2 sm:py-3 flex flex-wrap gap-2 text-xs sm:text-sm items-center border-b bg-muted/30">
             <span className="text-muted-foreground">
               Mostrando {validVacantes.length} de {allVacantes.length} vacantes
             </span>
@@ -1050,9 +1127,9 @@ export const KanbanBoardPage = ({
 
         {/* Loading indicator for filtering */}
         {isFilteringVacantes && (
-          <div className="px-6 py-2 flex items-center justify-center bg-muted/20 border-b">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
+          <div className="px-3 sm:px-6 py-2 flex items-center justify-center bg-muted/20 border-b">
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+              <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
               <span>Aplicando filtros...</span>
             </div>
           </div>
@@ -1077,18 +1154,63 @@ export const KanbanBoardPage = ({
           onDragEnd={handleDragEnd}
           modifiers={[restrictToWindowEdges]}
         >
-          <ScrollArea className="flex-1 pt-4">
-            <div className="flex gap-14 h-full">
+          {/* Mobile Column Navigation - Solo visible en pantallas pequeñas */}
+          <div className="sm:hidden px-4 py-2 border-b bg-muted/20">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Vista de columna
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMobileView(null)}
+                className={cn(
+                  "text-xs px-2 py-1 h-6",
+                  mobileView === null && "bg-primary text-primary-foreground"
+                )}
+              >
+                Todas
+              </Button>
+            </div>
+            <ScrollArea className="w-full">
+              <div className="flex gap-2 pb-2">
+                {columns.map((column) => {
+                  const columnVacantes = validVacantes.filter(
+                    (v) => v.estado === column.id
+                  );
+                  return (
+                    <Button
+                      key={column.id}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setMobileView(column.id)}
+                      className={cn(
+                        "text-xs px-3 py-1 h-6 whitespace-nowrap flex-shrink-0",
+                        mobileView === column.id &&
+                          "bg-primary text-primary-foreground"
+                      )}
+                    >
+                      {column.title} ({columnVacantes.length})
+                    </Button>
+                  );
+                })}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </div>
+
+          <ScrollArea className="flex-1 pt-2 sm:pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-14 min-h-full px-2 sm:px-0">
               {validVacantes.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center h-full  hhh-[calc(100vh-300px)]">
-                  <div className="text-center">
-                    <div className="w-24 h-24 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
-                      <Filter className="h-12 w-12 text-muted-foreground" />
+                <div className="flex-1 flex items-center justify-center h-full min-h-[calc(100vh-300px)]">
+                  <div className="text-center px-4">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
+                      <Filter className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">
+                    <h3 className="text-base sm:text-lg font-semibold mb-2">
                       No se encontraron vacantes
                     </h3>
-                    <p className="text-muted-foreground mb-4">
+                    <p className="text-sm sm:text-base text-muted-foreground mb-4">
                       No hay vacantes que coincidan con los filtros aplicados.
                     </p>
                     <Button
@@ -1114,21 +1236,16 @@ export const KanbanBoardPage = ({
                 columns.map(
                   (column) =>
                     (mobileView === null || mobileView === column.id) && (
-                      <div
-                        className="h-[calc(100vh-330px)] flex flex-col"
+                      <DroppableColumn
+                        user_logged={user_logged}
                         key={column.id}
-                      >
-                        <DroppableColumn
-                          user_logged={user_logged}
-                          key={column.id}
-                          id={column.id}
-                          title={column.title}
-                          vacantes={validVacantes.filter(
-                            (v) => v.estado === column.id
-                          )}
-                          onVacanteClick={setSelectedVacante}
-                        />
-                      </div>
+                        id={column.id}
+                        title={column.title}
+                        vacantes={validVacantes.filter(
+                          (v) => v.estado === column.id
+                        )}
+                        onVacanteClick={setSelectedVacante}
+                      />
                     )
                 )
               )}

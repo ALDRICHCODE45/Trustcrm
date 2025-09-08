@@ -49,6 +49,7 @@ interface KanbanFiltersProps {
   reclutadores: User[];
   clientes: Client[];
   vacantes: VacancyWithRelations[];
+  isMinimalistView?: boolean;
 }
 
 export function KanbanFilters({
@@ -56,6 +57,7 @@ export function KanbanFilters({
   reclutadores,
   clientes,
   vacantes,
+  isMinimalistView = false,
 }: KanbanFiltersProps) {
   const [filters, setFilters] = useState<FilterState>({
     searchTerm: "",
@@ -158,71 +160,117 @@ export function KanbanFilters({
   ].filter(Boolean).length;
 
   return (
-    <div className="bg-card border rounded-xl p-6 mb-6 space-y-6 shadow-sm">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Filter className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold">Filtros</h2>
-          {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="ml-2">
-              {activeFiltersCount} activo{activeFiltersCount > 1 ? "s" : ""}
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 mr-2 transition-transform",
-                showAdvancedFilters && "rotate-180"
-              )}
-            />
-            {showAdvancedFilters ? "Ocultar" : "Mostrar"} filtros avanzados
-          </Button>
-          {hasActiveFilters && (
+    <div
+      className={cn(
+        "bg-card border rounded-xl shadow-sm transition-all duration-300",
+        isMinimalistView
+          ? "p-2 sm:p-3 mb-2 sm:mb-3"
+          : "p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 space-y-4 sm:space-y-6"
+      )}
+    >
+      {/* Header - Solo en vista completa */}
+      {!isMinimalistView && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+            <h2 className="text-base sm:text-lg font-semibold">Filtros</h2>
+            {activeFiltersCount > 0 && (
+              <Badge variant="secondary" className="ml-2 text-xs">
+                {activeFiltersCount} activo{activeFiltersCount > 1 ? "s" : ""}
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
-              onClick={clearFilters}
-              className="text-muted-foreground hover:text-foreground"
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className="text-muted-foreground hover:text-foreground text-xs sm:text-sm"
             >
-              <X className="h-4 w-4 mr-2" />
-              Limpiar
+              <ChevronDown
+                className={cn(
+                  "h-3 w-3 sm:h-4 sm:w-4 mr-2 transition-transform",
+                  showAdvancedFilters && "rotate-180"
+                )}
+              />
+              <span className="hidden xs:inline">
+                {showAdvancedFilters ? "Ocultar" : "Mostrar"} filtros avanzados
+              </span>
+              <span className="xs:hidden">
+                {showAdvancedFilters ? "Ocultar" : "Avanzados"}
+              </span>
             </Button>
-          )}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="text-muted-foreground hover:text-foreground text-xs sm:text-sm"
+              >
+                <X className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                Limpiar
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Header minimalista - Solo filtros activos y botón limpiar */}
+      {isMinimalistView && hasActiveFilters && (
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <Badge variant="secondary" className="text-xs">
+            {activeFiltersCount} filtro{activeFiltersCount > 1 ? "s" : ""}{" "}
+            activo{activeFiltersCount > 1 ? "s" : ""}
+          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+            className="text-muted-foreground hover:text-foreground text-xs h-6 px-2"
+          >
+            <X className="h-3 w-3 mr-1" />
+            Limpiar
+          </Button>
+        </div>
+      )}
 
       {/* Filtros básicos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Búsqueda por posición */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">
-            Buscar posición
-          </label>
+      <div
+        className={cn(
+          "grid gap-3 sm:gap-4",
+          isMinimalistView
+            ? "grid-cols-1 sm:grid-cols-3"
+            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+        )}
+      >
+        {/* Búsqueda por posición - Siempre visible */}
+        <div className={cn("space-y-2", isMinimalistView && "space-y-1")}>
+          {!isMinimalistView && (
+            <label className="text-sm font-medium text-muted-foreground">
+              Buscar posición
+            </label>
+          )}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Nombre de la posición..."
+              placeholder={
+                isMinimalistView ? "Buscar..." : "Nombre de la posición..."
+              }
               value={filters.searchTerm}
               onChange={(e) => handleFilterChange("searchTerm", e.target.value)}
-              className="pl-10"
+              className={cn("pl-10", isMinimalistView && "h-8 text-sm")}
             />
           </div>
         </div>
 
-        {/* Reclutador */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Reclutador
-          </label>
+        {/* Reclutador - Siempre visible */}
+        <div className={cn("space-y-2", isMinimalistView && "space-y-1")}>
+          {!isMinimalistView && (
+            <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Reclutador
+            </label>
+          )}
           <Select
             value={filters.reclutadorId || "todos"}
             onValueChange={(value) =>
@@ -232,8 +280,12 @@ export function KanbanFilters({
               )
             }
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar reclutador" />
+            <SelectTrigger className={cn(isMinimalistView && "h-8 text-sm")}>
+              <SelectValue
+                placeholder={
+                  isMinimalistView ? "Reclutador" : "Seleccionar reclutador"
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos los reclutadores</SelectItem>
@@ -246,20 +298,26 @@ export function KanbanFilters({
           </Select>
         </div>
 
-        {/* Cliente */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Building className="h-4 w-4" />
-            Cliente
-          </label>
+        {/* Cliente - Siempre visible */}
+        <div className={cn("space-y-2", isMinimalistView && "space-y-1")}>
+          {!isMinimalistView && (
+            <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Building className="h-4 w-4" />
+              Cliente
+            </label>
+          )}
           <Select
             value={filters.clienteId || "todos"}
             onValueChange={(value) =>
               handleFilterChange("clienteId", value === "todos" ? null : value)
             }
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar cliente" />
+            <SelectTrigger className={cn(isMinimalistView && "h-8 text-sm")}>
+              <SelectValue
+                placeholder={
+                  isMinimalistView ? "Cliente" : "Seleccionar cliente"
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos los clientes</SelectItem>
@@ -272,43 +330,45 @@ export function KanbanFilters({
           </Select>
         </div>
 
-        {/* Tipo */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Tag className="h-4 w-4" />
-            Tipo
-          </label>
-          <Select
-            value={filters.tipo || "todos"}
-            onValueChange={(value) =>
-              handleFilterChange(
-                "tipo",
-                value === "todos" ? null : (value as VacancyTipo)
-              )
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos los tipos</SelectItem>
-              <SelectItem value={VacancyTipo.Nueva}>Nueva</SelectItem>
-              <SelectItem value={VacancyTipo.Recompra}>Recompra</SelectItem>
-              <SelectItem value={VacancyTipo.Garantia}>Garantía</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Tipo - Solo en vista completa */}
+        {!isMinimalistView && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Tag className="h-4 w-4" />
+              Tipo
+            </label>
+            <Select
+              value={filters.tipo || "todos"}
+              onValueChange={(value) =>
+                handleFilterChange(
+                  "tipo",
+                  value === "todos" ? null : (value as VacancyTipo)
+                )
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos los tipos</SelectItem>
+                <SelectItem value={VacancyTipo.Nueva}>Nueva</SelectItem>
+                <SelectItem value={VacancyTipo.Recompra}>Recompra</SelectItem>
+                <SelectItem value={VacancyTipo.Garantia}>Garantía</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
-      {/* Filtros avanzados */}
-      {showAdvancedFilters && (
+      {/* Filtros avanzados - Solo en vista completa */}
+      {!isMinimalistView && showAdvancedFilters && (
         <div className="space-y-4 border-t pt-4">
           <h3 className="text-md font-medium text-muted-foreground flex items-center gap-2">
             <Clock className="h-4 w-4" />
             Filtros de fecha
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Rango de fechas de asignación */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">
@@ -488,10 +548,10 @@ export function KanbanFilters({
         </div>
       )}
 
-      {/* Filtros activos */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2 pt-4 border-t">
-          <span className="text-sm text-muted-foreground">
+      {/* Filtros activos - Solo en vista completa */}
+      {!isMinimalistView && hasActiveFilters && (
+        <div className="flex flex-wrap gap-2 pt-3 sm:pt-4 border-t">
+          <span className="text-xs sm:text-sm text-muted-foreground mb-1 w-full sm:w-auto">
             Filtros activos:
           </span>
 

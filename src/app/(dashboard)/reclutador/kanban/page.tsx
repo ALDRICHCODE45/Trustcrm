@@ -1,14 +1,11 @@
 "use client";
 import { KanbanBoardPage } from "../components/kanbanReclutadorBoard";
 import { Role } from "@prisma/client";
-import QuickStatsDialog from "../components/QuickStatsDialog";
-import CreateVacanteForm from "../../list/reclutamiento/components/CreateVacanteForm";
 import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 import { useClients } from "@/hooks/clientes/use-clients";
 import { useEffect, useState } from "react";
 import { useUsers } from "@/hooks/users/use-users";
-import { Loader2, Eye, EyeOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 export default function KanbanReclutadorPage() {
   //hook para vacantes
@@ -32,9 +29,6 @@ export default function KanbanReclutadorPage() {
     isLoading: isLoadingReclutadores,
   } = useUsers();
 
-  // Estado para controlar la visibilidad de los componentes superiores
-  const [showTopComponents, setShowTopComponents] = useState(true);
-
   useEffect(() => {
     fetchAllVacancies();
     fetchAllClients();
@@ -48,13 +42,6 @@ export default function KanbanReclutadorPage() {
     role: loggedUser?.role as Role,
     image: loggedUser?.image || "",
     id: loggedUser?.id || "",
-  };
-
-  const user_logged_data_form = {
-    id: loggedUser?.id || "",
-    name: loggedUser?.name || "",
-    email: loggedUser?.email || "",
-    role: loggedUser?.role as Role,
   };
 
   if (
@@ -77,52 +64,14 @@ export default function KanbanReclutadorPage() {
     await fetchAllVacancies();
   };
 
-  const toggleTopComponents = () => {
-    setShowTopComponents(!showTopComponents);
-  };
-
   return (
-    <>
-      <div className="flex justify-between items-center mt-2 mb-4 w-full">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleTopComponents}
-          className="flex items-center gap-2"
-        >
-          {showTopComponents ? (
-            <>
-              <EyeOff className="h-4 w-4" />
-              Ocultar controles
-            </>
-          ) : (
-            <>
-              <Eye className="h-4 w-4" />
-              Mostrar controles
-            </>
-          )}
-        </Button>
-
-        {showTopComponents && (
-          <div className="flex gap-2">
-            <QuickStatsDialog />
-            <CreateVacanteForm
-              clientes={clients}
-              reclutadores={reclutadores}
-              user_logged={user_logged_data_form}
-              onVacancyCreated={handleVacancyCreated}
-            />
-          </div>
-        )}
-      </div>
-
-      <KanbanBoardPage
-        initialVacantes={vacancies}
-        user_logged={user_logged_data}
-        reclutadores={reclutadores}
-        clientes={clients}
-        refreshVacancies={fetchAllVacancies}
-      />
-    </>
+    <KanbanBoardPage
+      initialVacantes={vacancies}
+      user_logged={user_logged_data}
+      reclutadores={reclutadores}
+      clientes={clients}
+      refreshVacancies={fetchAllVacancies}
+      onVacancyCreated={handleVacancyCreated}
+    />
   );
 }
