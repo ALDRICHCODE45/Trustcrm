@@ -537,6 +537,24 @@ export const deleteVacancy = async (vacancyId: string) => {
   }
 };
 
+export const reassignRecruiter = async (
+  vacancyId: string,
+  newRecruiterId: string
+) => {
+  try {
+    const vacancy = await prisma.vacancy.update({
+      where: { id: vacancyId },
+      data: { reclutadorId: newRecruiterId },
+    });
+  } catch (err) {
+    console.log(err);
+    return {
+      ok: false,
+      message: "Error al reasignar el reclutador",
+    };
+  }
+};
+
 export const deseleccionarCandidato = async (vacancyId: string) => {
   try {
     const vacancy = await prisma.vacancy.update({

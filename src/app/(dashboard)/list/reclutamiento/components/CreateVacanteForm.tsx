@@ -77,6 +77,7 @@ import {
   SheetPortal,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Label } from "@/components/ui/label";
 
 // Schema basado en el modelo Vacancy de Prisma
 const vacancySchema = z.object({
@@ -154,6 +155,7 @@ export const CreateVacanteForm = ({
   clientes,
   user_logged,
   onVacancyCreated,
+  clientDefaultId,
 }: Props) => {
   return (
     <Dialog>
@@ -169,6 +171,7 @@ export const CreateVacanteForm = ({
           clientes={clientes}
           user_logged={user_logged}
           onVacancyCreated={onVacancyCreated}
+          clientDefaultId={clientDefaultId}
         />
       </DialogContent>
     </Dialog>
@@ -297,6 +300,7 @@ function VacancyForm({
               reclutadores={reclutadores}
               clientes={clientes}
               user_logged={user_logged}
+              clientDefaultId={clientDefaultId}
             />
           </TabsContent>
 
@@ -326,6 +330,7 @@ const BasicInformationTab = ({
   reclutadores,
   clientes,
   user_logged,
+  clientDefaultId,
 }: {
   form: any; // FormReturn from react-hook-form
   reclutadores: User[];
@@ -335,6 +340,7 @@ const BasicInformationTab = ({
     name: string;
     role: string;
   };
+  clientDefaultId: string;
 }) => {
   const [calendarOpen, setCalendarOpen] = useState(false);
 
@@ -648,79 +654,99 @@ const BasicInformationTab = ({
               </FormItem>
             )}
           />
-          {}
-          <FormField
-            control={form.control}
-            name="clienteId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cliente</FormLabel>
-                <Popover open={open} onOpenChange={setOpen}>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={open}
-                        className="bg-background hover:bg-background border-input w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]"
-                      >
-                        <span
-                          className={cn(
-                            "truncate",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value
-                            ? clientes.find(
-                                (cliente) => cliente.id === field.value
-                              )?.cuenta
-                            : "Seleccionar Cliente"}
-                        </span>
-                        <ChevronDownIcon
-                          size={16}
-                          className="text-muted-foreground/80 shrink-0"
-                          aria-hidden="true"
-                        />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0 z-[999999]"
-                    align="start"
-                  >
-                    <Command className="z-[999999]">
-                      <CommandInput placeholder="Buscar Cliente..." />
-                      <CommandList className="">
-                        <CommandEmpty>No se encontraron clientes.</CommandEmpty>
-                        <CommandGroup className="overflow-y-auto">
-                          {clientes.map((cliente) => (
-                            <CommandItem
-                              key={cliente.id}
-                              value={cliente.cuenta || ""}
-                              onSelect={() => {
-                                const newValue =
-                                  field.value === cliente.id ? "" : cliente.id;
-                                field.onChange(newValue);
-                                setValue(newValue || "");
-                                setOpen(false);
-                              }}
-                            >
-                              {cliente.cuenta}
-                              {field.value === cliente.id && (
-                                <CheckIcon size={16} className="ml-auto" />
-                              )}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
 
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {clientDefaultId ? (
+            <div className="flex flex-col gap-3">
+              <Label>Cliente</Label>
+              <Button
+                disabled
+                variant="outline"
+                className="border border-black"
+              >
+                {
+                  clientes.find((cliente) => cliente.id === clientDefaultId)
+                    ?.cuenta
+                }
+              </Button>
+            </div>
+          ) : (
+            <FormField
+              control={form.control}
+              name="clienteId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cliente</FormLabel>
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={open}
+                          className="bg-background hover:bg-background border-input w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]"
+                        >
+                          <span
+                            className={cn(
+                              "truncate",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value
+                              ? clientes.find(
+                                  (cliente) => cliente.id === field.value
+                                )?.cuenta
+                              : "Seleccionar Cliente"}
+                          </span>
+                          <ChevronDownIcon
+                            size={16}
+                            className="text-muted-foreground/80 shrink-0"
+                            aria-hidden="true"
+                          />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="border-input w-full min-w-[var(--radix-popper-anchor-width)] p-0 z-[999999]"
+                      align="start"
+                    >
+                      <Command className="z-[999999]">
+                        <CommandInput placeholder="Buscar Cliente..." />
+                        <CommandList className="">
+                          <CommandEmpty>
+                            No se encontraron clientes.
+                          </CommandEmpty>
+                          <CommandGroup className="overflow-y-auto">
+                            {clientes.map((cliente) => (
+                              <CommandItem
+                                key={cliente.id}
+                                value={cliente.cuenta || ""}
+                                onSelect={() => {
+                                  const newValue =
+                                    field.value === cliente.id
+                                      ? ""
+                                      : cliente.id;
+                                  field.onChange(newValue);
+                                  setValue(newValue || "");
+                                  setOpen(false);
+                                }}
+                              >
+                                {cliente.cuenta}
+                                {field.value === cliente.id && (
+                                  <CheckIcon size={16} className="ml-auto" />
+                                )}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         <div className="w-full">

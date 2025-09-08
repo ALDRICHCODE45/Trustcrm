@@ -12,7 +12,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Edit3 } from "lucide-react";
-import { NuevoComentarioForm } from "@/app/(dashboard)/list/reclutamiento/components/CommentSheet";
 import { Role } from "@prisma/client";
 import { EditClientForm } from "@/app/(dashboard)/list/clientes/components/EditClientForm";
 import { notFound } from "next/navigation";
@@ -155,10 +154,6 @@ export const ClientProfileHeader = ({
                 reclutadores={users}
                 clientes={clients}
               />
-              <Button variant="outline" size="sm">
-                <PlusCircle />
-                Nueva Vacante
-              </Button>
             </div>
           </div>
         </div>

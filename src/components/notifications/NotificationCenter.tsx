@@ -14,12 +14,11 @@ import {
 } from "@/components/ui/dialog";
 import { Bell, Ban, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { NotificationStatus, Prisma, Role } from "@prisma/client";
+import { NotificationStatus, Role } from "@prisma/client";
 import {
   NotificationFilters,
   NotificationFilters as NotificationFiltersType,
 } from "./NotificationFilters";
-import { NotificationItem } from "./NotificationItem";
 import {
   markAsReadNotification,
   deleteNotification,

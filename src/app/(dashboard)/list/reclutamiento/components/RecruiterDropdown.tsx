@@ -20,6 +20,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 
 export const RecruiterDropDown = ({
   row,
@@ -70,11 +71,27 @@ export const RecruiterDropDown = ({
     setIsUpdating(true);
     try {
       // Aquí puedes implementar la lógica para actualizar la vacante
+      console.log("newUser", newUser);
+
       // Por ejemplo, llamar a una función como updateVacancyRecruiter
-      toast.success("Reclutador reasignado con éxito");
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Reclutador reasignado con éxito"
+          message="Reclutador reasignado con éxito"
+          type="success"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
       router.refresh();
     } catch (error) {
-      toast.error("Error al reasignar reclutador");
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error al reasignar reclutador"
+          message="Error al reasignar reclutador"
+          type="error"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
     } finally {
       setIsUpdating(false);
       setIsDropdownOpen(false);
