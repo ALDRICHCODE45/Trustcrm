@@ -478,7 +478,7 @@ const DroppableColumn: React.FC<ColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`w-[320px] flex-shrink-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-3 min-h-full flex flex-col border-2 transition-all duration-200 ${
+      className={`w-[320px] h-[calc(100vh-180px)] flex-shrink-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-3xl p-3 flex flex-col border-2 transition-all duration-200 ${
         isOver
           ? "border-blue-400 bg-blue-50/50 dark:bg-blue-900/20"
           : "border-slate-200 dark:border-gray-700"
@@ -494,7 +494,7 @@ const DroppableColumn: React.FC<ColumnProps> = ({
           </span>
         </div>
       </div>
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 h-[calc(100vh-280px)]">
         <div className="space-y-3 px-2">
           <SortableContext
             items={vacantes.map((v) => v.id.toString())}
@@ -523,7 +523,7 @@ const DroppableColumn: React.FC<ColumnProps> = ({
           </SortableContext>
           {/* Área de drop vacía al final de la columna */}
           {vacantes.length === 0 && (
-            <div className="h-20 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center">
+            <div className="h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center">
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 Arrastra vacantes aquí
               </span>
@@ -1111,9 +1111,7 @@ export const KanbanBoardPage = ({
       <div
         className={cn(
           "flex flex-col",
-          isMinimalistView
-            ? "h-[calc(100vh-120px)] sm:h-[calc(100vh-130px)]"
-            : "h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] md:h-[calc(100vh-200px)]"
+          isMinimalistView ? "h-[calc(100vh-80px)]" : "h-[calc(100vh-120px)]"
         )}
       >
         {/* Filter status indicator */}
@@ -1200,9 +1198,9 @@ export const KanbanBoardPage = ({
           </div>
 
           <ScrollArea className="flex-1 pt-2 sm:pt-4">
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-14 min-h-full px-2 sm:px-0">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-14 px-2 sm:px-0">
               {validVacantes.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center h-full min-h-[calc(100vh-300px)]">
+                <div className="flex-1 flex items-center justify-center h-full min-h-[400px]">
                   <div className="text-center px-4">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
                       <Filter className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-muted-foreground" />
