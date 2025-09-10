@@ -96,7 +96,7 @@ const vacancySchema = z.object({
       VacancyEstado.PrePlacement,
     ])
     .optional(),
-  posicion: z.string().optional(),
+  posicion: z.string().min(1, "La posición es requerida"),
   prioridad: z
     .enum([
       VacancyPrioridad.Alta,
@@ -411,46 +411,16 @@ const BasicInformationTab = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Status</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar Status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="z-[8888]">
-                    <SelectItem value={VacancyEstado.QuickMeeting}>
-                      Quick Meeting
-                    </SelectItem>
-                    <SelectItem value={VacancyEstado.Hunting}>
-                      Hunting
-                    </SelectItem>
-                    <SelectItem value={VacancyEstado.Cancelada}>
-                      Cancelada
-                    </SelectItem>
-                    <SelectItem value={VacancyEstado.Entrevistas}>
-                      Entrevistas
-                    </SelectItem>
-                    <SelectItem value={VacancyEstado.Perdida}>
-                      Perdida
-                    </SelectItem>
-                    <SelectItem value={VacancyEstado.PrePlacement}>
-                      Pre Placement
-                    </SelectItem>
-                    <SelectItem value={VacancyEstado.Placement}>
-                      Placement
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <Button type="button" variant="outline" className="w-full">
+                  {field.value}
+                </Button>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <FormField
             control={form.control}
             name="posicion"
@@ -460,34 +430,6 @@ const BasicInformationTab = ({
                 <FormControl>
                   <Input placeholder="Ej. Desarrollador Senior" {...field} />
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="prioridad"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Prioridad</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar Prioridad" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="z-[8888]">
-                    <SelectItem value={VacancyPrioridad.Alta}>Alta</SelectItem>
-                    <SelectItem value={VacancyPrioridad.Normal}>
-                      Normal
-                    </SelectItem>
-                    <SelectItem value={VacancyPrioridad.Baja}>Baja</SelectItem>
-                  </SelectContent>
-                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -741,7 +683,6 @@ const BasicInformationTab = ({
                       </Command>
                     </PopoverContent>
                   </Popover>
-
                   <FormMessage />
                 </FormItem>
               )}
