@@ -377,11 +377,21 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
     },
   },
   {
-    id: "tiempoTranscurrido",
+    accessorKey: "fechaEntregaTerna",
     header: ({ column }) => (
-      <SortableHeader column={column} title="Tiempo transcurrido" />
+      <SortableHeader column={column} title="Fecha Terna" />
     ),
-    cell: ({ row }) => <TiempoTranscurridoCell row={row} />,
+    cell: ({ row }) => {
+      return (
+        <ChangeDateComponent
+          fecha={row.original.fechaEntregaTerna}
+          onFechaChange={(nuevaFecha) => {
+            // Aquí implementarías la lógica para actualizar la fecha en tu fuente de datos
+            console.log("Fecha actualizada:", nuevaFecha);
+          }}
+        />
+      );
+    },
   },
   {
     id: "prioridad",
@@ -452,23 +462,6 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
       );
     },
     accessorFn: (row) => row.tipo,
-  },
-  {
-    accessorKey: "fechaEntregaTerna",
-    header: ({ column }) => (
-      <SortableHeader column={column} title="Fecha Terna" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <ChangeDateComponent
-          fecha={row.original.fechaEntregaTerna}
-          onFechaChange={(nuevaFecha) => {
-            // Aquí implementarías la lógica para actualizar la fecha en tu fuente de datos
-            console.log("Fecha actualizada:", nuevaFecha);
-          }}
-        />
-      );
-    },
   },
   {
     accessorKey: "fechaOferta",
@@ -618,6 +611,14 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
   //     );
   //   },
   // },
+
+  {
+    id: "tiempoTranscurrido",
+    header: ({ column }) => (
+      <SortableHeader column={column} title="Tiempo total de Proceso" />
+    ),
+    cell: ({ row }) => <TiempoTranscurridoCell row={row} />,
+  },
   {
     id: "oficina",
     accessorKey: "oficina",

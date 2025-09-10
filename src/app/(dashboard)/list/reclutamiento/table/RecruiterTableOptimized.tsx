@@ -46,7 +46,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   ChevronLeft,
   ChevronRight,
@@ -61,7 +60,6 @@ import {
   SlidersHorizontal,
   X,
   SearchIcon,
-  ChevronDown,
   Maximize2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -271,34 +269,6 @@ function TableFilters<TData, TValue>({
     [setDateRange, table]
   );
 
-  const handleStatusToggle = useCallback(
-    (statusValue: string) => {
-      const newStatus = currentStatus.includes(statusValue)
-        ? currentStatus.filter((s) => s !== statusValue)
-        : [...currentStatus, statusValue];
-
-      setCurrentStatus(newStatus);
-    },
-    [currentStatus, setCurrentStatus]
-  );
-
-  const handleRecruiterToggle = useCallback(
-    (recruiterId: string) => {
-      const newRecruiter = currentRecruiter.includes(recruiterId)
-        ? currentRecruiter.filter((r) => r !== recruiterId)
-        : [...currentRecruiter, recruiterId];
-
-      setCurrentRecruiter(newRecruiter);
-      if (newRecruiter.length === 0) {
-        table.getColumn("reclutador")?.setFilterValue(undefined);
-      } else {
-        table.getColumn("reclutador")?.setFilterValue(newRecruiter);
-      }
-      table.setPageIndex(0);
-    },
-    [currentRecruiter, setCurrentRecruiter, table]
-  );
-
   const clearFilters = [
     {
       condition: currentOficina !== "all",
@@ -474,78 +444,94 @@ function TableFilters<TData, TValue>({
             >
               Estados
             </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className={`${
-                    isCompact ? "h-8 text-xs" : "h-9 text-sm"
-                  } justify-between`}
+            <Select
+              value=""
+              onValueChange={(value) => {
+                if (!currentStatus.includes(value)) {
+                  // Solo agregar nuevo estado si no está ya seleccionado
+                  const newStatus = [...currentStatus, value];
+                  setCurrentStatus(newStatus);
+                  table.getColumn("estado")?.setFilterValue(newStatus);
+                  table.setPageIndex(0);
+                }
+              }}
+            >
+              <SelectTrigger
+                className={`${isCompact ? "h-8 text-xs" : "h-9 text-sm"}`}
+              >
+                <SelectValue
+                  placeholder={isCompact ? "Estados" : "Seleccionar estados"}
                 >
                   {currentStatus.length === 0
                     ? isCompact
                       ? "Estados"
-                      : "Todos los estados"
+                      : "Seleccionar estados"
                     : currentStatus.length === 1
                     ? statusOptions.find((s) => s.value === currentStatus[0])
                         ?.label
                     : `${currentStatus.length} estados`}
-                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-[200px] p-0 z-50 max-h-[200px] overflow-y-scroll"
-                align="start"
-                side="bottom"
-                avoidCollisions={false}
-                sideOffset={4}
-              >
-                <div className="p-2">
-                  <div className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded-sm">
-                    <Checkbox
-                      id="select-all-status"
-                      checked={currentStatus.length === statusOptions.length}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setCurrentStatus(statusOptions.map((s) => s.value));
-                        } else {
-                          setCurrentStatus([]);
-                        }
-                      }}
-                    />
-                    <Label
-                      htmlFor="select-all-status"
-                      className="text-sm font-medium"
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((status) => (
+                  <SelectItem
+                    key={status.value}
+                    value={status.value}
+                    disabled={currentStatus.includes(status.value)}
+                  >
+                    {status.label}
+                  </SelectItem>
+                ))}
+                {statusOptions.length === 0 && (
+                  <SelectItem value="" disabled>
+                    No hay estados disponibles
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+
+            {currentStatus.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {currentStatus.map((statusValue) => {
+                  const status = statusOptions.find(
+                    (s) => s.value === statusValue
+                  );
+                  return (
+                    <Badge
+                      key={statusValue}
+                      variant="secondary"
+                      className="flex items-center gap-1"
                     >
-                      Seleccionar todos
-                    </Label>
-                  </div>
-                  <div className="border-t border-gray-200 mt-2 pt-2">
-                    {statusOptions.map((status) => (
-                      <div
-                        key={status.value}
-                        className="flex items-center space-x-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-sm"
-                      >
-                        <Checkbox
-                          id={`status-${status.value}`}
-                          checked={currentStatus.includes(status.value)}
-                          onCheckedChange={() =>
-                            handleStatusToggle(status.value)
+                      {status?.label || "Estado desconocido"}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 hover:bg-transparent"
+                        onClick={() => {
+                          const newStatus = currentStatus.filter(
+                            (s) => s !== statusValue
+                          );
+                          setCurrentStatus(newStatus);
+                          if (newStatus.length === 0) {
+                            table
+                              .getColumn("estado")
+                              ?.setFilterValue(undefined);
+                          } else {
+                            table
+                              .getColumn("estado")
+                              ?.setFilterValue(newStatus);
                           }
-                        />
-                        <Label
-                          htmlFor={`status-${status.value}`}
-                          className="text-sm"
-                        >
-                          {status.label}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+                          table.setPageIndex(0);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Filtro de Oficina */}
@@ -613,85 +599,98 @@ function TableFilters<TData, TValue>({
             >
               Reclutadores
             </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className={`${
-                    isCompact ? "h-8 text-xs" : "h-9 text-sm"
-                  } justify-between`}
+            <Select
+              value=""
+              onValueChange={(value) => {
+                if (!currentRecruiter.includes(value)) {
+                  // Solo agregar nuevo reclutador si no está ya seleccionado
+                  const newRecruiter = [...currentRecruiter, value];
+                  setCurrentRecruiter(newRecruiter);
+                  table.getColumn("reclutador")?.setFilterValue(newRecruiter);
+                  table.setPageIndex(0);
+                }
+              }}
+            >
+              <SelectTrigger
+                className={`${isCompact ? "h-8 text-xs" : "h-9 text-sm"}`}
+              >
+                <SelectValue
+                  placeholder={
+                    isCompact ? "Reclutadores" : "Seleccionar reclutadores"
+                  }
                 >
                   {currentRecruiter.length === 0
                     ? isCompact
                       ? "Reclutadores"
-                      : "Todos los reclutadores"
+                      : "Seleccionar reclutadores"
                     : currentRecruiter.length === 1
-                    ? reclutadores.find((r) => r.id === currentRecruiter[0])
-                        ?.name
+                    ? reclutadores
+                        .find((r) => r.id === currentRecruiter[0])
+                        ?.name?.split(" ")[0]
                     : `${currentRecruiter.length} reclutadores`}
-                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-[200px] p-0 z-50 max-h-[200px] overflow-y-scroll"
-                align="start"
-                side="bottom"
-                avoidCollisions={false}
-                sideOffset={4}
-              >
-                <div className="p-2">
-                  <div className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded-sm">
-                    <Checkbox
-                      id="select-all-recruiters"
-                      checked={currentRecruiter.length === reclutadores.length}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          const allRecruiters = reclutadores.map((r) => r.id);
-                          setCurrentRecruiter(allRecruiters);
-                          table
-                            .getColumn("reclutador")
-                            ?.setFilterValue(allRecruiters);
-                        } else {
-                          setCurrentRecruiter([]);
-                          table
-                            .getColumn("reclutador")
-                            ?.setFilterValue(undefined);
-                        }
-                      }}
-                    />
-                    <Label
-                      htmlFor="select-all-recruiters"
-                      className="text-sm font-medium"
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {reclutadores.map((recruiter) => (
+                  <SelectItem
+                    key={recruiter.id}
+                    value={recruiter.id}
+                    disabled={currentRecruiter.includes(recruiter.id)}
+                  >
+                    {recruiter.name}
+                  </SelectItem>
+                ))}
+                {reclutadores.length === 0 && (
+                  <SelectItem value="" disabled>
+                    No hay reclutadores disponibles
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+
+            {currentRecruiter.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {currentRecruiter.map((recruiterId) => {
+                  const recruiter = reclutadores.find(
+                    (r) => r.id === recruiterId
+                  );
+                  return (
+                    <Badge
+                      key={recruiterId}
+                      variant="secondary"
+                      className="flex items-center gap-1"
                     >
-                      Seleccionar todos
-                    </Label>
-                  </div>
-                  <div className="border-t border-gray-200 mt-2 pt-2">
-                    {reclutadores.map((recruiter) => (
-                      <div
-                        key={recruiter.id}
-                        className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded-sm"
-                      >
-                        <Checkbox
-                          id={`recruiter-${recruiter.id}`}
-                          checked={currentRecruiter.includes(recruiter.id)}
-                          onCheckedChange={() =>
-                            handleRecruiterToggle(recruiter.id)
+                      {recruiter?.name?.split(" ")[0] ||
+                        "Reclutador desconocido"}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 hover:bg-transparent"
+                        onClick={() => {
+                          const newRecruiter = currentRecruiter.filter(
+                            (r) => r !== recruiterId
+                          );
+                          setCurrentRecruiter(newRecruiter);
+                          if (newRecruiter.length === 0) {
+                            table
+                              .getColumn("reclutador")
+                              ?.setFilterValue(undefined);
+                          } else {
+                            table
+                              .getColumn("reclutador")
+                              ?.setFilterValue(newRecruiter);
                           }
-                        />
-                        <Label
-                          htmlFor={`recruiter-${recruiter.id}`}
-                          className="text-sm"
-                        >
-                          {recruiter.name}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+                          table.setPageIndex(0);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Filtro de Tipo */}
