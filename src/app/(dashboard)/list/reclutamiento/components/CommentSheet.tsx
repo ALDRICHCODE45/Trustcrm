@@ -81,6 +81,7 @@ import { toast } from "sonner";
 import { useComments } from "@/hooks/useComments";
 import { CommentWithRelations, CreateCommentData } from "@/types/comment";
 import { Label } from "@/components/ui/label";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 
 // Schema para validación del formulario
 const comentarioFormSchema = z
@@ -140,6 +141,7 @@ export const CommentSheet = ({
   vacancyOwnerId: string;
 }) => {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [isAddCommentDialogOpen, setIsAddCommentDialogOpen] = useState(false);
 
   // Usar useRef para mantener los IDs consistentes
   const vacancyIdRef = useRef<string>(vacancyId);
@@ -298,7 +300,10 @@ export const CommentSheet = ({
                   <Filter className="mr-1 h-4 w-4" />
                   Filtros
                 </Button>
-                <Dialog>
+                <Dialog
+                  open={isAddCommentDialogOpen}
+                  onOpenChange={setIsAddCommentDialogOpen}
+                >
                   <DialogTrigger asChild>
                     <Button size="sm" variant="outline">
                       <Plus className="mr-1 h-4 w-4" />
@@ -316,6 +321,7 @@ export const CommentSheet = ({
                       onAddComment={addComment}
                       onSubmitSuccess={() => {
                         // El hook ya maneja la actualización automática
+                        setIsAddCommentDialogOpen(false);
                       }}
                     />
                   </DialogContent>
@@ -788,7 +794,15 @@ export const NuevoComentarioForm = memo(
           }
         }
 
-        toast.success("Comentario creado exitosamente");
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Comentario creado exitosamente"
+            message="El comentario ha sido creado exitosamente"
+            type="success"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
+
         onSubmitSuccess();
 
         // Limpiar formulario solo si es nuevo comentario
