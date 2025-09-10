@@ -272,6 +272,7 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
     id: "comentarios",
     accessorKey: "comentarios",
     header: "Comentarios",
+
     cell: ({ row }) => (
       <CommentSheet
         vacancyId={row.original.id}
@@ -281,7 +282,9 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
   },
   {
     id: "asignacion",
-    header: "Asignacion",
+    header: ({ column }) => (
+      <SortableHeader column={column} title="Asignacion" />
+    ),
     accessorKey: "fechaAsignacion",
     cell: ({ row }) => {
       return (
@@ -393,36 +396,36 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
       );
     },
   },
-  {
-    id: "prioridad",
-    accessorKey: "prioridad",
-    header: ({ column }) => (
-      <SortableHeader column={column} title="Prioridad" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <Badge variant="outline" className="gap-1.5">
-          {row.original.prioridad === "Alta" ? (
-            <span
-              className="size-1.5 rounded-full bg-emerald-500"
-              aria-hidden="true"
-            ></span>
-          ) : row.original.prioridad === "Baja" ? (
-            <span
-              className="size-1.5 rounded-full bg-red-500"
-              aria-hidden="true"
-            ></span>
-          ) : (
-            <span
-              className="size-1.5 rounded-full bg-yellow-500"
-              aria-hidden="true"
-            ></span>
-          )}
-          {row.original.prioridad}
-        </Badge>
-      );
-    },
-  },
+  // {
+  //   id: "prioridad",
+  //   accessorKey: "prioridad",
+  //   header: ({ column }) => (
+  //     <SortableHeader column={column} title="Prioridad" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     return (
+  //       <Badge variant="outline" className="gap-1.5">
+  //         {row.original.prioridad === "Alta" ? (
+  //           <span
+  //             className="size-1.5 rounded-full bg-emerald-500"
+  //             aria-hidden="true"
+  //           ></span>
+  //         ) : row.original.prioridad === "Baja" ? (
+  //           <span
+  //             className="size-1.5 rounded-full bg-red-500"
+  //             aria-hidden="true"
+  //           ></span>
+  //         ) : (
+  //           <span
+  //             className="size-1.5 rounded-full bg-yellow-500"
+  //             aria-hidden="true"
+  //           ></span>
+  //         )}
+  //         {row.original.prioridad}
+  //       </Badge>
+  //     );
+  //   },
+  // },
   {
     id: "tipo",
     accessorKey: "tipo",
@@ -463,23 +466,23 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
     },
     accessorFn: (row) => row.tipo,
   },
-  {
-    accessorKey: "fechaOferta",
-    header: ({ column }) => (
-      <SortableHeader column={column} title="Fecha oferta" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <ChangeDateComponent
-          fecha={row.original.fechaOferta}
-          onFechaChange={(nuevaFecha) => {
-            // Aquí implementarías la lógica para actualizar la fecha en tu fuente de datos
-            console.log("Fecha actualizada:", nuevaFecha);
-          }}
-        />
-      );
-    },
-  },
+  // {
+  //   accessorKey: "fechaOferta",
+  //   header: ({ column }) => (
+  //     <SortableHeader column={column} title="Fecha oferta" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     return (
+  //       <ChangeDateComponent
+  //         fecha={row.original.fechaOferta}
+  //         onFechaChange={(nuevaFecha) => {
+  //           // Aquí implementarías la lógica para actualizar la fecha en tu fuente de datos
+  //           console.log("Fecha actualizada:", nuevaFecha);
+  //         }}
+  //       />
+  //     );
+  //   },
+  // },
   {
     accessorKey: "candidatoContratado",
     header: "Contratado",
