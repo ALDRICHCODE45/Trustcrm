@@ -49,6 +49,7 @@ model User {
   Task                 Task[]
   LeadStatusHistory    LeadStatusHistory[] // Nueva relación
   VacancyStatusHistory VacancyStatusHistory[] // Nueva relación para historial de vacantes
+  TernaHistory         TernaHistory[] // Nueva relación para historial de ternas
   ContactInteraction   ContactInteraction[] // Nueva relación para las interacciones con contactos
   Logs                 Log[]
   notifications        Notification[]
@@ -95,6 +96,37 @@ model VacancyStatusHistory {
   changedById String
 
   @@index([vacancyId, changedAt]) // Índice para optimizar consultas por vacante y fecha
+}
+
+// Modelo para registrar historial de entrega de ternas
+model TernaHistory {
+  id          String   @id @default(cuid())
+  vacancy     Vacancy  @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  vacancyId   String
+  deliveredAt DateTime @default(now())
+
+  // Para auditoría - quién validó la terna
+  validatedBy   User   @relation(fields: [validatedById], references: [id], onDelete: Cascade)
+  validatedById String
+
+  // Relación con los candidatos que formaron parte de esta terna
+  candidates TernaHistoryCandidate[]
+
+  @@index([vacancyId, deliveredAt]) // Índice para optimizar consultas por vacante y fecha
+}
+
+// Modelo intermedio para la relación many-to-many entre TernaHistory y Person
+model TernaHistoryCandidate {
+  id             String       @id @default(cuid())
+  ternaHistory   TernaHistory @relation(fields: [ternaHistoryId], references: [id], onDelete: Cascade)
+  ternaHistoryId String
+  candidate      Person       @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId    String
+  addedAt        DateTime     @default(now())
+
+  @@unique([ternaHistoryId, candidateId]) // Evitar duplicados
+  @@index([ternaHistoryId])
+  @@index([candidateId])
 }
 
 model Sector {
@@ -202,6 +234,9 @@ model Person {
   clientId               String?
   cvFileId               String?                  @unique
   InputChecklistFeedback InputChecklistFeedback[]
+
+  // Relación con historial de ternas
+  ternaHistoryEntries TernaHistoryCandidate[]
 }
 
 enum VacancyTipo {
@@ -297,6 +332,9 @@ model Vacancy {
 
   // Relación con historial de estados
   statusHistory VacancyStatusHistory[]
+
+  // Relación con historial de ternas
+  ternaHistory TernaHistory[]
 }
 
 model InputChecklist {

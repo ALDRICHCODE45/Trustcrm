@@ -12,6 +12,7 @@ import {
   unValidateCandidate,
   validateTernaToVacancy,
   unvalidateTernaAction,
+  getTernaHistory,
 } from "@/actions/vacantes/actions";
 import { PersonWithRelations } from "@/app/(dashboard)/list/reclutamiento/components/FinalTernaSheet";
 import { CreateCandidateFormData } from "@/zod/createCandidateSchema";
@@ -230,9 +231,15 @@ export const useCandidates = (vacancyId?: string) => {
     }
   };
 
-  const validarTerna = async (vacancyId: string) => {
+  const validarTerna = async (
+    vacancyId: string,
+    selectedCandidateIds: string[]
+  ) => {
     try {
-      const response = await validateTernaToVacancy(vacancyId);
+      const response = await validateTernaToVacancy(
+        vacancyId,
+        selectedCandidateIds
+      );
       if (!response.ok) {
         throw new Error(response.message || "Error al validar la terna");
       }
@@ -251,6 +258,20 @@ export const useCandidates = (vacancyId?: string) => {
       return response;
     } catch (e) {
       throw new Error("Error al desvalidar la terna");
+    }
+  };
+
+  const fetchTernaHistory = async (vacancyId: string) => {
+    try {
+      const response = await getTernaHistory(vacancyId);
+      if (!response.ok) {
+        throw new Error(
+          response.message || "Error al obtener el historial de ternas"
+        );
+      }
+      return response.data;
+    } catch (e) {
+      throw new Error("Error al obtener el historial de ternas");
     }
   };
 
@@ -277,5 +298,6 @@ export const useCandidates = (vacancyId?: string) => {
     desValidateCandidate,
     validarTerna,
     unvalidateTerna,
+    fetchTernaHistory,
   };
 };

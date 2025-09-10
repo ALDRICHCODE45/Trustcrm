@@ -847,17 +847,76 @@ export const validateCandidateAction = async (candidateId: string) => {
   }
 };
 
-export const validateTernaToVacancy = async (vacancyId: string) => {
+export const validateTernaToVacancy = async (
+  vacancyId: string,
+  selectedCandidateIds: string[]
+) => {
   try {
     const session = await auth();
     if (!session?.user) {
       throw new Error("Unauthorized");
     }
 
-    //actualizar la vacante para validar la terna
-    await prisma.vacancy.update({
+    // Validar que se hayan seleccionado candidatos
+    if (!selectedCandidateIds || selectedCandidateIds.length === 0) {
+      return {
+        ok: false,
+        message: "Debe seleccionar al menos un candidato para la terna",
+      };
+    }
+
+    // Verificar que la vacante existe
+    const vacancy = await prisma.vacancy.findUnique({
       where: { id: vacancyId },
-      data: { fechaEntregaTerna: new Date() },
+    });
+
+    if (!vacancy) {
+      return {
+        ok: false,
+        message: "La vacante no existe",
+      };
+    }
+
+    // Verificar que todos los candidatos existen y están relacionados con la vacante
+    const candidates = await prisma.person.findMany({
+      where: {
+        id: { in: selectedCandidateIds },
+        vacanciesTernaFinal: { some: { id: vacancyId } },
+      },
+    });
+
+    if (candidates.length !== selectedCandidateIds.length) {
+      return {
+        ok: false,
+        message:
+          "Algunos candidatos seleccionados no son válidos o no están en la terna final",
+      };
+    }
+
+    // Usar transacción para asegurar consistencia
+    await prisma.$transaction(async (tx) => {
+      // Actualizar la vacante para validar la terna
+      await tx.vacancy.update({
+        where: { id: vacancyId },
+        data: { fechaEntregaTerna: new Date() },
+      });
+
+      // Crear entrada en el historial de terna
+      const ternaHistory = await tx.ternaHistory.create({
+        data: {
+          vacancyId: vacancyId,
+          validatedById: session.user.id,
+          deliveredAt: new Date(),
+        },
+      });
+
+      // Crear las relaciones con los candidatos seleccionados
+      await tx.ternaHistoryCandidate.createMany({
+        data: selectedCandidateIds.map((candidateId) => ({
+          ternaHistoryId: ternaHistory.id,
+          candidateId: candidateId,
+        })),
+      });
     });
 
     revalidatePath("/reclutador");
@@ -867,6 +926,7 @@ export const validateTernaToVacancy = async (vacancyId: string) => {
       message: "Terna validada correctamente",
     };
   } catch (e) {
+    console.error("Error validating terna:", e);
     return {
       ok: false,
       message: "Error al validar la terna",
@@ -881,10 +941,29 @@ export const unvalidateTernaAction = async (vacancyId: string) => {
       throw new Error("Unauthorized");
     }
 
-    //actualizar la vacante para desvalidar la terna
-    await prisma.vacancy.update({
+    // Verificar que la vacante existe
+    const vacancy = await prisma.vacancy.findUnique({
       where: { id: vacancyId },
-      data: { fechaEntregaTerna: null },
+    });
+
+    if (!vacancy) {
+      return {
+        ok: false,
+        message: "La vacante no existe",
+      };
+    }
+
+    // Usar transacción para asegurar consistencia
+    await prisma.$transaction(async (tx) => {
+      // Actualizar la vacante para desvalidar la terna
+      await tx.vacancy.update({
+        where: { id: vacancyId },
+        data: { fechaEntregaTerna: null },
+      });
+
+      // Eliminar las entradas del historial de terna más reciente
+      // Nota: Mantenemos el historial por auditoría, pero podríamos agregar un campo "isActive" si se requiere
+      // Por ahora, solo actualizamos la fechaEntregaTerna a null
     });
 
     revalidatePath("/reclutador");
@@ -894,9 +973,65 @@ export const unvalidateTernaAction = async (vacancyId: string) => {
       message: "Terna desvalidada correctamente",
     };
   } catch (e) {
+    console.error("Error unvalidating terna:", e);
     return {
       ok: false,
       message: "Error al desvalidar la terna",
+    };
+  }
+};
+
+// Función para obtener el historial de ternas de una vacante
+export const getTernaHistory = async (vacancyId: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    const ternaHistory = await prisma.ternaHistory.findMany({
+      where: { vacancyId },
+      include: {
+        validatedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        candidates: {
+          include: {
+            candidate: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                position: true,
+                cv: {
+                  select: {
+                    url: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { deliveredAt: "desc" },
+    });
+
+    return {
+      ok: true,
+      data: ternaHistory,
+    };
+  } catch (e) {
+    console.error("Error getting terna history:", e);
+    return {
+      ok: false,
+      message: "Error al obtener el historial de ternas",
+      data: [],
     };
   }
 };
