@@ -7,7 +7,7 @@ import { ChangeDateComponent } from "../../list/reclutamiento/components/Asignac
 import { RecruiterDropDown } from "../../list/reclutamiento/components/RecruiterDropdown";
 import { CommentSheet } from "../../list/reclutamiento/components/CommentSheet";
 import { ActionsRecruitment } from "../../list/reclutamiento/components/ActionsRecruitment";
-import { Prisma } from "@prisma/client";
+import { Prisma, VacancyEstado } from "@prisma/client";
 import {
   Tooltip,
   TooltipTrigger,
@@ -254,11 +254,21 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
     },
     cell: ({ row }) => {
       //return <StatusDropdown row={row} />;
+      const statusMap = {
+        [VacancyEstado.QuickMeeting]: "Quick Meeting",
+        [VacancyEstado.Hunting]: "Hunting",
+        [VacancyEstado.Entrevistas]: "Follow Up",
+        [VacancyEstado.PrePlacement]: "Pre Placement",
+        [VacancyEstado.Placement]: "Placement",
+        [VacancyEstado.Perdida]: "Posicion Perdida",
+        [VacancyEstado.Cancelada]: "Posicion Cancelada",
+        [VacancyEstado.StandBy]: "Stand By",
+      };
       return (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="outline" className="w-full">
-              {row.original.estado}
+              {statusMap[row.original.estado]}
             </Button>
           </TooltipTrigger>
           <TooltipContent>

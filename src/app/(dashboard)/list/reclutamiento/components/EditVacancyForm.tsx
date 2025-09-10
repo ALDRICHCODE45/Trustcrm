@@ -331,13 +331,13 @@ export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
                                 Hunting
                               </SelectItem>
                               <SelectItem value={VacancyEstado.Entrevistas}>
-                                Entrevistas con Cliente
-                              </SelectItem>
-                              <SelectItem value={VacancyEstado.Placement}>
-                                Placement
+                                Follow Up
                               </SelectItem>
                               <SelectItem value={VacancyEstado.PrePlacement}>
                                 Pre Placement
+                              </SelectItem>
+                              <SelectItem value={VacancyEstado.Placement}>
+                                Placement
                               </SelectItem>
                               <SelectItem value={VacancyEstado.Perdida}>
                                 Posición Perdida
@@ -355,7 +355,7 @@ export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
                       )}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <FormField
                       control={form.control}
                       name="posicion"
@@ -368,37 +368,6 @@ export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
                               {...field}
                             />
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="prioridad"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Prioridad</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar Prioridad" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="z-[100]">
-                              <SelectItem value={VacancyPrioridad.Alta}>
-                                Alta
-                              </SelectItem>
-                              <SelectItem value={VacancyPrioridad.Normal}>
-                                Normal
-                              </SelectItem>
-                              <SelectItem value={VacancyPrioridad.Baja}>
-                                Baja
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
