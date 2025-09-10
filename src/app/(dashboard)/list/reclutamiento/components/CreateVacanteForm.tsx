@@ -157,8 +157,13 @@ export const CreateVacanteForm = ({
   onVacancyCreated,
   clientDefaultId,
 }: Props) => {
+  const [isAddVacancyDialogOpen, setIsAddVacancyDialogOpen] = useState(false);
+
   return (
-    <Dialog>
+    <Dialog
+      open={isAddVacancyDialogOpen}
+      onOpenChange={setIsAddVacancyDialogOpen}
+    >
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <BriefcaseBusiness />
@@ -172,11 +177,26 @@ export const CreateVacanteForm = ({
           user_logged={user_logged}
           onVacancyCreated={onVacancyCreated}
           clientDefaultId={clientDefaultId}
+          setIsAddVacancyDialogOpen={setIsAddVacancyDialogOpen}
         />
       </DialogContent>
     </Dialog>
   );
 };
+
+interface VacancyFormProps {
+  reclutadores: User[];
+  clientDefaultId?: string;
+
+  clientes: Client[];
+  user_logged: {
+    id: string;
+    name: string;
+    role: string;
+  };
+  onVacancyCreated?: () => void;
+  setIsAddVacancyDialogOpen: (open: boolean) => void;
+}
 
 // Componente principal del formulario con react-hook-form
 function VacancyForm({
@@ -185,7 +205,8 @@ function VacancyForm({
   user_logged,
   onVacancyCreated,
   clientDefaultId = "",
-}: Props) {
+  setIsAddVacancyDialogOpen,
+}: VacancyFormProps) {
   const form = useForm<VacancyFormData>({
     resolver: zodResolver(vacancySchema),
     defaultValues: {
@@ -270,6 +291,7 @@ function VacancyForm({
       ));
       form.reset();
       onVacancyCreated?.();
+      setIsAddVacancyDialogOpen(false);
     } catch (error) {
       toast.custom((t) => (
         <ToastCustomMessage
