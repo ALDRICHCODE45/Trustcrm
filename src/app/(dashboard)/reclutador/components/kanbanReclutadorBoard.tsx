@@ -139,11 +139,21 @@ export const calculateDaysFromAssignment = (fechaAsignacion: Date): number => {
   return Math.max(0, diffDays); // Nunca menos de 0 días transcurridos
 };
 
-// Nueva función para calcular días transcurridos considerando si la terna ya fue entregada
-export const calculateDaysFromAssignmentWithTernaDelivery = (
+// Nueva función para calcular días transcurridos considerando si la terna ya fue entregada Y si el conteo fue pausado
+export const calculateDaysFromAssignmentWithTernaDeliveryAndPause = (
   fechaAsignacion: Date,
-  fechaEntregaTerna: Date | null
+  fechaEntregaTerna: Date | null,
+  fechaPausaConteo: Date | null
 ): number => {
+  // Si el conteo fue pausado, usar esa fecha como límite
+  if (fechaPausaConteo) {
+    const diffDays = differenceInCalendarDays(
+      new Date(fechaPausaConteo),
+      new Date(fechaAsignacion)
+    );
+    return Math.max(0, diffDays);
+  }
+
   // Si ya se entregó la terna, calcular días hasta la fecha de entrega de terna
   // Si no se ha entregado, calcular días hasta hoy
   const endDate = fechaEntregaTerna ? new Date(fechaEntregaTerna) : new Date();
@@ -160,12 +170,18 @@ export const calculateDaysToDelivery = (fechaEntrega: Date | null): number => {
   return diffDays; // Positivo = días restantes, negativo = días de retraso
 };
 
-// Nueva función para calcular días restantes considerando si la terna ya fue entregada
-export const calculateDaysToDeliveryWithTernaStatus = (
+// Nueva función para calcular días restantes considerando si la terna ya fue entregada Y si el conteo fue pausado
+export const calculateDaysToDeliveryWithTernaStatusAndPause = (
   fechaEntrega: Date | null,
-  fechaEntregaTerna: Date | null
+  fechaEntregaTerna: Date | null,
+  fechaPausaConteo: Date | null
 ): number => {
   if (!fechaEntrega) return 0;
+
+  // Si el conteo fue pausado, no mostrar días restantes/retraso
+  if (fechaPausaConteo) {
+    return 0;
+  }
 
   // Si ya se entregó la terna, calcular diferencia entre fecha de entrega comprometida y fecha real de entrega
   // Si no se ha entregado, calcular días restantes hasta la fecha comprometida
@@ -232,17 +248,19 @@ export const getProgressPercentage = (
   return Math.min(100, Math.max(0, percentage));
 };
 
-// Nueva función para obtener el porcentaje de progreso considerando el estado de la terna
-export const getProgressPercentageWithTernaStatus = (
+// Nueva función para obtener el porcentaje de progreso considerando el estado de la terna Y pausa del conteo
+export const getProgressPercentageWithTernaStatusAndPause = (
   fechaAsignacion: Date,
   fechaEntrega: Date | null,
-  fechaEntregaTerna: Date | null
+  fechaEntregaTerna: Date | null,
+  fechaPausaConteo: Date | null
 ): number => {
   if (!fechaEntrega) return 0;
 
-  const daysTranscurred = calculateDaysFromAssignmentWithTernaDelivery(
+  const daysTranscurred = calculateDaysFromAssignmentWithTernaDeliveryAndPause(
     fechaAsignacion,
-    fechaEntregaTerna
+    fechaEntregaTerna,
+    fechaPausaConteo
   );
   const totalDays = getDaysDifference(fechaAsignacion, fechaEntrega);
 
@@ -347,9 +365,10 @@ export const getDeliveryStatusWithTernaStatus = (
 ) => {
   if (!fechaEntrega) {
     return {
-      daysTranscurred: calculateDaysFromAssignmentWithTernaDelivery(
+      daysTranscurred: calculateDaysFromAssignmentWithTernaDeliveryAndPause(
         fechaAsignacion,
-        fechaEntregaTerna
+        fechaEntregaTerna,
+        null
       ),
       daysRemaining: 0,
       totalDays: 0,
@@ -362,19 +381,22 @@ export const getDeliveryStatusWithTernaStatus = (
     };
   }
 
-  const daysTranscurred = calculateDaysFromAssignmentWithTernaDelivery(
+  const daysTranscurred = calculateDaysFromAssignmentWithTernaDeliveryAndPause(
     fechaAsignacion,
-    fechaEntregaTerna
+    fechaEntregaTerna,
+    null
   );
-  const daysRemaining = calculateDaysToDeliveryWithTernaStatus(
+  const daysRemaining = calculateDaysToDeliveryWithTernaStatusAndPause(
     fechaEntrega,
-    fechaEntregaTerna
+    fechaEntregaTerna,
+    null
   );
   const totalDays = getDaysDifference(fechaAsignacion, fechaEntrega);
-  const progressPercentage = getProgressPercentageWithTernaStatus(
+  const progressPercentage = getProgressPercentageWithTernaStatusAndPause(
     fechaAsignacion,
     fechaEntrega,
-    fechaEntregaTerna
+    fechaEntregaTerna,
+    null
   );
   const progressColor = getProgressColor(daysRemaining);
 
@@ -416,6 +438,125 @@ export const getDeliveryStatusWithTernaStatus = (
       : isPast(deliveryDate) && !isToday(deliveryDate),
     isDueToday: !fechaEntregaTerna && isToday(deliveryDate),
     isTernaDelivered: !!fechaEntregaTerna,
+  };
+};
+
+// Nueva función auxiliar que combina múltiples cálculos de fecha considerando la pausa del conteo
+export const getDeliveryStatusWithTernaStatusAndPause = (
+  fechaAsignacion: Date,
+  fechaEntrega: Date | null,
+  fechaEntregaTerna: Date | null,
+  fechaPausaConteo: Date | null,
+  estado: string
+) => {
+  const estadosPausados = ["StandBy", "Cancelada", "Perdida"];
+  const estaEnEstadoPausado = estadosPausados.includes(estado);
+
+  if (!fechaEntrega) {
+    return {
+      daysTranscurred: calculateDaysFromAssignmentWithTernaDeliveryAndPause(
+        fechaAsignacion,
+        fechaEntregaTerna,
+        fechaPausaConteo
+      ),
+      daysRemaining: 0,
+      totalDays: 0,
+      progressPercentage: 0,
+      progressColor: estaEnEstadoPausado ? "bg-gray-400" : "bg-gray-400",
+      statusText: {
+        text: estaEnEstadoPausado ? "Estado pausado" : "Sin fecha de entrega",
+        color: "text-gray-500",
+      },
+      isOverdue: false,
+      isDueToday: false,
+      isTernaDelivered: !!fechaEntregaTerna,
+      isPaused: estaEnEstadoPausado,
+    };
+  }
+
+  const daysTranscurred = calculateDaysFromAssignmentWithTernaDeliveryAndPause(
+    fechaAsignacion,
+    fechaEntregaTerna,
+    fechaPausaConteo
+  );
+  const daysRemaining = calculateDaysToDeliveryWithTernaStatusAndPause(
+    fechaEntrega,
+    fechaEntregaTerna,
+    fechaPausaConteo
+  );
+  const totalDays = getDaysDifference(fechaAsignacion, fechaEntrega);
+  const progressPercentage = getProgressPercentageWithTernaStatusAndPause(
+    fechaAsignacion,
+    fechaEntrega,
+    fechaEntregaTerna,
+    fechaPausaConteo
+  );
+
+  // Si está en estado pausado, usar color gris y texto específico
+  if (estaEnEstadoPausado) {
+    return {
+      daysTranscurred,
+      daysRemaining: 0,
+      totalDays,
+      progressPercentage,
+      progressColor: "bg-gray-400",
+      statusText: {
+        text:
+          estado === "StandBy"
+            ? "En pausa"
+            : estado === "Cancelada"
+            ? "Cancelada"
+            : "Perdida",
+        color: "text-gray-600",
+      },
+      isOverdue: false,
+      isDueToday: false,
+      isTernaDelivered: !!fechaEntregaTerna,
+      isPaused: true,
+    };
+  }
+
+  const progressColor = getProgressColor(daysRemaining);
+
+  // Texto de estado personalizado según si la terna ya fue entregada
+  let statusText;
+  if (fechaEntregaTerna) {
+    // Terna ya entregada: mostrar si fue a tiempo o con retraso
+    if (daysRemaining >= 0) {
+      statusText = {
+        text: `Entregada ${Math.abs(daysRemaining)} día${
+          Math.abs(daysRemaining) === 1 ? "" : "s"
+        } antes`,
+        color: "text-green-600 font-semibold",
+      };
+    } else {
+      statusText = {
+        text: `Entregada ${Math.abs(daysRemaining)} día${
+          Math.abs(daysRemaining) === 1 ? "" : "s"
+        } tarde`,
+        color: "text-red-600 font-semibold",
+      };
+    }
+  } else {
+    // Terna no entregada: usar el texto normal
+    statusText = getProgressStatusText(fechaEntrega);
+  }
+
+  const deliveryDate = new Date(fechaEntrega);
+
+  return {
+    daysTranscurred,
+    daysRemaining,
+    totalDays,
+    progressPercentage,
+    progressColor,
+    statusText,
+    isOverdue: fechaEntregaTerna
+      ? daysRemaining < 0
+      : isPast(deliveryDate) && !isToday(deliveryDate),
+    isDueToday: !fechaEntregaTerna && isToday(deliveryDate),
+    isTernaDelivered: !!fechaEntregaTerna,
+    isPaused: false,
   };
 };
 
@@ -480,11 +621,14 @@ const DraggableVacanteCard: React.FC<VacanteCardProps> = ({
                 </div>
                 {/* Indicador de retraso - debajo del nombre */}
                 {(() => {
-                  const deliveryStatus = getDeliveryStatusWithTernaStatus(
-                    vacante.fechaAsignacion,
-                    vacante.fechaEntrega,
-                    vacante.fechaEntregaTerna
-                  );
+                  const deliveryStatus =
+                    getDeliveryStatusWithTernaStatusAndPause(
+                      vacante.fechaAsignacion,
+                      vacante.fechaEntrega,
+                      vacante.fechaEntregaTerna,
+                      (vacante as any).fechaPausaConteo,
+                      vacante.estado
+                    );
 
                   if (deliveryStatus.isOverdue) {
                     return (
@@ -561,10 +705,12 @@ const DraggableVacanteCard: React.FC<VacanteCardProps> = ({
 
           {/* Barra de progreso visual */}
           {(() => {
-            const deliveryStatus = getDeliveryStatusWithTernaStatus(
+            const deliveryStatus = getDeliveryStatusWithTernaStatusAndPause(
               vacante.fechaAsignacion,
               vacante.fechaEntrega,
-              vacante.fechaEntregaTerna
+              vacante.fechaEntregaTerna,
+              (vacante as any).fechaPausaConteo,
+              vacante.estado
             );
 
             return (
@@ -610,9 +756,10 @@ const DraggableVacanteCard: React.FC<VacanteCardProps> = ({
           <div className="flex items-center text-xs text-muted-foreground">
             <Clock className="h-4 w-4 mr-1" />
             <span>
-              {calculateDaysFromAssignmentWithTernaDelivery(
+              {calculateDaysFromAssignmentWithTernaDeliveryAndPause(
                 vacante.fechaAsignacion,
-                vacante.fechaEntregaTerna
+                vacante.fechaEntregaTerna,
+                (vacante as any).fechaPausaConteo
               )}{" "}
               días
             </span>

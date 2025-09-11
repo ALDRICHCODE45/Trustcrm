@@ -461,10 +461,32 @@ export const updateVacancyStatus = async (
       };
     }
 
+    // Determinar si necesitamos pausar el conteo de tiempo
+    const estadosQuePausanConteo = ["StandBy", "Cancelada", "Perdida"];
+
+    const debeDetenerConteo = estadosQuePausanConteo.includes(status);
+    const yaEstabaPausado = currentVacancy.fechaPausaConteo !== null;
+    const estabaEnEstadoPausado = estadosQuePausanConteo.includes(
+      currentVacancy.estado
+    );
+
+    // Preparar los datos de actualización
+    let updateData: any = { estado: status };
+
+    // Si el nuevo estado requiere pausar el conteo y no estaba pausado
+    if (debeDetenerConteo && !yaEstabaPausado) {
+      updateData.fechaPausaConteo = new Date();
+    }
+
+    // Si sale de un estado pausado a uno activo, reanudar el conteo
+    if (estabaEnEstadoPausado && !debeDetenerConteo && yaEstabaPausado) {
+      updateData.fechaPausaConteo = null;
+    }
+
     // Si la validación es exitosa, actualizar el estado
     const vacancy = await prisma.vacancy.update({
       where: { id: vacancyId },
-      data: { estado: status },
+      data: updateData,
     });
 
     // Registrar el cambio de estado en el historial

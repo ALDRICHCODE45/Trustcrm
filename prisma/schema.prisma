@@ -291,6 +291,9 @@ model Vacancy {
   salarioFinal          String?
   fecha_proxima_entrada String?
 
+  // Campo para pausar el conteo de tiempo en estados finales
+  fechaPausaConteo DateTime?
+
   //Detalles de la vacante NO OBLIGATORIOS 
   prestaciones String?
   herramientas String?

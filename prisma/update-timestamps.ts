@@ -1,51 +1,119 @@
-//Descomentar esta funcion para ejecutarla en el servidor para actualizar los timestamps de las vacantes
-// import prisma from "@/lib/db";
+import { PrismaClient, VacancyEstado } from "@prisma/client";
 
-// const updateVacantesCreateAtAndUpdatedAt = async () => {
-//   try {
-//     const now = new Date();
-//     const result = await prisma.vacancy.updateMany({
-//       where: {
-//         OR: [{ createdAt: null }, { updatedAt: null }],
-//       },
-//       data: {
-//         createdAt: now,
-//         updatedAt: now,
-//       },
-//     });
-//     console.log(`✅ ${result.count} registros actualizados exitosamente`);
-//   } catch (error) {
-//     console.error("❌ Error:", error);
-//   } finally {
-//     await prisma.$disconnect();
-//   }
-// };
-//
-// updateVacantesCreateAtAndUpdatedAt();
-//
-//TODO: descomentar y ejecutar una vez en produccion bunx tsx prisma/update-timestamps.ts
-// import prisma from "@/lib/db";
-//
-// async function updateExistingRecords() {
-//   try {
-//     const now = new Date();
-//
-//     const result = await prisma.leadOrigen.updateMany({
-//       where: {
-//         OR: [{ createdAt: null }, { updatedAt: null }],
-//       },
-//       data: {
-//         createdAt: now,
-//         updatedAt: now,
-//       },
-//     });
-//
-//     console.log(`✅ ${result.count} registros actualizados exitosamente`);
-//   } catch (error) {
-//     console.error("❌ Error:", error);
-//   } finally {
-//     await prisma.$disconnect();
-//   }
-// }
-//
-// updateExistingRecords();
+const prisma = new PrismaClient();
+
+/**
+ * Script para migrar vacantes existentes y establecer fechaPausaConteo
+ * para aquellas que ya están en estados que requieren pausar el conteo
+ */
+async function migrateVacancyPauseTimestamps() {
+  try {
+    console.log("🚀 Iniciando migración de fechaPausaConteo...");
+
+    // Estados que requieren pausar el conteo
+    const estadosQuePausanConteo: VacancyEstado[] = [
+      VacancyEstado.StandBy,
+      VacancyEstado.Cancelada,
+      VacancyEstado.Perdida,
+    ];
+
+    // Encontrar todas las vacantes que están en estados que requieren pausa
+    const vacantesEnEstadosPausados = await prisma.vacancy.findMany({
+      where: {
+        estado: {
+          in: estadosQuePausanConteo,
+        },
+        fechaPausaConteo: null, // Solo las que no tienen fecha de pausa establecida
+      },
+      include: {
+        statusHistory: {
+          orderBy: {
+            changedAt: "desc",
+          },
+          take: 1,
+          where: {
+            status: {
+              in: estadosQuePausanConteo,
+            },
+          },
+        },
+      },
+    });
+
+    console.log(
+      `📊 Encontradas ${vacantesEnEstadosPausados.length} vacantes en estados pausados sin fechaPausaConteo`
+    );
+
+    let vacantesActualizadas = 0;
+
+    for (const vacante of vacantesEnEstadosPausados) {
+      try {
+        // Buscar el historial de cambio de estado más reciente para este estado
+        const ultimoCambioEstado = await prisma.vacancyStatusHistory.findFirst({
+          where: {
+            vacancyId: vacante.id,
+            status: vacante.estado,
+          },
+          orderBy: {
+            changedAt: "desc",
+          },
+        });
+
+        // Usar la fecha del último cambio de estado o la fecha de creación como fallback
+        const fechaPausa =
+          ultimoCambioEstado?.changedAt || vacante.createdAt || new Date();
+
+        await prisma.vacancy.update({
+          where: {
+            id: vacante.id,
+          },
+          data: {
+            fechaPausaConteo: fechaPausa,
+          },
+        });
+
+        vacantesActualizadas++;
+        console.log(
+          `✅ Vacante ${vacante.posicion} (${vacante.id}) - Estado: ${
+            vacante.estado
+          } - Fecha pausa: ${fechaPausa.toISOString()}`
+        );
+      } catch (error) {
+        console.error(`❌ Error al actualizar vacante ${vacante.id}: ${error}`);
+      }
+    }
+
+    console.log(
+      `🎉 Migración completada. ${vacantesActualizadas} vacantes actualizadas.`
+    );
+
+    // Mostrar estadísticas finales
+    const estadisticasFinales = await prisma.vacancy.groupBy({
+      by: ["estado"],
+      _count: {
+        id: true,
+      },
+      where: {
+        fechaPausaConteo: {
+          not: null,
+        },
+      },
+    });
+
+    console.log("\n📈 Estadísticas finales de vacantes con fechaPausaConteo:");
+    estadisticasFinales.forEach((stat) => {
+      console.log(`   ${stat.estado}: ${stat._count.id} vacantes`);
+    });
+  } catch (error) {
+    console.error("💥 Error durante la migración:", error);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+// Ejecutar solo si se llama directamente
+if (require.main === module) {
+  migrateVacancyPauseTimestamps();
+}
+
+export { migrateVacancyPauseTimestamps };
