@@ -138,18 +138,26 @@ export const deleteChecklist = async (id: string) => {
     if (!session?.user) {
       throw new Error("Unauthorized");
     }
+
+    // Verificar si el id es válido
+    if (!id || id.trim() === "") {
+      throw new Error("ID de requisito inválido");
+    }
+
     //buscar el requisito
     const requisito = await prisma.inputChecklist.findUnique({
       where: {
-        id,
+        id: id.trim(),
       },
     });
+
     if (!requisito) {
       throw new Error("Requisito no encontrado");
     }
+
     //eliminar el requisito
     await prisma.inputChecklist.delete({
-      where: { id },
+      where: { id: id.trim() },
     });
 
     revalidatePath(`/reclutador/kanban`);
@@ -161,6 +169,7 @@ export const deleteChecklist = async (id: string) => {
       message: "Requisito eliminado correctamente",
     };
   } catch (error) {
+    console.error("Error en deleteChecklist:", error);
     return {
       ok: false,
       message: "Error al eliminar el requisito",

@@ -11,7 +11,7 @@ import { VacancyWithRelations } from "../../components/ReclutadorColumns";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { MailCheck, Plus, Trash2, Save } from "lucide-react";
+import { MailCheck, Plus, Trash2, Save, AlertCircle } from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
 import {
   completeChecklistAndNotify,
@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
+import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface Props {
   vacante: VacancyWithRelations;
@@ -44,7 +46,7 @@ interface ChecklistFormData {
 }
 
 interface ExistingChecklistFormData {
-  requisitosExistentes: { id: string; valor: string }[];
+  requisitosExistentes: { dbId: string; valor: string }[];
 }
 
 export const VacancyDetailsChecklist = ({
@@ -53,12 +55,15 @@ export const VacancyDetailsChecklist = ({
 }: Props) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [idToDelete, setIdToDelete] = useState<string | null>(null);
+  const [isSubmittingNew, setIsSubmittingNew] = useState(false);
+  const [isSubmittingExisting, setIsSubmittingExisting] = useState(false);
 
   // Formulario para requisitos existentes
   const {
     control: existingControl,
     handleSubmit: handleExistingSubmit,
     reset: resetExisting,
+    getValues: getExistingValues,
   } = useForm<ExistingChecklistFormData>({
     defaultValues: {
       requisitosExistentes: [],
@@ -73,7 +78,7 @@ export const VacancyDetailsChecklist = ({
   // Inicializar formulario de requisitos existentes cuando cambie la vacante
   useEffect(() => {
     const existingRequisitos = vacante.InputChecklist.map((item) => ({
-      id: item.id,
+      dbId: item.id,
       valor: item.content,
     }));
     resetExisting({
@@ -94,10 +99,12 @@ export const VacancyDetailsChecklist = ({
   });
 
   const handleExistingFormSubmit = async (data: ExistingChecklistFormData) => {
+    setIsSubmittingExisting(true);
+
     try {
       // Actualizar cada requisito existente
       const updatePromises = data.requisitosExistentes.map((req) =>
-        updateChecklist(req.id, req.valor.trim())
+        updateChecklist(req.dbId, req.valor.trim())
       );
 
       const responses = await Promise.all(updatePromises);
@@ -124,7 +131,7 @@ export const VacancyDetailsChecklist = ({
       toast.custom((t) => {
         return (
           <ToastCustomMessage
-            title="Requisitos actualizados"
+            title="¡Cambios guardados!"
             message="Todos los requisitos se han actualizado correctamente"
             type="success"
             onClick={() => {
@@ -140,7 +147,7 @@ export const VacancyDetailsChecklist = ({
         return (
           <ToastCustomMessage
             title="Error al actualizar requisitos"
-            message="No se pudieron actualizar los requisitos"
+            message="No se pudieron actualizar los requisitos. Intenta de nuevo."
             type="error"
             onClick={() => {
               toast.dismiss(t);
@@ -148,10 +155,14 @@ export const VacancyDetailsChecklist = ({
           />
         );
       });
+    } finally {
+      setIsSubmittingExisting(false);
     }
   };
 
   const handleFormSubmit = async (data: ChecklistFormData) => {
+    setIsSubmittingNew(true);
+
     // Filtrar requisitos vacíos y extraer solo los valores
     const requisitosLimpios = data.nuevosRequisitos
       .map((req) => req.valor.trim())
@@ -162,7 +173,7 @@ export const VacancyDetailsChecklist = ({
         return (
           <ToastCustomMessage
             title="Sin requisitos nuevos"
-            message="No hay requisitos nuevos para agregar"
+            message="Agrega al menos un requisito antes de guardar"
             type="info"
             onClick={() => {
               toast.dismiss(t);
@@ -170,6 +181,7 @@ export const VacancyDetailsChecklist = ({
           />
         );
       });
+      setIsSubmittingNew(false);
       return;
     }
 
@@ -183,8 +195,12 @@ export const VacancyDetailsChecklist = ({
       toast.custom((t) => {
         return (
           <ToastCustomMessage
-            title="Requisitos agregados"
-            message="Los nuevos requisitos se han agregado correctamente"
+            title="¡Requisitos guardados!"
+            message={`Se ${
+              requisitosLimpios.length === 1 ? "agregó" : "agregaron"
+            } ${requisitosLimpios.length} requisito${
+              requisitosLimpios.length === 1 ? "" : "s"
+            } correctamente`}
             type="success"
             onClick={() => {
               toast.dismiss(t);
@@ -199,8 +215,8 @@ export const VacancyDetailsChecklist = ({
       toast.custom((t) => {
         return (
           <ToastCustomMessage
-            title="Error al agregar requisitos"
-            message="No se pudieron agregar los nuevos requisitos"
+            title="Error al guardar requisitos"
+            message="No se pudieron guardar los nuevos requisitos. Intenta de nuevo."
             type="error"
             onClick={() => {
               toast.dismiss(t);
@@ -208,6 +224,8 @@ export const VacancyDetailsChecklist = ({
           />
         );
       });
+    } finally {
+      setIsSubmittingNew(false);
     }
   };
 
@@ -305,8 +323,9 @@ export const VacancyDetailsChecklist = ({
   };
 
   const handleDeleteExistingRequisito = (index: number) => {
-    const requisito = existingFields[index];
-    setIdToDelete(requisito.id);
+    // Obtener el ID de la base de datos desde el valor del formulario
+    const formValue = getExistingValues(`requisitosExistentes.${index}`);
+    setIdToDelete(formValue.dbId);
     setIsDeleteDialogOpen(true);
   };
 
@@ -324,7 +343,13 @@ export const VacancyDetailsChecklist = ({
         {/* Formulario para requisitos existentes */}
         {existingFields.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-sm font-medium mb-3">Requisitos existentes</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium">Requisitos existentes</h3>
+              <Badge variant="outline" className="text-xs">
+                {existingFields.length} requisito
+                {existingFields.length === 1 ? "" : "s"}
+              </Badge>
+            </div>
             <form onSubmit={handleExistingSubmit(handleExistingFormSubmit)}>
               <div className="grid auto-rows-min gap-4 max-h-[40vh] overflow-y-auto mb-4">
                 {existingFields.map((field, index) => (
@@ -351,12 +376,33 @@ export const VacancyDetailsChecklist = ({
                       placeholder="Requisito existente"
                       type="text"
                     />
+                    {/* Campo oculto para almacenar el ID de la base de datos */}
+                    <input
+                      type="hidden"
+                      {...existingControl.register(
+                        `requisitosExistentes.${index}.dbId`
+                      )}
+                    />
                   </div>
                 ))}
               </div>
-              <Button type="submit" className="w-full mb-4" variant="default">
-                <Save className="h-4 w-4 mr-2" />
-                Guardar cambios
+              <Button
+                type="submit"
+                className="w-full mb-4"
+                variant="default"
+                disabled={isSubmittingExisting}
+              >
+                {isSubmittingExisting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Guardar cambios
+                  </>
+                )}
               </Button>
             </form>
           </div>
@@ -365,76 +411,125 @@ export const VacancyDetailsChecklist = ({
         <Separator orientation="horizontal" className="mb-4" />
 
         {/* Formulario para nuevos requisitos */}
-        <form
-          onSubmit={handleSubmit(handleFormSubmit)}
-          className="flex flex-col h-full"
-        >
-          <div className="mb-4">
-            <h3 className="text-sm font-medium mb-3">
-              Agregar nuevos requisitos
-            </h3>
-            <div className="grid auto-rows-min gap-4 max-h-[30vh] overflow-y-auto">
-              {fields.map((field, index) => (
-                <div key={field.id} className="grid gap-3 mr-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor={`nuevo-${index}`}>
-                      Nuevo requisito {index + 1}
-                    </Label>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => eliminarRequisito(index)}
-                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Input
-                    id={`nuevo-${index}`}
-                    {...control.register(`nuevosRequisitos.${index}.valor`)}
-                    placeholder="Escribir nuevo requisito"
-                    type="text"
-                  />
-                </div>
-              ))}
+        <div className="flex flex-col h-full">
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium">Agregar nuevos requisitos</h3>
+              {fields.length > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="text-xs bg-amber-100 text-amber-800 border-amber-200"
+                >
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  {fields.length} sin guardar
+                </Badge>
+              )}
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full mt-4"
-              onClick={agregarRequisito}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar requisito
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full mt-4"
-              onClick={handleCompleteChecklistAndNotify}
-            >
-              <MailCheck />
-              Notificar Checklist Completado
-            </Button>
+            <form onSubmit={handleSubmit(handleFormSubmit)}>
+              {/* Lista de nuevos requisitos */}
+              {fields.length > 0 ? (
+                <div className="grid auto-rows-min gap-4 max-h-[25vh] overflow-y-auto mb-4 p-3 bg-slate-50 rounded-lg border">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="grid gap-2">
+                      <div className="flex items-center justify-between">
+                        <Label
+                          htmlFor={`nuevo-${index}`}
+                          className="text-xs text-slate-600"
+                        >
+                          Nuevo requisito {index + 1}
+                        </Label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => eliminarRequisito(index)}
+                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <Input
+                        id={`nuevo-${index}`}
+                        {...control.register(`nuevosRequisitos.${index}.valor`)}
+                        placeholder="Escribe el requisito aquí..."
+                        type="text"
+                        className="text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-700 text-center">
+                    Haz clic en Agregar requisito para comenzar a añadir nuevos
+                    requisitos a esta vacante.
+                  </p>
+                </div>
+              )}
+
+              {/* Botones de acción para nuevos requisitos */}
+              <div className="space-y-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={agregarRequisito}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar requisito
+                </Button>
+
+                {fields.length > 0 && (
+                  <Button
+                    type="submit"
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    disabled={isSubmittingNew}
+                  >
+                    {isSubmittingNew ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Guardar {fields.length} requisito
+                        {fields.length === 1 ? "" : "s"}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <Separator orientation="horizontal" className="mb-4" />
+
+          {/* Botón para notificar checklist completado */}
+          <div className="mb-6">
+            <ConfirmDialog
+              title="Notificar Checklist Completado"
+              description="¿Estás seguro de querer notificar el checklist completado?
+              Se enviará un correo a los usuarioa administradores."
+              trigger={
+                <Button type="button" variant="outline" className="w-full">
+                  <MailCheck className="h-4 w-4 mr-2" />
+                  Notificar Checklist Completado
+                </Button>
+              }
+              onConfirm={handleCompleteChecklistAndNotify}
+            />
           </div>
 
           <SheetFooter className="mt-auto px-4 gap-2">
-            <Button
-              type="submit"
-              disabled={fields.length === 0}
-              className="flex-1"
-            >
-              Guardar nuevos requisitos
-            </Button>
             <SheetClose asChild>
               <Button variant="outline" className="flex-1">
                 Cerrar
               </Button>
             </SheetClose>
           </SheetFooter>
-        </form>
+        </div>
 
         <AlertDialog
           open={isDeleteDialogOpen}
