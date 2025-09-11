@@ -139,6 +139,18 @@ export const calculateDaysFromAssignment = (fechaAsignacion: Date): number => {
   return Math.max(0, diffDays); // Nunca menos de 0 días transcurridos
 };
 
+// Nueva función para calcular días transcurridos considerando si la terna ya fue entregada
+export const calculateDaysFromAssignmentWithTernaDelivery = (
+  fechaAsignacion: Date,
+  fechaEntregaTerna: Date | null
+): number => {
+  // Si ya se entregó la terna, calcular días hasta la fecha de entrega de terna
+  // Si no se ha entregado, calcular días hasta hoy
+  const endDate = fechaEntregaTerna ? new Date(fechaEntregaTerna) : new Date();
+  const diffDays = differenceInCalendarDays(endDate, new Date(fechaAsignacion));
+  return Math.max(0, diffDays);
+};
+
 // Función optimizada para calcular días restantes hasta la entrega o días de retraso
 export const calculateDaysToDelivery = (fechaEntrega: Date | null): number => {
   if (!fechaEntrega) return 0;
@@ -146,6 +158,27 @@ export const calculateDaysToDelivery = (fechaEntrega: Date | null): number => {
   // Usar differenceInCalendarDays para días calendario reales
   const diffDays = differenceInCalendarDays(new Date(fechaEntrega), new Date());
   return diffDays; // Positivo = días restantes, negativo = días de retraso
+};
+
+// Nueva función para calcular días restantes considerando si la terna ya fue entregada
+export const calculateDaysToDeliveryWithTernaStatus = (
+  fechaEntrega: Date | null,
+  fechaEntregaTerna: Date | null
+): number => {
+  if (!fechaEntrega) return 0;
+
+  // Si ya se entregó la terna, calcular diferencia entre fecha de entrega comprometida y fecha real de entrega
+  // Si no se ha entregado, calcular días restantes hasta la fecha comprometida
+  if (fechaEntregaTerna) {
+    // Ya se entregó: comparar fecha comprometida vs fecha real de entrega
+    return differenceInCalendarDays(
+      new Date(fechaEntrega),
+      new Date(fechaEntregaTerna)
+    );
+  } else {
+    // No se ha entregado: días restantes hasta la fecha comprometida
+    return differenceInCalendarDays(new Date(fechaEntrega), new Date());
+  }
 };
 
 // Nueva función para obtener el color de progreso basado en los días restantes
@@ -191,6 +224,26 @@ export const getProgressPercentage = (
   if (!fechaEntrega) return 0;
 
   const daysTranscurred = calculateDaysFromAssignment(fechaAsignacion);
+  const totalDays = getDaysDifference(fechaAsignacion, fechaEntrega);
+
+  if (totalDays === 0) return 0;
+
+  const percentage = (daysTranscurred / totalDays) * 100;
+  return Math.min(100, Math.max(0, percentage));
+};
+
+// Nueva función para obtener el porcentaje de progreso considerando el estado de la terna
+export const getProgressPercentageWithTernaStatus = (
+  fechaAsignacion: Date,
+  fechaEntrega: Date | null,
+  fechaEntregaTerna: Date | null
+): number => {
+  if (!fechaEntrega) return 0;
+
+  const daysTranscurred = calculateDaysFromAssignmentWithTernaDelivery(
+    fechaAsignacion,
+    fechaEntregaTerna
+  );
   const totalDays = getDaysDifference(fechaAsignacion, fechaEntrega);
 
   if (totalDays === 0) return 0;
@@ -286,6 +339,86 @@ export const getDeliveryStatus = (
   };
 };
 
+// Nueva función auxiliar que considera el estado de la terna entregada
+export const getDeliveryStatusWithTernaStatus = (
+  fechaAsignacion: Date,
+  fechaEntrega: Date | null,
+  fechaEntregaTerna: Date | null
+) => {
+  if (!fechaEntrega) {
+    return {
+      daysTranscurred: calculateDaysFromAssignmentWithTernaDelivery(
+        fechaAsignacion,
+        fechaEntregaTerna
+      ),
+      daysRemaining: 0,
+      totalDays: 0,
+      progressPercentage: 0,
+      progressColor: "bg-gray-400",
+      statusText: { text: "Sin fecha de entrega", color: "text-gray-500" },
+      isOverdue: false,
+      isDueToday: false,
+      isTernaDelivered: !!fechaEntregaTerna,
+    };
+  }
+
+  const daysTranscurred = calculateDaysFromAssignmentWithTernaDelivery(
+    fechaAsignacion,
+    fechaEntregaTerna
+  );
+  const daysRemaining = calculateDaysToDeliveryWithTernaStatus(
+    fechaEntrega,
+    fechaEntregaTerna
+  );
+  const totalDays = getDaysDifference(fechaAsignacion, fechaEntrega);
+  const progressPercentage = getProgressPercentageWithTernaStatus(
+    fechaAsignacion,
+    fechaEntrega,
+    fechaEntregaTerna
+  );
+  const progressColor = getProgressColor(daysRemaining);
+
+  // Texto de estado personalizado según si la terna ya fue entregada
+  let statusText;
+  if (fechaEntregaTerna) {
+    // Terna ya entregada: mostrar si fue a tiempo o con retraso
+    if (daysRemaining >= 0) {
+      statusText = {
+        text: `Entregada ${Math.abs(daysRemaining)} día${
+          Math.abs(daysRemaining) === 1 ? "" : "s"
+        } antes`,
+        color: "text-green-600 font-semibold",
+      };
+    } else {
+      statusText = {
+        text: `Entregada ${Math.abs(daysRemaining)} día${
+          Math.abs(daysRemaining) === 1 ? "" : "s"
+        } tarde`,
+        color: "text-red-600 font-semibold",
+      };
+    }
+  } else {
+    // Terna no entregada: usar el texto normal
+    statusText = getProgressStatusText(fechaEntrega);
+  }
+
+  const deliveryDate = new Date(fechaEntrega);
+
+  return {
+    daysTranscurred,
+    daysRemaining,
+    totalDays,
+    progressPercentage,
+    progressColor,
+    statusText,
+    isOverdue: fechaEntregaTerna
+      ? daysRemaining < 0
+      : isPast(deliveryDate) && !isToday(deliveryDate),
+    isDueToday: !fechaEntregaTerna && isToday(deliveryDate),
+    isTernaDelivered: !!fechaEntregaTerna,
+  };
+};
+
 // Draggable Vacante Card Component
 const DraggableVacanteCard: React.FC<VacanteCardProps> = ({
   vacante,
@@ -347,15 +480,32 @@ const DraggableVacanteCard: React.FC<VacanteCardProps> = ({
                 </div>
                 {/* Indicador de retraso - debajo del nombre */}
                 {(() => {
-                  const daysRemaining = calculateDaysToDelivery(
-                    vacante.fechaEntrega
+                  const deliveryStatus = getDeliveryStatusWithTernaStatus(
+                    vacante.fechaAsignacion,
+                    vacante.fechaEntrega,
+                    vacante.fechaEntregaTerna
                   );
-                  if (daysRemaining < 0) {
+
+                  if (deliveryStatus.isOverdue) {
                     return (
                       <div className="flex items-center mt-1">
                         <AlertCircle className="h-4 w-4 text-red-600" />
                         <span className="text-xs text-red-600 font-semibold ml-1">
-                          ¡Retraso!
+                          {deliveryStatus.isTernaDelivered
+                            ? "Entregada tarde"
+                            : "¡Retraso!"}
+                        </span>
+                      </div>
+                    );
+                  } else if (
+                    deliveryStatus.isTernaDelivered &&
+                    !deliveryStatus.isOverdue
+                  ) {
+                    return (
+                      <div className="flex items-center mt-1">
+                        <AlertCircle className="h-4 w-4 text-green-600" />
+                        <span className="text-xs text-green-600 font-semibold ml-1">
+                          Entregada a tiempo
                         </span>
                       </div>
                     );
@@ -411,36 +561,42 @@ const DraggableVacanteCard: React.FC<VacanteCardProps> = ({
 
           {/* Barra de progreso visual */}
           {(() => {
-            const valueToUse = vacante.tiempoTranscurrido
-              ? vacante.tiempoTranscurrido
-              : calculateDaysFromAssignment(vacante.fechaAsignacion);
-
-            const daysTranscurred = valueToUse;
-            const daysRemaining = calculateDaysToDelivery(vacante.fechaEntrega);
-            const progressPercentage = getProgressPercentage(
+            const deliveryStatus = getDeliveryStatusWithTernaStatus(
               vacante.fechaAsignacion,
-              vacante.fechaEntrega
+              vacante.fechaEntrega,
+              vacante.fechaEntregaTerna
             );
-            const progressColor = getProgressColor(daysRemaining);
 
             return (
               <div className="mt-3">
                 <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
                   <div
-                    className={`h-full ${progressColor} transition-all duration-300`}
+                    className={`h-full ${deliveryStatus.progressColor} transition-all duration-300`}
                     style={{
-                      width: `${progressPercentage}%`,
+                      width: `${deliveryStatus.progressPercentage}%`,
                     }}
                   ></div>
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>{daysTranscurred}d transcurridos</span>
-                  {daysRemaining < 0 ? (
+                  <span>{deliveryStatus.daysTranscurred}d transcurridos</span>
+                  {deliveryStatus.isTernaDelivered ? (
+                    <span
+                      className={
+                        deliveryStatus.isOverdue
+                          ? "text-red-600 font-semibold"
+                          : "text-green-600 font-semibold"
+                      }
+                    >
+                      {deliveryStatus.isOverdue
+                        ? `${Math.abs(deliveryStatus.daysRemaining)}d tarde`
+                        : `${Math.abs(deliveryStatus.daysRemaining)}d antes`}
+                    </span>
+                  ) : deliveryStatus.daysRemaining < 0 ? (
                     <span className="text-red-600 font-semibold">
-                      {Math.abs(daysRemaining)}d retraso
+                      {Math.abs(deliveryStatus.daysRemaining)}d retraso
                     </span>
                   ) : (
-                    <span>{daysRemaining}d restantes</span>
+                    <span>{deliveryStatus.daysRemaining}d restantes</span>
                   )}
                 </div>
               </div>
@@ -454,7 +610,11 @@ const DraggableVacanteCard: React.FC<VacanteCardProps> = ({
           <div className="flex items-center text-xs text-muted-foreground">
             <Clock className="h-4 w-4 mr-1" />
             <span>
-              {calculateDaysFromAssignment(vacante.fechaAsignacion)} días
+              {calculateDaysFromAssignmentWithTernaDelivery(
+                vacante.fechaAsignacion,
+                vacante.fechaEntregaTerna
+              )}{" "}
+              días
             </span>
           </div>
         </CardFooter>
