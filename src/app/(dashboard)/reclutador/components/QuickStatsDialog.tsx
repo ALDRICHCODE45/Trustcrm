@@ -141,8 +141,8 @@ export default function QuickStatsDialog({ trigger }: QuickStatsDialogProps) {
     (sum, recruiter) => sum + recruiter.totalVacantes,
     0
   );
-  const totalPlacements = stats.reduce(
-    (sum, recruiter) => sum + recruiter.placement,
+  const totalHunting = stats.reduce(
+    (sum, recruiter) => sum + recruiter.hunting,
     0
   );
 
@@ -200,12 +200,12 @@ export default function QuickStatsDialog({ trigger }: QuickStatsDialogProps) {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium">
-                    Total Placements
+                    Total Hunting
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">
-                    {totalPlacements}
+                    {totalHunting}
                   </div>
                 </CardContent>
               </Card>
