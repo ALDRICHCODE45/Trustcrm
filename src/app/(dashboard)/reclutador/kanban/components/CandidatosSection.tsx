@@ -533,15 +533,26 @@ export const CandidatesSectionReclutador = ({
 
               {user_logged.role === Role.Admin &&
                 vacancyDetails?.fechaEntregaTerna !== null && (
-                  <Button
-                    onClick={() => handleUnvalidateTerna()}
-                    size="sm"
-                    variant="outline"
-                    className="gap-1"
-                  >
-                    <FolderX className="mr-1 text-gray-700" />
-                    Desvalidar terna
-                  </Button>
+                  <ConfirmDialog
+                    title="Desvalidar terna"
+                    description="¿Estás seguro de querer desvalidar la terna?"
+                    onConfirm={() => handleUnvalidateTerna()}
+                    trigger={
+                      <Button size="sm" variant="outline" className="gap-1">
+                        <FolderX className="mr-1 text-gray-700" />
+                        Desvalidar terna
+                      </Button>
+                    }
+                  />
+                  // <Button
+                  //   onClick={() => handleUnvalidateTerna()}
+                  //   size="sm"
+                  //   variant="outline"
+                  //   className="gap-1"
+                  // >
+                  //   <FolderX className="mr-1 text-gray-700" />
+                  //   Desvalidar terna
+                  // </Button>
                 )}
 
               {/* Botón para ver historial de ternas (disponible siempre para Admin) */}
