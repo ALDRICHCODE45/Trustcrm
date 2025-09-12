@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 
 // Tipos temporales hasta que se genere Prisma
 export type SpecialNotificationWithRelations =
@@ -108,8 +109,20 @@ export function useSpecialNotifications(
 
       if (response.ok) {
         // Remover la notificación de la lista local
+        // Al siempre mostrar la primera notificación (índice 0), cuando se remueve una,
+        // automáticamente la siguiente toma su lugar
         setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-        toast.success("Notificación procesada");
+
+        toast.custom((t) =>
+          React.createElement(ToastCustomMessage, {
+            title: "Notificación procesada",
+            message: "Notificación procesada",
+            type: "success",
+            onClick: () => {
+              toast.dismiss(t);
+            },
+          })
+        );
       } else {
         toast.error("Error al procesar la notificación");
       }
@@ -137,6 +150,8 @@ export function useSpecialNotifications(
 
       if (response.ok) {
         // Remover la notificación de la lista local
+        // Al siempre mostrar la primera notificación (índice 0), cuando se remueve una,
+        // automáticamente la siguiente toma su lugar
         setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
         toast.success("Notificación descartada");
       } else {
@@ -156,11 +171,10 @@ export function useSpecialNotifications(
     }
   }, [currentNotificationIndex, notifications.length]);
 
-  // Obtener la notificación actual
+  // Obtener la notificación actual - siempre mostramos la primera (índice 0)
+  // Cuando se remueve una notificación, automáticamente la siguiente toma el lugar de la primera
   const currentNotification =
-    notifications.length > 0 && currentNotificationIndex < notifications.length
-      ? notifications[currentNotificationIndex]
-      : null;
+    notifications.length > 0 ? notifications[0] : null;
 
   // Polling cada 30 segundos para nuevas notificaciones
   useEffect(() => {

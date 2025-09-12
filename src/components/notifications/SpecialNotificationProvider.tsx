@@ -25,31 +25,20 @@ export const SpecialNotificationProvider = ({
 
   // Mostrar dialog automáticamente cuando hay notificaciones pendientes
   useEffect(() => {
-    console.log("Provider useEffect - checking notification", {
-      hasCurrentNotification: !!currentNotification,
-      isDialogOpen,
-      notificationId: currentNotification?.id,
-    });
-
     if (currentNotification && !isDialogOpen) {
-      console.log(
-        "Provider: Opening dialog for notification",
-        currentNotification.id
-      );
       setIsDialogOpen(true);
     }
   }, [currentNotification, isDialogOpen]);
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
-    // Mostrar la siguiente notificación después de un breve delay
-    setTimeout(() => {
-      showNextNotification();
-    }, 500);
   };
 
   const handleMarkAsShown = async (notificationId: string) => {
     await markAsShown(notificationId);
+    // Cuando se marca como vista, la notificación se remueve del array
+    // y automáticamente la siguiente notificación toma su lugar en el mismo índice
+    // Por eso NO necesitamos llamar showNextNotification()
     handleCloseDialog();
   };
 
@@ -57,13 +46,6 @@ export const SpecialNotificationProvider = ({
     await dismissNotification(notificationId);
     handleCloseDialog();
   };
-
-  console.log("currentNotification SpecialNotificationProvider", {
-    currentNotification,
-    isDialogOpen,
-    hasNotification: !!currentNotification,
-    shouldShowDialog: isDialogOpen && !!currentNotification,
-  });
 
   return (
     <>
