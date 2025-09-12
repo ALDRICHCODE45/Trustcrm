@@ -5,7 +5,42 @@ import { toast } from "sonner";
 // Tipos temporales hasta que se genere Prisma
 export type SpecialNotificationWithRelations =
   Prisma.SpecialNotificationGetPayload<{
-    include: { recipient: true };
+    include: {
+      recipient: true;
+      vacancy: {
+        include: {
+          InputChecklist: {
+            include: {
+              InputChecklistFeedback: {
+                include: {
+                  candidate: true;
+                };
+              };
+            };
+          };
+          reclutador: true;
+          cliente: true;
+          candidatoContratado: {
+            include: {
+              cv: true;
+              vacanciesContratado: true;
+            };
+          };
+          ternaFinal: {
+            include: {
+              cv: true;
+              vacanciesContratado: true;
+            };
+          };
+          files: true;
+          Comments: {
+            include: {
+              author: true;
+            };
+          };
+        };
+      };
+    };
   }>;
 
 interface UseSpecialNotificationsReturn {

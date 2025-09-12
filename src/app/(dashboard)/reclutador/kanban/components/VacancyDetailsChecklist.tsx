@@ -511,7 +511,7 @@ export const VacancyDetailsChecklist = ({
             <ConfirmDialog
               title="Notificar Checklist Completado"
               description="¿Estás seguro de querer notificar el checklist completado?
-              Se enviará un correo a los usuarioa administradores."
+              Se enviará una notificación a los usuarios administradores."
               trigger={
                 <Button type="button" variant="outline" className="w-full">
                   <MailCheck className="h-4 w-4 mr-2" />

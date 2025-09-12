@@ -1,10 +1,14 @@
 "use server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { NotificationVacancyType } from "@/types/vacancy-notifications";
 import { revalidatePath } from "next/cache";
-import { createVacancyNotification } from "../notifications/vacancies-notificactions";
-import { NotificationType } from "@prisma/client";
+import {
+  NotificationType,
+  Role,
+  SpecialNotificationPriority,
+  SpecialNotificationType,
+} from "@prisma/client";
+import { createSpecialNotification } from "@/actions/notifications/special-notifications";
 
 interface addCandidateFeedbackProps {
   feedback: string;
@@ -316,13 +320,55 @@ export const ValidatePerfilMuestraAction = async (vacancyId: string) => {
 
 export const completeChecklistAndNotify = async (vacancyId: string) => {
   try {
-    const notification = await createVacancyNotification({
-      vacancyId,
-      type: NotificationVacancyType.Checklist,
+    const session = await auth();
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    //buscar vacante para obtener sus datos
+    const vacancy = await prisma.vacancy.findUnique({
+      where: {
+        id: vacancyId,
+      },
     });
 
-    if (!notification.ok) {
-      throw new Error(notification.message);
+    if (!vacancy) {
+      return {
+        ok: false,
+        message: "Vacante no encontrada",
+      };
+    }
+
+    //buscar usuarios administradores
+    const administrators = await prisma.user.findMany({
+      where: {
+        role: Role.Admin,
+      },
+    });
+
+    if (!administrators) {
+      return {
+        ok: false,
+        message: "Usuarios administradores no encontrados",
+      };
+    }
+
+    for (const administrator of administrators) {
+      const notification = await createSpecialNotification({
+        type: SpecialNotificationType.URGENT_TASK_ASSIGNED,
+        title: "Checklist completado",
+        message: `El checklist de la vacante ${vacancy.posicion} se ha completado correctamente y espera tu validación`,
+        recipientId: administrator.id,
+        vacancyId: vacancy.id,
+        priority: SpecialNotificationPriority.URGENT,
+      });
+
+      if (!notification.ok) {
+        return {
+          ok: false,
+          message: "Error al notificar el checklist completado",
+        };
+      }
     }
 
     return {

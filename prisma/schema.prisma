@@ -337,7 +337,8 @@ model Vacancy {
   statusHistory VacancyStatusHistory[]
 
   // Relación con historial de ternas
-  ternaHistory TernaHistory[]
+  ternaHistory        TernaHistory[]
+  SpecialNotification SpecialNotification[]
 }
 
 model InputChecklist {
@@ -605,6 +606,10 @@ model SpecialNotification {
   priority SpecialNotificationPriority @default(MEDIUM)
   title    String
   message  String
+
+  //Relacion con la vacante
+  vacancyId String?
+  vacancy   Vacancy? @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
 
   // Relación con el destinatario
   recipient   User   @relation(fields: [recipientId], references: [id], onDelete: Cascade)

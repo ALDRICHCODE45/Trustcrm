@@ -25,7 +25,17 @@ export const SpecialNotificationProvider = ({
 
   // Mostrar dialog automáticamente cuando hay notificaciones pendientes
   useEffect(() => {
+    console.log("Provider useEffect - checking notification", {
+      hasCurrentNotification: !!currentNotification,
+      isDialogOpen,
+      notificationId: currentNotification?.id,
+    });
+
     if (currentNotification && !isDialogOpen) {
+      console.log(
+        "Provider: Opening dialog for notification",
+        currentNotification.id
+      );
       setIsDialogOpen(true);
     }
   }, [currentNotification, isDialogOpen]);
@@ -47,6 +57,13 @@ export const SpecialNotificationProvider = ({
     await dismissNotification(notificationId);
     handleCloseDialog();
   };
+
+  console.log("currentNotification SpecialNotificationProvider", {
+    currentNotification,
+    isDialogOpen,
+    hasNotification: !!currentNotification,
+    shouldShowDialog: isDialogOpen && !!currentNotification,
+  });
 
   return (
     <>

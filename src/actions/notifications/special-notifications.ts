@@ -14,6 +14,7 @@ export interface CreateSpecialNotificationData {
   message: string;
   recipientId: string;
   priority?: SpecialNotificationPriority;
+  vacancyId?: string;
 }
 
 // Crear una notificación especial
@@ -40,9 +41,11 @@ export const createSpecialNotification = async (
         message: data.message,
         recipientId: data.recipientId,
         priority: data.priority || SpecialNotificationPriority.MEDIUM,
+        vacancyId: data.vacancyId || null,
       },
       include: {
         recipient: true,
+        vacancy: true,
       },
     });
 
@@ -72,6 +75,39 @@ export const getPendingSpecialNotifications = async (userId: string) => {
       orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
       include: {
         recipient: true,
+        vacancy: {
+          include: {
+            InputChecklist: {
+              include: {
+                InputChecklistFeedback: {
+                  include: {
+                    candidate: true,
+                  },
+                },
+              },
+            },
+            reclutador: true,
+            cliente: true,
+            candidatoContratado: {
+              include: {
+                cv: true,
+                vacanciesContratado: true,
+              },
+            },
+            ternaFinal: {
+              include: {
+                cv: true,
+                vacanciesContratado: true,
+              },
+            },
+            files: true,
+            Comments: {
+              include: {
+                author: true,
+              },
+            },
+          },
+        },
       },
     });
 

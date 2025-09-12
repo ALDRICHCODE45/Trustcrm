@@ -7,7 +7,7 @@ import { CreateClientFormData } from "@/zod/createClientSchema";
 import { Client } from "@prisma/client";
 
 export const createClientFromClientForm = async (
-  data: CreateClientFormData
+  data: CreateClientFormData,
 ) => {
   try {
     const client = await prisma.client.create({
