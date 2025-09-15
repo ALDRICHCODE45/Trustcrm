@@ -292,20 +292,6 @@ export const createPerfilMuestraAction = async ({
       },
     });
 
-    //crear y mandar notificaciones a los administradores
-    const { message: messageNotification, ok: okNotification } =
-      await createVacancyNotification({
-        vacancyId,
-        type: NotificationVacancyType.PerfilMuestra,
-      });
-
-    if (!okNotification) {
-      return {
-        ok: false,
-        message: messageNotification,
-      };
-    }
-
     revalidatePath(`/reclutador`);
     revalidatePath(`/reclutador/kanban`);
     revalidatePath(`/list/reclutamiento`);

@@ -3,7 +3,7 @@ import { KanbanBoardPage } from "../components/kanbanReclutadorBoard";
 import { Role } from "@prisma/client";
 import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
 import { useClients } from "@/hooks/clientes/use-clients";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useUsers } from "@/hooks/users/use-users";
 import { Loader2 } from "lucide-react";
 

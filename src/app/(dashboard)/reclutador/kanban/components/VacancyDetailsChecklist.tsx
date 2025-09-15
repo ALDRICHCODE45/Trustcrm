@@ -507,7 +507,7 @@ export const VacancyDetailsChecklist = ({
           <Separator orientation="horizontal" className="mb-4" />
 
           {/* Botón para notificar checklist completado */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <ConfirmDialog
               title="Notificar Checklist Completado"
               description="¿Estás seguro de querer notificar el checklist completado?
@@ -520,7 +520,7 @@ export const VacancyDetailsChecklist = ({
               }
               onConfirm={handleCompleteChecklistAndNotify}
             />
-          </div>
+          </div> */}
 
           <SheetFooter className="mt-auto px-4 gap-2">
             <SheetClose asChild>

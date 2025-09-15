@@ -4,15 +4,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  BoltIcon,
   Building,
   CalendarIcon,
   CheckCircle2,
+  ChevronDownIcon,
+  CircleAlertIcon,
   ClipboardCheck,
   Clock,
+  CopyPlusIcon,
   FileCheck2,
+  FilesIcon,
   FileText,
   History,
+  Layers2Icon,
+  ListCheck,
   ListCollapse,
+  SquareUser,
 } from "lucide-react";
 import { Role } from "@prisma/client";
 import { format } from "date-fns";
@@ -35,7 +43,7 @@ import {
 import { VacancyDetailsChecklist } from "./VacancyDetailsChecklist";
 import { DrawerVacancyDetails } from "./DrawerVacancyDetails";
 import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
-import { useEffect } from "react";
+import { use, useEffect, useState } from "react";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { toast } from "sonner";
 import { VacancyStatusHistorySheet } from "./VacancyStatusHistorySheet";
@@ -45,6 +53,23 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTitle,
+  AlertDialogHeader,
+  AlertDialogTrigger,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 interface DetailsSectionProps {
   vacanteId: string;
@@ -61,6 +86,13 @@ export const DetailsSectionReclutador = ({
   vacanteId,
   user_logged,
 }: DetailsSectionProps) => {
+  const [
+    isRequestingPerfilMuestraValidation,
+    setIsRequestingPerfilMuestraValidation,
+  ] = useState<boolean>(false);
+  const [isRequestingChecklistValidation, setIsRequestingChecklistValidation] =
+    useState<boolean>(false);
+
   const {
     vacancyDetails,
     fetchVacancyDetails,
@@ -68,7 +100,74 @@ export const DetailsSectionReclutador = ({
     isLoading,
     validateChecklist,
     validatePerfilMuestra,
+    requestPerfilMuestraValidation,
+    requestChecklistValidation,
   } = useVacancyDetails(vacanteId);
+
+  const handleRequestChecklistValidation = async () => {
+    try {
+      //llamar a la funcion para solicitar la validación del checklist
+      await requestChecklistValidation();
+
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Validación del checklist solicitada correctamente"
+            message="Validación del checklist solicitada correctamente"
+            type="success"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    } catch (e) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error al solicitar la validación del checklist"
+            message="Error al solicitar la validación del checklist"
+            type="error"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    }
+  };
+
+  const handleRequestPerfilMuestraValidation = async () => {
+    try {
+      await requestPerfilMuestraValidation();
+
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Validación del perfil muestra solicitada correctamente"
+            message="Validación del perfil muestra solicitada correctamente"
+            type="success"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    } catch (e) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error al solicitar la validación del perfil muestra"
+            message="Error al solicitar la validación del perfil muestra"
+            type="error"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    }
+  };
 
   const handleValidateChecklist = async () => {
     try {
@@ -314,7 +413,7 @@ export const DetailsSectionReclutador = ({
             <FileText className="h-4 w-4 mr-2" />
             Información financiera
           </h4>
-          <div className="mb-2">
+          <div className="mb-2 flex gap-2">
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="mr-2">
@@ -342,8 +441,115 @@ export const DetailsSectionReclutador = ({
                 />
               </SheetPortal>
             </Sheet>
+            <div className="ml-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Validaciones
+                    <ChevronDownIcon
+                      className="-me-1 opacity-60"
+                      size={16}
+                      aria-hidden="true"
+                    />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="z-[9999]">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setIsRequestingPerfilMuestraValidation(true);
+                      setIsRequestingChecklistValidation(false);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <SquareUser
+                      size={16}
+                      className="opacity-60"
+                      aria-hidden="true"
+                    />
+                    Perfil muestra
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setIsRequestingChecklistValidation(true);
+                      setIsRequestingPerfilMuestraValidation(false);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <ListCheck
+                      size={16}
+                      className="opacity-60"
+                      aria-hidden="true"
+                    />
+                    Checklist
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
+
+        <AlertDialog
+          open={isRequestingPerfilMuestraValidation}
+          onOpenChange={setIsRequestingPerfilMuestraValidation}
+        >
+          <AlertDialogContent className="z-[9999]">
+            <div className="flex flex-col gap-2 max-sm:items-center sm:flex-row sm:gap-4">
+              <div
+                className="flex size-9 shrink-0 items-center justify-center rounded-full border"
+                aria-hidden="true"
+              >
+                <CircleAlertIcon className="opacity-80" size={16} />
+              </div>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción no se puede deshacer. Se solicitará la validación
+                  del perfil muestra a los usuarios administradores.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleRequestPerfilMuestraValidation()}
+              >
+                Confirmar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog
+          open={isRequestingChecklistValidation}
+          onOpenChange={setIsRequestingChecklistValidation}
+        >
+          <AlertDialogContent className="z-[9999]">
+            <div className="flex flex-col gap-2 max-sm:items-center sm:flex-row sm:gap-4">
+              <div
+                className="flex size-9 shrink-0 items-center justify-center rounded-full border"
+                aria-hidden="true"
+              >
+                <CircleAlertIcon className="opacity-80" size={16} />
+              </div>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción no se puede deshacer. Se solicitará la validación
+                  del checklist a los usuarios administradores.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleRequestChecklistValidation()}
+              >
+                Confirmar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <div className="grid grid-cols-3 gap-4">
           <Card className="overflow-hidden">
             <div className="h-1 bg-blue-500"></div>

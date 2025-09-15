@@ -283,7 +283,10 @@ export const ValidatePerfilMuestraAction = async (vacancyId: string) => {
     });
 
     if (!vacancy) {
-      throw new Error("Vacante no encontrada");
+      return {
+        ok: false,
+        message: "Vacante no encontrada",
+      };
     }
 
     //actualizar la vacante
@@ -314,6 +317,137 @@ export const ValidatePerfilMuestraAction = async (vacancyId: string) => {
     return {
       ok: false,
       message: "Error al validar el perfil muestra",
+    };
+  }
+};
+
+export const requestChecklistValidationAction = async (vacancyId: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    const vacancy = await prisma.vacancy.findUnique({
+      where: {
+        id: vacancyId,
+      },
+    });
+
+    if (!vacancy) {
+      return {
+        ok: false,
+        message: "Vacante no encontrada",
+      };
+    }
+
+    //buscar usuarios administradores
+    const administrators = await prisma.user.findMany({
+      where: {
+        role: Role.Admin,
+      },
+    });
+
+    if (!administrators) {
+      return {
+        ok: false,
+        message: "Usuarios administradores no encontrados",
+      };
+    }
+
+    for (const administrator of administrators) {
+      const notification = await createSpecialNotification({
+        type: SpecialNotificationType.URGENT_TASK_ASSIGNED,
+        title: "Checklist completado",
+        message: `El checklist de la vacante ${vacancy.posicion} se ha completado correctamente y espera tu validación`,
+        recipientId: administrator.id,
+        vacancyId: vacancy.id,
+        priority: SpecialNotificationPriority.URGENT,
+      });
+
+      if (!notification.ok) {
+        return {
+          ok: false,
+          message: "Error al notificar el checklist completado",
+        };
+      }
+    }
+    return {
+      ok: true,
+      message: "Checklist completado y notificado correctamente",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Error al solicitar la validación del checklist",
+    };
+  }
+};
+
+export const completePerfilMuestraAndNotify = async (vacancyId: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        ok: false,
+        message: "No autorizado",
+      };
+    }
+
+    //buscar vacante para obtener sus datos
+    const vacancy = await prisma.vacancy.findUnique({
+      where: {
+        id: vacancyId,
+      },
+    });
+
+    if (!vacancy) {
+      return {
+        ok: false,
+        message: "Vacante no encontrada",
+      };
+    }
+
+    //buscar usuarios administradores
+    const administrators = await prisma.user.findMany({
+      where: {
+        role: Role.Admin,
+      },
+    });
+
+    if (!administrators) {
+      return {
+        ok: false,
+        message: "Usuarios administradores no encontrados",
+      };
+    }
+
+    for (const administrator of administrators) {
+      const notification = await createSpecialNotification({
+        type: SpecialNotificationType.URGENT_TASK_ASSIGNED,
+        title: "Perfil muestra completado",
+        message: `El perfil muestra de la vacante ${vacancy.posicion} se ha completado correctamente y espera tu validación`,
+        recipientId: administrator.id,
+        vacancyId: vacancy.id,
+        priority: SpecialNotificationPriority.URGENT,
+      });
+
+      if (!notification.ok) {
+        return {
+          ok: false,
+          message: "Error al notificar el perfil muestra completado",
+        };
+      }
+    }
+    return {
+      ok: true,
+      message: "Perfil muestra completado y notificado correctamente",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message:
+        "Error al completar el perfil muestra y notificar a los administradores",
     };
   }
 };
