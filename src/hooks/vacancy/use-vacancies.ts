@@ -2,6 +2,7 @@ import { getVacancies, getVacancyDetails } from "@/actions/vacantes/actions";
 import {
   completePerfilMuestraAndNotify,
   requestChecklistValidationAction,
+  requestTernaValidationAction,
   ValidateChecklistAction,
   ValidatePerfilMuestraAction,
 } from "@/actions/vacantes/checklist/actions";
@@ -125,6 +126,23 @@ export const useVacancyDetails = (vacancyId?: string) => {
     }
   }, [vacancyId]);
 
+  const requestTernaValidation = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (!vacancyId) return;
+      const response = await requestTernaValidationAction(vacancyId);
+      if (!response.ok) {
+        setError("Error al solicitar la validación del checklist");
+        return;
+      }
+    } catch (e) {
+      setError("Error al solicitar la validación del checklist");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [vacancyId]);
+
   return {
     //variables
     isLoading,
@@ -133,6 +151,7 @@ export const useVacancyDetails = (vacancyId?: string) => {
     vacancies,
 
     //metodos
+    requestTernaValidation,
     fetchVacancyDetails,
     validateChecklist,
     validatePerfilMuestra,

@@ -321,6 +321,69 @@ export const ValidatePerfilMuestraAction = async (vacancyId: string) => {
   }
 };
 
+export const requestTernaValidationAction = async (vacancyId: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    const vacancy = await prisma.vacancy.findUnique({
+      where: {
+        id: vacancyId,
+      },
+    });
+
+    if (!vacancy) {
+      return {
+        ok: false,
+        message: "Vacante no encontrada",
+      };
+    }
+
+    //buscar usuarios administradores
+    const administrators = await prisma.user.findMany({
+      where: {
+        role: Role.Admin,
+      },
+    });
+
+    if (!administrators) {
+      return {
+        ok: false,
+        message: "Usuarios administradores no encontrados",
+      };
+    }
+
+    for (const administrator of administrators) {
+      const notification = await createSpecialNotification({
+        type: SpecialNotificationType.URGENT_TASK_ASSIGNED,
+        title: "Terna completada",
+        message: `La terna de la vacante ${vacancy.posicion} se ha completado correctamente y espera tu validación`,
+        recipientId: administrator.id,
+        vacancyId: vacancy.id,
+        priority: SpecialNotificationPriority.URGENT,
+      });
+
+      if (!notification.ok) {
+        return {
+          ok: false,
+          message: "Error al notificar la terna completada",
+        };
+      }
+    }
+    return {
+      ok: true,
+      message: "Terna completada y notificado correctamente",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Error al solicitar la validación de la terna",
+    };
+  }
+};
+
 export const requestChecklistValidationAction = async (vacancyId: string) => {
   try {
     const session = await auth();

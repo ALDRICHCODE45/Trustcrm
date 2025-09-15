@@ -21,6 +21,7 @@ import {
   ListCheck,
   ListCollapse,
   SquareUser,
+  Users,
 } from "lucide-react";
 import { Role } from "@prisma/client";
 import { format } from "date-fns";
@@ -70,6 +71,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { requestTernaValidationAction } from "@/actions/vacantes/checklist/actions";
 
 interface DetailsSectionProps {
   vacanteId: string;
@@ -92,6 +94,8 @@ export const DetailsSectionReclutador = ({
   ] = useState<boolean>(false);
   const [isRequestingChecklistValidation, setIsRequestingChecklistValidation] =
     useState<boolean>(false);
+  const [isRequestingTernaValidation, setIsRequestingTernaValidation] =
+    useState<boolean>(false);
 
   const {
     vacancyDetails,
@@ -102,11 +106,43 @@ export const DetailsSectionReclutador = ({
     validatePerfilMuestra,
     requestPerfilMuestraValidation,
     requestChecklistValidation,
+    requestTernaValidation,
   } = useVacancyDetails(vacanteId);
+
+  const handleRequestTernaValidation = async () => {
+    try {
+      await requestTernaValidation();
+
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Validación de la terna solicitada correctamente"
+            message="Validación de la terna solicitada correctamente"
+            type="success"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    } catch (e) {
+      toast.custom((t) => {
+        return (
+          <ToastCustomMessage
+            title="Error al solicitar la validación de la terna"
+            message="Error al solicitar la validación de la terna"
+            type="error"
+            onClick={() => {
+              toast.dismiss(t);
+            }}
+          />
+        );
+      });
+    }
+  };
 
   const handleRequestChecklistValidation = async () => {
     try {
-      //llamar a la funcion para solicitar la validación del checklist
       await requestChecklistValidation();
 
       toast.custom((t) => {
@@ -466,7 +502,7 @@ export const DetailsSectionReclutador = ({
                       className="opacity-60"
                       aria-hidden="true"
                     />
-                    Perfil muestra
+                    Solicitar Validación de Perfil Muestra
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
@@ -480,7 +516,24 @@ export const DetailsSectionReclutador = ({
                       className="opacity-60"
                       aria-hidden="true"
                     />
-                    Checklist
+                    Solicitar Validación de Checklist
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setIsRequestingTernaValidation(true);
+
+                      setIsRequestingChecklistValidation(false);
+                      setIsRequestingPerfilMuestraValidation(false);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Users
+                      size={16}
+                      className="opacity-60"
+                      aria-hidden="true"
+                    />
+                    Solicitar Validación de Terna
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -544,6 +597,35 @@ export const DetailsSectionReclutador = ({
               <AlertDialogAction
                 onClick={() => handleRequestChecklistValidation()}
               >
+                Confirmar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog
+          open={isRequestingTernaValidation}
+          onOpenChange={setIsRequestingTernaValidation}
+        >
+          <AlertDialogContent className="z-[9999]">
+            <div className="flex flex-col gap-2 max-sm:items-center sm:flex-row sm:gap-4">
+              <div
+                className="flex size-9 shrink-0 items-center justify-center rounded-full border"
+                aria-hidden="true"
+              >
+                <CircleAlertIcon className="opacity-80" size={16} />
+              </div>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción no se puede deshacer. Se solicitará la validación
+                  de la terna a los usuarios administradores.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleRequestTernaValidation()}>
                 Confirmar
               </AlertDialogAction>
             </AlertDialogFooter>
