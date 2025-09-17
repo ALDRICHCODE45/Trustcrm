@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import { ReportFilters } from "./components/ReportFilters";
 import { ReportTable } from "./components/ReportTable";
 import { ReportSummary } from "./components/ReportSummary";
-import { reportColumns } from "./components/ReportColumns";
+import { createReportColumns } from "./components/ReportColumns";
+import { LeadDetailsModal } from "./components/LeadDetailsModal";
 import {
   getLeadReports,
   getLeadGenerators,
   getLeadReportSummary,
   LeadReportData,
+  LeadDetail,
 } from "@/actions/leads/reports";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +42,15 @@ export default function ReportesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasGeneratedReport, setHasGeneratedReport] = useState(false);
 
+  // Estado para el modal de detalles
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    leads: [] as LeadDetail[],
+    estado: "",
+    generadorName: "",
+    periodo: "",
+  });
+
   // Cargar generadores al montar el componente
   useEffect(() => {
     const loadGeneradores = async () => {
@@ -58,6 +69,33 @@ export default function ReportesPage() {
 
     loadGeneradores();
   }, []);
+
+  // Función para mostrar detalles de leads
+  const handleShowDetails = (
+    leads: LeadDetail[],
+    estado: string,
+    generadorName: string,
+    periodo: string
+  ) => {
+    setModalState({
+      isOpen: true,
+      leads,
+      estado,
+      generadorName,
+      periodo,
+    });
+  };
+
+  // Función para cerrar el modal
+  const handleCloseModal = () => {
+    setModalState({
+      isOpen: false,
+      leads: [],
+      estado: "",
+      generadorName: "",
+      periodo: "",
+    });
+  };
 
   const handleFiltersChange = async (filters: ReportFilters) => {
     setIsLoading(true);
@@ -87,8 +125,11 @@ export default function ReportesPage() {
     }
   };
 
+  // Crear columnas dinámicas con funcionalidad de drill-down
+  const columns = createReportColumns({ onShowDetails: handleShowDetails });
+
   return (
-    <div className="p-6 space-y-6  min-h-screen">
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* Filtros */}
       <ReportFilters
         generadores={generadores}
@@ -100,12 +141,11 @@ export default function ReportesPage() {
       {hasGeneratedReport && (
         <>
           {/* Resumen */}
-          {/* TODO: Agregar resumen, comentado por el momento */}
-          {/* <ReportSummary summary={summary} /> */}
+          <ReportSummary summary={summary} />
 
           {/* Tabla de datos */}
           <ReportTable
-            columns={reportColumns}
+            columns={columns}
             data={reportData}
             isLoading={isLoading}
           />
@@ -133,6 +173,16 @@ export default function ReportesPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de detalles de leads */}
+      <LeadDetailsModal
+        isOpen={modalState.isOpen}
+        onClose={handleCloseModal}
+        leads={modalState.leads}
+        estado={modalState.estado}
+        generadorName={modalState.generadorName}
+        periodo={modalState.periodo}
+      />
     </div>
   );
 }

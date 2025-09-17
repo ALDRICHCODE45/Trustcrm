@@ -146,29 +146,6 @@ export function ReportSummary({ summary }: ReportSummaryProps) {
           </CardContent>
         </Card>
       </div>
-
-      {/* Indicadores adicionales */}
-      {summary.totalGeneral > 0 && (
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="outline" className="text-sm">
-            Promedio por generador:{" "}
-            {Math.round(summary.totalGeneral / summary.totalGeneradores)}
-          </Badge>
-          <Badge variant="outline" className="text-sm">
-            Tasa de conversión a citas:{" "}
-            {(
-              (summary.totalCitaAgendada / summary.totalContactos) *
-              100
-            ).toFixed(1)}
-            %
-          </Badge>
-          <Badge variant="outline" className="text-sm">
-            Tasa de asignación:{" "}
-            {((summary.totalAsignadas / summary.totalGeneral) * 100).toFixed(1)}
-            %
-          </Badge>
-        </div>
-      )}
     </div>
   );
 }

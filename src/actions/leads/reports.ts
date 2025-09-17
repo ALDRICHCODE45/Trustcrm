@@ -3,6 +3,14 @@
 import prisma from "@/lib/db";
 import { LeadStatus } from "@prisma/client";
 
+export interface LeadDetail {
+  id: string;
+  empresa: string;
+  createdAt: Date;
+  currentStatus: string;
+  statusInPeriod: string;
+}
+
 export interface LeadReportData {
   generadorId: string;
   generadorName: string;
@@ -15,6 +23,14 @@ export interface LeadReportData {
   citaValidada: number;
   asignadas: number;
   total: number;
+  // Detalles de leads por estado
+  contactosDetails: LeadDetail[];
+  socialSellingDetails: LeadDetail[];
+  contactoCalidoDetails: LeadDetail[];
+  citaAgendadaDetails: LeadDetail[];
+  citaAtendidaDetails: LeadDetail[];
+  citaValidadaDetails: LeadDetail[];
+  asignadasDetails: LeadDetail[];
 }
 
 export interface LeadReportFilters {
@@ -76,6 +92,17 @@ export async function getLeadReports(
         asignadas: 0,
       };
 
+      // Arrays para almacenar los detalles de leads por estado
+      const detallesPorEstado = {
+        contactosDetails: [] as LeadDetail[],
+        socialSellingDetails: [] as LeadDetail[],
+        contactoCalidoDetails: [] as LeadDetail[],
+        citaAgendadaDetails: [] as LeadDetail[],
+        citaAtendidaDetails: [] as LeadDetail[],
+        citaValidadaDetails: [] as LeadDetail[],
+        asignadasDetails: [] as LeadDetail[],
+      };
+
       for (const lead of leads) {
         // Solo incluir leads que existían durante el período
         if (lead.createdAt > fechaFin) {
@@ -109,29 +136,44 @@ export async function getLeadReports(
           estadoEnPeriodo = obtenerEstadoEnFecha(fechaFin);
         }
 
-        // Contar según el estado
+        // Contar según el estado y almacenar detalles
         if (estadoEnPeriodo) {
+          const leadDetail: LeadDetail = {
+            id: lead.id,
+            empresa: lead.empresa,
+            createdAt: lead.createdAt,
+            currentStatus: lead.status,
+            statusInPeriod: estadoEnPeriodo,
+          };
+
           switch (estadoEnPeriodo) {
             case LeadStatus.Contacto:
               estadisticas.contactos++;
+              detallesPorEstado.contactosDetails.push(leadDetail);
               break;
             case LeadStatus.SocialSelling:
               estadisticas.socialSelling++;
+              detallesPorEstado.socialSellingDetails.push(leadDetail);
               break;
             case LeadStatus.ContactoCalido:
               estadisticas.contactoCalido++;
+              detallesPorEstado.contactoCalidoDetails.push(leadDetail);
               break;
             case LeadStatus.CitaAgendada:
               estadisticas.citaAgendada++;
+              detallesPorEstado.citaAgendadaDetails.push(leadDetail);
               break;
             case LeadStatus.CitaAtendida:
               estadisticas.citaAtendida++;
+              detallesPorEstado.citaAtendidaDetails.push(leadDetail);
               break;
             case LeadStatus.CitaValidada:
               estadisticas.citaValidada++;
+              detallesPorEstado.citaValidadaDetails.push(leadDetail);
               break;
             case LeadStatus.Asignadas:
               estadisticas.asignadas++;
+              detallesPorEstado.asignadasDetails.push(leadDetail);
               break;
           }
         }
@@ -148,14 +190,10 @@ export async function getLeadReports(
         periodo: `Fotografía al ${fechaFin.toLocaleDateString()}`,
         ...estadisticas,
         total,
+        ...detallesPorEstado,
       });
     }
 
-    console.log("📸 FOTOGRAFÍA DE LEADS GENERADA:");
-    console.log(
-      `📅 Momento de la fotografía: ${fechaFin.toLocaleDateString()}`
-    );
-    console.log("📊 Resultados:", reportData);
     return reportData;
   } catch (error) {
     console.error("Error al generar reporte de leads:", error);
