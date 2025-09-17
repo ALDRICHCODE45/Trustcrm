@@ -108,6 +108,17 @@ export const editLeadByIdAndCreatePreClient = async (
       },
     });
 
+    if (status !== existingLead.status) {
+      await prisma.leadStatusHistory.create({
+        data: {
+          leadId: leadId,
+          status: status as LeadStatus,
+          changedById: existingLead.generadorId,
+          // La fecha se establecerá automáticamente con @default(now())
+        },
+      });
+    }
+
     //Creamos el precliente
     //Quitamos el precliente por el momento, pero debemos corregir el nombre de la funcion
     // await prisma.client.create({
@@ -495,7 +506,7 @@ export const editLeadById = async (leadId: string, formData: FormData) => {
         return;
       } else {
         // Si no existe, creamos uno nuevo
-        const clienteCreated = await prisma.client.create({
+        await prisma.client.create({
           data: {
             leadId: leadId,
             usuarioId: existingLead.generadorId,
@@ -503,8 +514,6 @@ export const editLeadById = async (leadId: string, formData: FormData) => {
             origenId: updatedLead.origenId,
           },
         });
-
-        console.log({ updatedLead, clienteCreated });
       }
     }
 
