@@ -25,6 +25,8 @@ import {
   FileCheck2,
   FolderCheck,
   FolderX,
+  CalendarClock,
+  ChevronDownIcon,
 } from "lucide-react";
 import { MoreVertical } from "lucide-react";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
@@ -63,6 +65,16 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { TernaHistoryDialog } from "./TernaHistoryDialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { FormControl } from "@/components/ui/form";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface CandidatesSectionProps {
   vacancyId: string;
@@ -105,6 +117,9 @@ export const CandidatesSectionReclutador = ({
   useEffect(() => {
     fetchVacancyDetails();
   }, [fetchVacancyDetails]);
+
+  const [openDate, setOpenDate] = useState(false);
+  const [date, setDate] = useState<Date | undefined>(undefined);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
@@ -374,10 +389,13 @@ export const CandidatesSectionReclutador = ({
         return;
       }
 
+      console.log("fechaEntregaTerna desde el cliente", date);
       const response = await validarTerna(
         vacancyId,
-        selectedCandidatesForTerna
+        selectedCandidatesForTerna,
+        date
       );
+
       if (!response.ok) {
         toast.custom((t) => {
           return (
@@ -983,6 +1001,41 @@ export const CandidatesSectionReclutador = ({
                         </div>
                       </div>
                     ))}
+                    <div className="flex flex-col gap-2 w-full">
+                      <Label className="text-sm font-medium text-muted-foreground mt-1">
+                        Fecha de entrega (Opcional)
+                      </Label>
+
+                      <Popover open={openDate} onOpenChange={setOpenDate}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            id="date"
+                            className="w-full justify-between font-normal"
+                          >
+                            {date
+                              ? format(date, "EEE dd/MM/yy", { locale: es })
+                              : "Seleccionar fecha"}
+                            <ChevronDownIcon />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-auto overflow-hidden p-0 z-[9999]"
+                          align="start"
+                        >
+                          <Calendar
+                            mode="single"
+                            selected={date}
+                            captionLayout="dropdown"
+                            onSelect={(date) => {
+                              setDate(date);
+                              setOpenDate(false);
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   </div>
                 </div>
               ) : (

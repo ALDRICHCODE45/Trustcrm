@@ -12,6 +12,7 @@ import {
   FileText,
   ExternalLink,
   Loader2,
+  TrashIcon,
 } from "lucide-react";
 import {
   Accordion,
@@ -32,6 +33,7 @@ import {
 import { Sheet } from "@/components/ui/sheet";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useUsers } from "@/hooks/users/use-users";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface TernaHistoryEntry {
   id: string;
@@ -70,7 +72,7 @@ export const TernaHistoryDialog = ({
   const [isOpen, setIsOpen] = useState(false);
   const [ternaHistory, setTernaHistory] = useState<TernaHistoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { fetchTernaHistory } = useCandidates(vacancyId);
+  const { fetchTernaHistory, deleteHistoryTerna } = useCandidates(vacancyId);
   const { loggedUser, fetchLoggedUser } = useUsers();
 
   useEffect(() => {
@@ -106,6 +108,41 @@ export const TernaHistoryDialog = ({
     }
   };
 
+  const handleDeleteHistoryTerna = async (ternaId: string) => {
+    try {
+      const response = await deleteHistoryTerna(ternaId);
+      if (!response.ok) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            title="Error al eliminar la terna"
+            message={response.message || "Error al eliminar la terna"}
+            type="error"
+            onClick={() => toast.dismiss(t)}
+          />
+        ));
+        return;
+      }
+
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Terna eliminada correctamente"
+          message="La terna ha sido eliminada correctamente"
+          type="success"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
+    } catch (e) {
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error al eliminar la terna"
+          message={e instanceof Error ? e.message : "Error desconocido"}
+          type="error"
+          onClick={() => toast.dismiss(t)}
+        />
+      ));
+    }
+  };
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("es-ES", {
       year: "numeric",
@@ -137,7 +174,7 @@ export const TernaHistoryDialog = ({
           Historial
         </Button>
       </SheetTrigger>
-      <SheetContent className="z-[9999] min-w-[30vw] overflow-y-auto">
+      <SheetContent className="z-[9999] min-w-[35vw] overflow-y-auto">
         <SheetHeader>
           <DialogTitle className="text-lg">
             Historial de Ternas - {vacancyTitle}
@@ -201,11 +238,28 @@ export const TernaHistoryDialog = ({
                     <AccordionContent className="text-muted-foreground pb-4">
                       <div className="space-y-3 pt-2">
                         {/* Información detallada de la fecha */}
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                          <Clock className="h-4 w-4" />
-                          <span>
-                            Validada el {formatDate(entry.deliveredAt)}
-                          </span>
+                        <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground mb-4">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            <span>
+                              Validada el {formatDate(entry.deliveredAt)}
+                            </span>
+                          </div>
+                          {/* TODO: Agregar el botón de eliminar la terna, contemplando otras acciones */}
+                          {/* <div className="flex items-center gap-2">
+                            <ConfirmDialog
+                              description="¿Estás seguro de querer eliminar esta terna?"
+                              title="Eliminar terna"
+                              onConfirm={() =>
+                                handleDeleteHistoryTerna(entry.id)
+                              }
+                              trigger={
+                                <Button variant="ghost" size="icon">
+                                  <TrashIcon className="h-4 w-4" />
+                                </Button>
+                              }
+                            />
+                          </div> */}
                         </div>
 
                         {/* Lista de candidatos minimalista */}

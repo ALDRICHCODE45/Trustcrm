@@ -869,9 +869,45 @@ export const validateCandidateAction = async (candidateId: string) => {
   }
 };
 
+export const deleteHistoryTernaAction = async (ternaId: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    //buscar el historial de la terna
+    const ternaHistory = await prisma.ternaHistory.findUnique({
+      where: { id: ternaId },
+    });
+    if (!ternaHistory) {
+      return {
+        ok: false,
+        message: "La terna no existe",
+      };
+    }
+    //eliminar el historial de la terna
+    await prisma.ternaHistory.delete({
+      where: { id: ternaId },
+    });
+    revalidatePath("/reclutador");
+    revalidatePath("/reclutador/kanban");
+    return {
+      ok: true,
+      message: "Terna eliminada correctamente",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Error al eliminar la terna",
+    };
+  }
+};
+
 export const validateTernaToVacancy = async (
   vacancyId: string,
-  selectedCandidateIds: string[]
+  selectedCandidateIds: string[],
+  fechaEntregaTerna?: Date | undefined
 ) => {
   try {
     const session = await auth();
@@ -911,7 +947,7 @@ export const validateTernaToVacancy = async (
       return {
         ok: false,
         message:
-          "Algunos candidatos seleccionados no son válidos o no están en la terna final",
+          "Algunos candidatos seleccionados no son válidos o no pertenecen a la vacante",
       };
     }
 
@@ -920,7 +956,7 @@ export const validateTernaToVacancy = async (
       // Actualizar la vacante para validar la terna
       await tx.vacancy.update({
         where: { id: vacancyId },
-        data: { fechaEntregaTerna: new Date() },
+        data: { fechaEntregaTerna: fechaEntregaTerna || new Date() },
       });
 
       // Crear entrada en el historial de terna
@@ -928,7 +964,7 @@ export const validateTernaToVacancy = async (
         data: {
           vacancyId: vacancyId,
           validatedById: session.user.id,
-          deliveredAt: new Date(),
+          deliveredAt: fechaEntregaTerna || new Date(),
         },
       });
 

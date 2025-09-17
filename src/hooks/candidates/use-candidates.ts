@@ -13,6 +13,7 @@ import {
   validateTernaToVacancy,
   unvalidateTernaAction,
   getTernaHistory,
+  deleteHistoryTernaAction,
 } from "@/actions/vacantes/actions";
 import { PersonWithRelations } from "@/app/(dashboard)/list/reclutamiento/components/FinalTernaSheet";
 import { CreateCandidateFormData } from "@/zod/createCandidateSchema";
@@ -233,12 +234,14 @@ export const useCandidates = (vacancyId?: string) => {
 
   const validarTerna = async (
     vacancyId: string,
-    selectedCandidateIds: string[]
+    selectedCandidateIds: string[],
+    fechaEntregaTerna?: Date | undefined
   ) => {
     try {
       const response = await validateTernaToVacancy(
         vacancyId,
-        selectedCandidateIds
+        selectedCandidateIds,
+        fechaEntregaTerna
       );
       if (!response.ok) {
         throw new Error(response.message || "Error al validar la terna");
@@ -275,6 +278,18 @@ export const useCandidates = (vacancyId?: string) => {
     }
   };
 
+  const deleteHistoryTerna = async (ternaId: string) => {
+    try {
+      const response = await deleteHistoryTernaAction(ternaId);
+      if (!response.ok) {
+        throw new Error(response.message || "Error al eliminar la terna");
+      }
+      return response;
+    } catch (e) {
+      throw new Error("Error al eliminar la terna");
+    }
+  };
+
   // Auto-fetch candidates when vacancyId changes
   useEffect(() => {
     fetchCandidates();
@@ -299,5 +314,6 @@ export const useCandidates = (vacancyId?: string) => {
     validarTerna,
     unvalidateTerna,
     fetchTernaHistory,
+    deleteHistoryTerna,
   };
 };
