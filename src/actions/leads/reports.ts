@@ -104,77 +104,65 @@ export async function getLeadReports(
       };
 
       for (const lead of leads) {
-        // Solo incluir leads que existían durante el período
-        if (lead.createdAt > fechaFin) {
-          continue; // Lead creado después del período
-        }
-
-        // Función para obtener el estado del lead en una fecha específica
-        const obtenerEstadoEnFecha = (fecha: Date): LeadStatus => {
-          // Estado inicial cuando se creó el lead
-          let estadoActual: LeadStatus = LeadStatus.Contacto; // Por defecto, los leads empiezan como Contacto
-
-          // Recorrer el historial cronológicamente hasta la fecha especificada
-          for (const historyEntry of lead.statusHistory) {
-            if (historyEntry.changedAt <= fecha) {
-              estadoActual = historyEntry.status;
-            } else {
-              break; // Ya pasamos de la fecha objetivo
-            }
-          }
-
-          return estadoActual;
-        };
-
-        // FOTOGRAFÍA: Determinar el estado del lead en el momento específico (final del período)
-        // Esto nos da una "fotografía" de cómo estaban TODOS los leads en un momento exacto
-        let estadoEnPeriodo: LeadStatus | null = null;
-
-        // Si el lead no existía aún en el momento de la fotografía, no lo contamos
-        if (lead.createdAt <= fechaFin) {
-          // Tomar el estado que tenía el lead en el momento específico (final del período)
-          estadoEnPeriodo = obtenerEstadoEnFecha(fechaFin);
-        }
-
-        // Contar según el estado y almacenar detalles
-        if (estadoEnPeriodo) {
-          const leadDetail: LeadDetail = {
+        // 1. CONTAR LEAD COMO "CONTACTO" SI FUE CREADO DURANTE EL PERÍODO
+        if (lead.createdAt >= fechaInicio && lead.createdAt <= fechaFin) {
+          estadisticas.contactos++;
+          detallesPorEstado.contactosDetails.push({
             id: lead.id,
             empresa: lead.empresa,
             createdAt: lead.createdAt,
             currentStatus: lead.status,
-            statusInPeriod: estadoEnPeriodo,
-          };
+            statusInPeriod: LeadStatus.Contacto,
+          });
+        }
 
-          switch (estadoEnPeriodo) {
-            case LeadStatus.Contacto:
-              estadisticas.contactos++;
-              detallesPorEstado.contactosDetails.push(leadDetail);
-              break;
-            case LeadStatus.SocialSelling:
-              estadisticas.socialSelling++;
-              detallesPorEstado.socialSellingDetails.push(leadDetail);
-              break;
-            case LeadStatus.ContactoCalido:
-              estadisticas.contactoCalido++;
-              detallesPorEstado.contactoCalidoDetails.push(leadDetail);
-              break;
-            case LeadStatus.CitaAgendada:
-              estadisticas.citaAgendada++;
-              detallesPorEstado.citaAgendadaDetails.push(leadDetail);
-              break;
-            case LeadStatus.CitaAtendida:
-              estadisticas.citaAtendida++;
-              detallesPorEstado.citaAtendidaDetails.push(leadDetail);
-              break;
-            case LeadStatus.CitaValidada:
-              estadisticas.citaValidada++;
-              detallesPorEstado.citaValidadaDetails.push(leadDetail);
-              break;
-            case LeadStatus.Asignadas:
-              estadisticas.asignadas++;
-              detallesPorEstado.asignadasDetails.push(leadDetail);
-              break;
+        // 2. CONTAR TODOS LOS CAMBIOS DE ESTADO QUE OCURRIERON DURANTE EL PERÍODO
+        // IMPORTANTE: No contamos cambios a "Contacto" para evitar duplicados,
+        // ya que la creación de un lead ya cuenta como "Contacto"
+        for (const historyEntry of lead.statusHistory) {
+          // Solo contar cambios que ocurrieron dentro del período
+          if (
+            historyEntry.changedAt >= fechaInicio &&
+            historyEntry.changedAt <= fechaFin
+          ) {
+            const leadDetail: LeadDetail = {
+              id: lead.id,
+              empresa: lead.empresa,
+              createdAt: lead.createdAt,
+              currentStatus: lead.status,
+              statusInPeriod: historyEntry.status,
+            };
+
+            // Contar y almacenar según el estado al que cambió
+            // NOTA: Excluimos LeadStatus.Contacto para evitar duplicados con la creación
+            switch (historyEntry.status) {
+              case LeadStatus.SocialSelling:
+                estadisticas.socialSelling++;
+                detallesPorEstado.socialSellingDetails.push(leadDetail);
+                break;
+              case LeadStatus.ContactoCalido:
+                estadisticas.contactoCalido++;
+                detallesPorEstado.contactoCalidoDetails.push(leadDetail);
+                break;
+              case LeadStatus.CitaAgendada:
+                estadisticas.citaAgendada++;
+                detallesPorEstado.citaAgendadaDetails.push(leadDetail);
+                break;
+              case LeadStatus.CitaAtendida:
+                estadisticas.citaAtendida++;
+                detallesPorEstado.citaAtendidaDetails.push(leadDetail);
+                break;
+              case LeadStatus.CitaValidada:
+                estadisticas.citaValidada++;
+                detallesPorEstado.citaValidadaDetails.push(leadDetail);
+                break;
+              case LeadStatus.Asignadas:
+                estadisticas.asignadas++;
+                detallesPorEstado.asignadasDetails.push(leadDetail);
+                break;
+              // Intencionalmente omitimos LeadStatus.Contacto aquí
+              // porque ya se cuenta cuando el lead se crea
+            }
           }
         }
       }
@@ -187,7 +175,7 @@ export async function getLeadReports(
       reportData.push({
         generadorId: generador.id,
         generadorName: generador.name,
-        periodo: `Fotografía al ${fechaFin.toLocaleDateString()}`,
+        periodo: `Actividad: ${fechaInicio.toLocaleDateString()} - ${fechaFin.toLocaleDateString()}`,
         ...estadisticas,
         total,
         ...detallesPorEstado,

@@ -130,6 +130,8 @@ export default function ReportesPage() {
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      {/* Header */}
+
       {/* Filtros */}
       <ReportFilters
         generadores={generadores}
@@ -164,11 +166,13 @@ export default function ReportesPage() {
             </h3>
             <p className="text-gray-400 mb-4 max-w-md mx-auto">
               Selecciona los filtros deseados y haz clic en Generar Reporte para
-              ver las estadísticas de generación de leads.
+              ver toda la actividad de leads durante el período seleccionado.
             </p>
             <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
               <TrendingUp className="h-4 w-4" />
-              <span>Análisis basado en historial de cambios de estado</span>
+              <span>
+                Muestra creaciones y cambios de estado durante el período
+              </span>
             </div>
           </CardContent>
         </Card>
