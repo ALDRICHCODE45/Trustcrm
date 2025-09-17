@@ -103,6 +103,11 @@ const data: {
           url: "/leads/kanban",
           roles: [Role.GL, Role.MK, Role.Admin],
         },
+        {
+          title: "Reportes",
+          url: "/leads/reportes",
+          roles: [Role.Admin],
+        },
       ],
     },
     {
