@@ -406,36 +406,6 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
       );
     },
   },
-  // {
-  //   id: "prioridad",
-  //   accessorKey: "prioridad",
-  //   header: ({ column }) => (
-  //     <SortableHeader column={column} title="Prioridad" />
-  //   ),
-  //   cell: ({ row }) => {
-  //     return (
-  //       <Badge variant="outline" className="gap-1.5">
-  //         {row.original.prioridad === "Alta" ? (
-  //           <span
-  //             className="size-1.5 rounded-full bg-emerald-500"
-  //             aria-hidden="true"
-  //           ></span>
-  //         ) : row.original.prioridad === "Baja" ? (
-  //           <span
-  //             className="size-1.5 rounded-full bg-red-500"
-  //             aria-hidden="true"
-  //           ></span>
-  //         ) : (
-  //           <span
-  //             className="size-1.5 rounded-full bg-yellow-500"
-  //             aria-hidden="true"
-  //           ></span>
-  //         )}
-  //         {row.original.prioridad}
-  //       </Badge>
-  //     );
-  //   },
-  // },
   {
     id: "tipo",
     accessorKey: "tipo",
@@ -476,23 +446,6 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
     },
     accessorFn: (row) => row.tipo,
   },
-  // {
-  //   accessorKey: "fechaOferta",
-  //   header: ({ column }) => (
-  //     <SortableHeader column={column} title="Fecha oferta" />
-  //   ),
-  //   cell: ({ row }) => {
-  //     return (
-  //       <ChangeDateComponent
-  //         fecha={row.original.fechaOferta}
-  //         onFechaChange={(nuevaFecha) => {
-  //           // Aquí implementarías la lógica para actualizar la fecha en tu fuente de datos
-  //           console.log("Fecha actualizada:", nuevaFecha);
-  //         }}
-  //       />
-  //     );
-  //   },
-  // },
   {
     accessorKey: "candidatoContratado",
     header: "Contratado",
@@ -539,6 +492,15 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
       );
     },
   },
+  //TODO: agregar el monto a la tabla de reclutador
+  // {
+  //   accessorKey: "monto",
+  //   header: ({ column }) => <SortableHeader column={column} title="Monto" />,
+  //   cell: ({ row }) => {
+  //     return <span>${row.original.monto}</span>;
+  //   },
+  // },
+
   {
     accessorKey: "fechaComision",
     header: ({ column }) => (
@@ -576,55 +538,6 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
       />
     ),
   },
-  // {
-  //   accessorKey: "duracionTotal",
-
-  //   header: ({ column }) => (
-  //     <SortableHeader column={column} title="Duración Total" />
-  //   ),
-  //   cell: ({ row }) => {
-  //     const fechaAsignacion = row.original.fechaAsignacion;
-  //     const estado = row.original.estado;
-  //     const fechaOferta = row.original.fechaOferta;
-
-  //     if (!fechaAsignacion) {
-  //       return (
-  //         <div className="flex items-center justify-center">
-  //           <Button variant="outline" className="w-full">
-  //             <p>
-  //               <span className="text-red-500">N/A</span>
-  //             </p>
-  //           </Button>
-  //         </div>
-  //       );
-  //     }
-
-  //     // Calcular la fecha final según el estado
-  //     let fechaFinal: Date;
-  //     if (estado === "Placement" && fechaOferta) {
-  //       fechaFinal = fechaOferta;
-  //     } else {
-  //       fechaFinal = new Date();
-  //     }
-
-  //     // Calcular la diferencia en días
-  //     const tiempoTranscurrido = Math.floor(
-  //       (fechaFinal.getTime() - fechaAsignacion.getTime()) /
-  //         (1000 * 60 * 60 * 24)
-  //     );
-
-  //     return (
-  //       <div className="flex items-center justify-center">
-  //         <Button variant="outline" className="w-full">
-  //           <p>
-  //             <span>{tiempoTranscurrido} días</span>
-  //           </p>
-  //         </Button>
-  //       </div>
-  //     );
-  //   },
-  // },
-
   {
     id: "tiempoTranscurrido",
     header: ({ column }) => (

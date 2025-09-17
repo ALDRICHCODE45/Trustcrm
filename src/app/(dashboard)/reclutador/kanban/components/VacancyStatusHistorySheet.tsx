@@ -7,10 +7,41 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { useVacancyStats } from "@/hooks/vacancy/useVacancyStats";
-import { VacancyEstado } from "@prisma/client";
+import { Role, VacancyEstado } from "@prisma/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Clock } from "lucide-react";
+import { Clock, PlusIcon, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+} from "@/components/ui/select";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createVacancyHistorySchema,
+  CreateVacancyHistoryFormData,
+} from "@/zod/createVacancyHistorySchema";
+import { createVacancyHistory } from "@/actions/vacantes/history/actions";
+import { toast } from "sonner";
+import { useUsers } from "@/hooks/users/use-users";
 
 // Mapeo de estados a nombres en español
 const getStatusDisplayName = (status: VacancyEstado) => {
@@ -39,15 +70,84 @@ export const VacancyStatusHistorySheet = ({
 }: {
   vacanteId: string;
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [addStatusIsOpen, setAddStatusIsOpen] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { isLoading, error, history, getVacancyHistory } =
     useVacancyStats(vacanteId);
+
+  const { loggedUser: user_logged, fetchLoggedUser } = useUsers();
+
+  useEffect(() => {
+    fetchLoggedUser();
+  }, []);
+
+  // Configurar react-hook-form
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CreateVacancyHistoryFormData>({
+    resolver: zodResolver(createVacancyHistorySchema),
+    defaultValues: {
+      vacanteId: vacanteId,
+      status: undefined,
+      changedAt: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+    },
+  });
 
   useEffect(() => {
     if (isOpen && vacanteId && history.length === 0) {
       getVacancyHistory();
     }
   }, [isOpen, vacanteId, history.length, getVacancyHistory]);
+
+  // Resetear formulario cuando se cierre el dialog
+  useEffect(() => {
+    if (!addStatusIsOpen) {
+      reset({
+        vacanteId: vacanteId,
+        status: undefined,
+        changedAt: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+      });
+    }
+  }, [addStatusIsOpen, reset, vacanteId]);
+
+  if (!user_logged) {
+    return <div>Cargando usuario logeado...</div>;
+  }
+
+  // Función para manejar el submit del formulario
+  const onSubmit = async (data: CreateVacancyHistoryFormData) => {
+    setIsSubmitting(true);
+    try {
+      const result = await createVacancyHistory({
+        vacancyId: data.vacanteId,
+        status: data.status,
+        changedAt: new Date(data.changedAt),
+      });
+
+      if (result?.ok === false) {
+        toast.error(result.message || "Error al agregar estado al historial");
+        return;
+      }
+
+      toast.success("Estado agregado al historial correctamente");
+
+      // Resetear formulario y cerrar dialog
+      reset();
+      setAddStatusIsOpen(false);
+
+      // Refrescar el historial
+      getVacancyHistory();
+    } catch (error) {
+      console.error("Error al agregar estado:", error);
+      toast.error("Error inesperado al agregar estado al historial");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -88,7 +188,121 @@ export const VacancyStatusHistorySheet = ({
         <SheetDescription>
           Cronología de cambios de estado de la vacante
         </SheetDescription>
+        {user_logged.role === Role.Admin && (
+          <div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAddStatusIsOpen(true)}
+            >
+              <PlusIcon className="h-4 w-4" />
+              Agregar estado al historial
+            </Button>
+          </div>
+        )}
       </SheetHeader>
+
+      <Dialog open={addStatusIsOpen} onOpenChange={setAddStatusIsOpen}>
+        <DialogContent className="sm:max-w-[425px] z-[99999]">
+          <DialogHeader>
+            <DialogTitle>Agregar estado al historial</DialogTitle>
+            <DialogDescription>
+              Agrega un estado al historial de la vacante manualmente.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid gap-4">
+              {/* Campo de Estado */}
+              <div className="grid gap-3">
+                <Label htmlFor="status">Estado *</Label>
+                <Controller
+                  name="status"
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecciona un estado" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[99999]">
+                        <SelectGroup>
+                          <SelectLabel>Estados</SelectLabel>
+                          <SelectItem value={VacancyEstado.QuickMeeting}>
+                            Quick Meeting
+                          </SelectItem>
+                          <SelectItem value={VacancyEstado.Hunting}>
+                            Hunting
+                          </SelectItem>
+                          <SelectItem value={VacancyEstado.Entrevistas}>
+                            Follow Up
+                          </SelectItem>
+                          <SelectItem value={VacancyEstado.PrePlacement}>
+                            Pre-Placement
+                          </SelectItem>
+                          <SelectItem value={VacancyEstado.Placement}>
+                            Placement
+                          </SelectItem>
+                          <SelectItem value={VacancyEstado.Perdida}>
+                            Perdida
+                          </SelectItem>
+                          <SelectItem value={VacancyEstado.Cancelada}>
+                            Cancelada
+                          </SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.status && (
+                  <p className="text-sm text-red-500">
+                    {errors.status.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Campo de Fecha y Hora */}
+              <div className="grid gap-3">
+                <Label htmlFor="changedAt">Fecha y Hora *</Label>
+                <Controller
+                  name="changedAt"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="changedAt"
+                      type="datetime-local"
+                      {...field}
+                      className="w-full"
+                    />
+                  )}
+                />
+                {errors.changedAt && (
+                  <p className="text-sm text-red-500">
+                    {errors.changedAt.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline" disabled={isSubmitting}>
+                  Cancelar
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  "Guardar cambios"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <div className="mt-6">
         {/* Timeline cronológico minimalista */}

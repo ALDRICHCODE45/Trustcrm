@@ -11,6 +11,7 @@ import {
   History,
   FileText,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 import {
   Accordion,
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/sheet";
 import { Sheet } from "@/components/ui/sheet";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { useUsers } from "@/hooks/users/use-users";
 
 interface TernaHistoryEntry {
   id: string;
@@ -69,6 +71,19 @@ export const TernaHistoryDialog = ({
   const [ternaHistory, setTernaHistory] = useState<TernaHistoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { fetchTernaHistory } = useCandidates(vacancyId);
+  const { loggedUser, fetchLoggedUser } = useUsers();
+
+  useEffect(() => {
+    fetchLoggedUser();
+  }, [fetchLoggedUser]);
+
+  if (!loggedUser) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   const handleOpenDialog = async () => {
     setIsOpen(true);
