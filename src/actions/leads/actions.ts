@@ -109,14 +109,15 @@ export const editLeadByIdAndCreatePreClient = async (
     });
 
     //Creamos el precliente
-    await prisma.client.create({
-      data: {
-        leadId: leadId,
-        usuarioId: existingLead.generadorId,
-        cuenta: existingLead.empresa,
-        origenId: existingLead.origenId,
-      },
-    });
+    //Quitamos el precliente por el momento, pero debemos corregir el nombre de la funcion
+    // await prisma.client.create({
+    //   data: {
+    //     leadId: leadId,
+    //     usuarioId: existingLead.generadorId,
+    //     cuenta: existingLead.empresa,
+    //     origenId: existingLead.origenId,
+    //   },
+    // });
   } catch (err) {
     console.log(err);
     throw new Error("Error al editar el lead y crear el precliente");
