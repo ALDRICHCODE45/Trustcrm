@@ -8,6 +8,7 @@ import { LogsColumnsActions } from "./logColumnsActions";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
+import { es } from "date-fns/locale";
 
 export type LogWithRelations = Prisma.LogGetPayload<{
   include: {
@@ -120,7 +121,7 @@ export const logsColumns: ColumnDef<LogWithRelations>[] = [
       return (
         <div className="flex gap-2 items-center">
           <Calendar size={18} />
-          <span>{format(fecha, "dd/mm/yyyy")}</span>
+          <span>{format(fecha, "EEE dd/MMMM/yyyy", { locale: es })}</span>
         </div>
       );
     },

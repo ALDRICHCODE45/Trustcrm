@@ -14,6 +14,7 @@ import { LogWithRelations } from "./logsColumns";
 import { toast } from "sonner";
 import { deleteLog } from "@/actions/logs/actions";
 import { useState } from "react";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export const LogsColumnsActions = ({ row }: { row: Row<LogWithRelations> }) => {
   const log = row.original;
@@ -63,16 +64,22 @@ export const LogsColumnsActions = ({ row }: { row: Row<LogWithRelations> }) => {
             Copiar Id
           </DropdownMenuItem>
 
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onClick={(e) => {
-              e.preventDefault();
-              handleDeleteLog(log.id);
-            }}
-          >
-            {isDeleting ? <Loader2 className="animate-spin" /> : <Trash />}
-            Eliminar
-          </DropdownMenuItem>
+          <ConfirmDialog
+            description="¿Estás seguro de querer eliminar este log?"
+            onConfirm={() => handleDeleteLog(log.id)}
+            title="Eliminar Log"
+            trigger={
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                }}
+                className="cursor-pointer"
+              >
+                {isDeleting ? <Loader2 className="animate-spin" /> : <Trash />}
+                Eliminar
+              </DropdownMenuItem>
+            }
+          />
         </DropdownMenuContent>
       </DropdownMenu>
     </>

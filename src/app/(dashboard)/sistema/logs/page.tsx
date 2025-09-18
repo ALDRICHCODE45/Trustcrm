@@ -11,14 +11,18 @@ export interface pageProps {}
 
 const getLogs = async () => {
   try {
-    const leads = await prisma.log.findMany({
+    const logs = await prisma.log.findMany({
       include: {
         autor: true,
       },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 50,
     });
-    return leads;
+    return logs;
   } catch (err) {
-    throw new Error("Erro al cargar los leads");
+    throw new Error("Error al cargar los logs");
   }
 };
 
