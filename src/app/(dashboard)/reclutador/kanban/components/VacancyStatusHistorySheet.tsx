@@ -51,7 +51,7 @@ const getStatusDisplayName = (status: VacancyEstado) => {
     case "Hunting":
       return "Hunting";
     case "Entrevistas":
-      return "Entrevistas";
+      return "Follow Up";
     case "PrePlacement":
       return "Pre-Placement";
     case "Placement":

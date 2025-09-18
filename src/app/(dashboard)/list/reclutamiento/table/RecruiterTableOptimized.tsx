@@ -213,7 +213,7 @@ function TableFilters<TData, TValue>({
     { value: "QuickMeeting", label: "Quick Meeting" },
     { value: "Hunting", label: "Hunting" },
     { value: "Cancelada", label: "Cancelada" },
-    { value: "Entrevistas", label: "Entrevistas" },
+    { value: "Entrevistas", label: "Follow Up" },
     { value: "Perdida", label: "Perdida" },
     { value: "Placement", label: "Placement" },
     { value: "PrePlacement", label: "Pre Placement" },

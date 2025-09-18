@@ -23,7 +23,7 @@ import {
   SquareUser,
   Users,
 } from "lucide-react";
-import { Role } from "@prisma/client";
+import { Role, VacancyEstado } from "@prisma/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -301,6 +301,17 @@ export const DetailsSectionReclutador = ({
     );
   }
 
+  const StatusMap = {
+    [VacancyEstado.QuickMeeting]: "Quick Meeting",
+    [VacancyEstado.Hunting]: "Hunting",
+    [VacancyEstado.Entrevistas]: "Follow Up",
+    [VacancyEstado.PrePlacement]: "Pre Placement",
+    [VacancyEstado.Placement]: "Placement",
+    [VacancyEstado.StandBy]: "Stand By",
+    [VacancyEstado.Cancelada]: "Cancelada",
+    [VacancyEstado.Perdida]: "Perdida",
+  };
+
   return (
     <div className="space-y-6 mt-4 z-[999]">
       <div className="bg-muted/30 p-4 rounded-lg border border-border">
@@ -336,7 +347,7 @@ export const DetailsSectionReclutador = ({
               variant="outline"
               className={`${getEstadoColor(vacancyDetails.estado)}`}
             >
-              {vacancyDetails.estado}
+              {StatusMap[vacancyDetails.estado]}
             </Badge>
 
             <Badge variant="outline" className="bg-muted">
