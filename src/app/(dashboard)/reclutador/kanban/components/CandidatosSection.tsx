@@ -22,10 +22,8 @@ import {
   Pencil,
   Trash2,
   FileUser,
-  FileCheck2,
   FolderCheck,
   FolderX,
-  CalendarClock,
   ChevronDownIcon,
 } from "lucide-react";
 import { MoreVertical } from "lucide-react";
@@ -70,8 +68,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { FormControl } from "@/components/ui/form";
-import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -142,14 +138,14 @@ export const CandidatesSectionReclutador = ({
   };
 
   const handleCandidateUpdated = async (
-    updatedCandidate: PersonWithRelations
+    updatedCandidate: PersonWithRelations,
   ) => {
     // obtener los candidatos actualizados
     await fetchCandidates();
   };
 
   const handleCandidateCreated = async (
-    candidateData: CreateCandidateFormData
+    candidateData: CreateCandidateFormData,
   ) => {
     try {
       const result = await addCandidate(candidateData);
@@ -358,12 +354,12 @@ export const CandidatesSectionReclutador = ({
   // Función para manejar la selección de candidatos para la terna
   const handleCandidateSelectionForTerna = (
     candidateId: string,
-    isSelected: boolean
+    isSelected: boolean,
   ) => {
     setSelectedCandidatesForTerna((prev) =>
       isSelected
         ? [...prev, candidateId]
-        : prev.filter((id) => id !== candidateId)
+        : prev.filter((id) => id !== candidateId),
     );
   };
 
@@ -393,7 +389,7 @@ export const CandidatesSectionReclutador = ({
       const response = await validarTerna(
         vacancyId,
         selectedCandidatesForTerna,
-        date
+        date,
       );
 
       if (!response.ok) {
@@ -612,7 +608,7 @@ export const CandidatesSectionReclutador = ({
             <ScrollArea className="h-[350px] w-full ">
               <div className="space-y-3 p-4">
                 {candidates.map(
-                  (candidato: PersonWithRelations, index: number) => (
+                  (candidato: PersonWithRelations, _index: number) => (
                     <Card
                       key={candidato.id}
                       className="group hover:shadow-sm transition-shadow duration-200"
@@ -713,7 +709,7 @@ export const CandidatesSectionReclutador = ({
                                       description="¿Estás seguro de querer seleccionar este candidato?"
                                       onConfirm={() =>
                                         handleMarkCandidateAsContratado(
-                                          candidato.id
+                                          candidato.id,
                                         )
                                       }
                                       trigger={
@@ -772,93 +768,12 @@ export const CandidatesSectionReclutador = ({
                             }}
                           />
                           <div className="flex items-center gap-3">
-                            {user_logged.role === Role.Admin &&
-                              !candidato.IsCandidateValidated && (
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="mt-4"
-                                    >
-                                      <UserCheck />
-                                      Validar
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent className="z-[9999]">
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Validar candidato
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Esta acción permitirá que la vacante
-                                        pueda actualizarce.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>
-                                        Cancelar
-                                      </AlertDialogCancel>
-                                      <AlertDialogAction
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        onClick={() =>
-                                          handleValidateCandidate(candidato.id)
-                                        }
-                                      >
-                                        Validar
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              )}
-                            {user_logged.role === Role.Admin &&
-                              candidato.IsCandidateValidated && (
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="mt-4"
-                                    >
-                                      <UserCheck className="h-4 w-4 mr-2" />
-                                      Validado
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent className="z-[9999]">
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Deshacer validación
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Esta acción deshacerá la validación del
-                                        candidato.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>
-                                        Cancelar
-                                      </AlertDialogCancel>
-                                      <AlertDialogAction
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        onClick={() =>
-                                          handleDesvalidateCandidate(
-                                            candidato.id
-                                          )
-                                        }
-                                      >
-                                        Deshacer validación
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              )}
-
                             <CandidateSheetDetails candidate={candidato} />
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                  )
+                  ),
                 )}
               </div>
             </ScrollArea>
@@ -881,7 +796,7 @@ export const CandidatesSectionReclutador = ({
                 Agregar candidatos
               </Button>
             </DialogTrigger>
-            <DialogContent className="flex flex-col gap-0 overflow-y-visible p-0 sm:max-w-lg [&>button:last-child]:top-3.5 z-[9999]">
+            <DialogContent className="flex flex-col gap-0 overflow-y-visible p-0 sm:max-w-lg [&>button:last-child]:top-3.5 z-[999999]">
               <DialogHeader className="contents space-y-0 text-left">
                 <DialogTitle className="border-b px-6 py-4 text-base">
                   Agregar candidato
@@ -911,7 +826,7 @@ export const CandidatesSectionReclutador = ({
 
       {/* Dialog para eliminar candidato */}
       <AlertDialog open={alertDialogDelete} onOpenChange={setAlertDialogDelete}>
-        <AlertDialogContent className="z-[9999]">
+        <AlertDialogContent className="z-[9999999]">
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar candidato</AlertDialogTitle>
             <AlertDialogDescription>
@@ -947,7 +862,7 @@ export const CandidatesSectionReclutador = ({
         open={showTernaValidationDialog}
         onOpenChange={setShowTernaValidationDialog}
       >
-        <DialogContent className="z-[9999] max-h-[70vh] overflow-y-auto flex flex-col gap-0 p-0 sm:max-w-lg [&>button:last-child]:top-3.5">
+        <DialogContent className="z-[99999999] max-h-[70vh] overflow-y-auto flex flex-col gap-0 p-0 sm:max-w-lg [&>button:last-child]:top-3.5">
           <DialogHeader className="contents space-y-0 text-left">
             <DialogTitle className="border-b px-6 py-4 text-base">
               Validar terna final
@@ -978,12 +893,12 @@ export const CandidatesSectionReclutador = ({
                         <Checkbox
                           id={`candidate-${candidate.id}`}
                           checked={selectedCandidatesForTerna.includes(
-                            candidate.id
+                            candidate.id,
                           )}
                           onCheckedChange={(checked) =>
                             handleCandidateSelectionForTerna(
                               candidate.id,
-                              checked as boolean
+                              checked as boolean,
                             )
                           }
                         />

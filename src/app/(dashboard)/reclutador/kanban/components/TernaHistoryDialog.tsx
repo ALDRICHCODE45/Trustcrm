@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Calendar,
   User,
@@ -12,7 +12,6 @@ import {
   FileText,
   ExternalLink,
   Loader2,
-  TrashIcon,
 } from "lucide-react";
 import {
   Accordion,
@@ -24,16 +23,10 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { useCandidates } from "@/hooks/candidates/use-candidates";
-import {
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { SheetContent, SheetHeader, SheetTrigger } from "@/components/ui/sheet";
 import { Sheet } from "@/components/ui/sheet";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useUsers } from "@/hooks/users/use-users";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface TernaHistoryEntry {
   id: string;
@@ -174,7 +167,7 @@ export const TernaHistoryDialog = ({
           Historial
         </Button>
       </SheetTrigger>
-      <SheetContent className="z-[9999] min-w-[35vw] overflow-y-auto">
+      <SheetContent className="z-[999999999] min-w-[35vw] overflow-y-auto">
         <SheetHeader>
           <DialogTitle className="text-lg">
             Historial de Ternas - {vacancyTitle}
