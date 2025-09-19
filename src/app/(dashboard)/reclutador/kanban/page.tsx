@@ -34,7 +34,7 @@ export default function KanbanReclutadorPage() {
     fetchAllClients();
     fetchReclutadores();
     fetchLoggedUser();
-  }, []);
+  }, [fetchAllVacancies, fetchAllClients, fetchReclutadores, fetchLoggedUser]);
 
   const user_logged_data = {
     name: loggedUser?.name || "",

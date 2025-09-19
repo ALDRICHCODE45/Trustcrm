@@ -1205,7 +1205,7 @@ export function RecruiterTable<TData, TValue>({
     } finally {
       setIsRefreshing(false);
     }
-  }, []);
+  }, [router]);
 
   // Memoize handlers to prevent unnecessary re-renders
   const handlePageSizeChange = useCallback(

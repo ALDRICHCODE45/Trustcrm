@@ -199,7 +199,7 @@ export const useDocuments = (vacancyId?: string) => {
         setIsUploading(false);
       }
     },
-    [vacancyId]
+    [vacancyId, fetchDocuments]
   );
 
   interface PerfilMuestraData {

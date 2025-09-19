@@ -173,7 +173,7 @@ export const ContactoCard = ({
 
   useEffect(() => {
     console.log("interactions", contacto.name, contacto.interactions);
-  }, [contacto.interactions]);
+  }, [contacto.interactions, contacto.name]);
 
   const [etiqueta, setEtiqueta] = useState<LeadStatus | "none">(
     contacto.etiqueta ?? "none"
@@ -220,7 +220,7 @@ export const ContactoCard = ({
         setOpenDialog(false);
       }
     },
-    [contacto.id, onUpdateContacts]
+    [onUpdateContacts, contacto]
   );
 
   const handleAddEtiqueta = useCallback(
@@ -593,7 +593,7 @@ export const SeguimientoContacto = ({
     useState<ContactInteractionWithRelations[]>(initialInteractions);
   useEffect(() => {
     console.log("initialInteractions", initialInteractions);
-  }, []);
+  }, [initialInteractions]);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);

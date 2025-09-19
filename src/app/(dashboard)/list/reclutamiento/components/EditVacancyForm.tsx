@@ -142,7 +142,7 @@ export const EditVacancyForm = ({ open, setOpen, vacancy }: Props) => {
 
   useEffect(() => {
     fetchLoggedUser();
-  }, []);
+  }, [fetchLoggedUser]);
 
   // Resetear el formulario cuando cambie la vacante
   useEffect(() => {

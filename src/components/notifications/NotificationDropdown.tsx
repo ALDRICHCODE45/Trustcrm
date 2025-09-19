@@ -330,7 +330,7 @@ export function NotificationDropdown({
     } finally {
       setIsMarkingRead(false);
     }
-  }, [notifications, isMarkingRead]);
+  }, [notifications]);
 
   return (
     <>

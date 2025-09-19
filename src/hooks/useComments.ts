@@ -16,7 +16,7 @@ export const useComments = (vacancyId?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     if (!vacancyId) return;
 
     setIsLoading(true);
@@ -40,7 +40,7 @@ export const useComments = (vacancyId?: string) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [vacancyId]);
 
   const addComment = async (commentData: CreateCommentData) => {
     try {
@@ -119,7 +119,7 @@ export const useComments = (vacancyId?: string) => {
 
   useEffect(() => {
     fetchComments();
-  }, [vacancyId]);
+  }, [fetchComments]);
 
   return {
     comments,

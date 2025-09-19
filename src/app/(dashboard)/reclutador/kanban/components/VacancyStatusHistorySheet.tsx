@@ -80,7 +80,7 @@ export const VacancyStatusHistorySheet = ({
 
   useEffect(() => {
     fetchLoggedUser();
-  }, []);
+  }, [fetchLoggedUser]);
 
   // Configurar react-hook-form
   const {

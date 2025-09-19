@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { VacancyEstado } from "@prisma/client";
 import { ArrowDownToLine, CircleCheck, CircleOff, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface Props {
   clientId: string;
@@ -36,7 +36,7 @@ export const GetCounStatusByClient = ({ clientId, status }: Props) => {
   const [statusCount, setStatusCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchStatusCount = async () => {
+  const fetchStatusCount = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -75,13 +75,13 @@ export const GetCounStatusByClient = ({ clientId, status }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [clientId, status]);
 
   useEffect(() => {
     if (clientId) {
       fetchStatusCount();
     }
-  }, [clientId, status]);
+  }, [clientId, status, fetchStatusCount]);
 
   return (
     <>

@@ -117,7 +117,7 @@ export default function CustomToast({ open, setOpen }: Props) {
         start();
       }
     },
-    [reset, start]
+    [reset, start, setOpen]
   );
 
   const handleButtonClick = useCallback(() => {
@@ -130,7 +130,7 @@ export default function CustomToast({ open, setOpen }: Props) {
     } else {
       handleOpenChange(true);
     }
-  }, [open, handleOpenChange]);
+  }, [open, handleOpenChange, setOpen]);
 
   return (
     <ToastProvider swipeDirection="left">

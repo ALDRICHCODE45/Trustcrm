@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   deleteCandidate,
   updateCandidate,
@@ -36,7 +36,7 @@ export const useCandidates = (vacancyId?: string) => {
   /**
    * Obtiene la lista de candidatos de la vacante
    */
-  const fetchCandidates = async () => {
+  const fetchCandidates = useCallback(async () => {
     if (!vacancyId) return;
 
     setIsLoading(true);
@@ -55,7 +55,7 @@ export const useCandidates = (vacancyId?: string) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [vacancyId]);
 
   /**
    * Crea un nuevo candidato y actualiza la lista local
@@ -293,7 +293,7 @@ export const useCandidates = (vacancyId?: string) => {
   // Auto-fetch candidates when vacancyId changes
   useEffect(() => {
     fetchCandidates();
-  }, [vacancyId]);
+  }, [fetchCandidates]);
 
   return {
     // Values

@@ -60,7 +60,7 @@ export function KanbanFilters({
     }, 350);
 
     return () => clearTimeout(timeout);
-  }, [searchInput]);
+  }, [searchInput, filters, onFilterChange]);
 
   const uniqueOffices = Array.from(
     new Set(generadores.map((gen) => gen.Oficina))

@@ -278,7 +278,7 @@ export function useNotifications(userId: string): UseNotificationsReturn {
     if (userId) {
       fetchNotifications();
     }
-  }, [fetchNotifications]);
+  }, [userId, fetchNotifications]);
 
   return {
     notifications,
