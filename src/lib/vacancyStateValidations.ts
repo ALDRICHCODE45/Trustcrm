@@ -55,16 +55,19 @@ const stateValidationRules: StateValidationRule[] = [
   {
     targetState: VacancyEstado.Entrevistas,
     validator: (vacancy: VacancyWithRelations) => {
-      // Para pasar a Entrevistas, debe tener al menos un candidato en terna final
+      // Para pasar a Entrevistas, debe terner al menos un candidato validado
       const hasCandidateValidated = vacancy.ternaFinal.some(
         (candidate) => candidate.IsCandidateValidated === true
       );
-      if (!hasCandidateValidated) {
+
+      const tieneTernaValidada = vacancy.fechaEntregaTerna !== null;
+
+      if (!tieneTernaValidada) {
         return {
           isValid: false,
           message: "No se puede cambiar al estado 'Follow Up'",
           reason:
-            "Para pasar al estado 'Follow Up' debe tener al menos un candidato validado y comparado contra el checklist. Por favor, valide un candidato antes de pasar al estado 'Follow Up'.",
+            "Para pasar al estado 'Follow Up' debe tener una terna validada. Por favor, valide la terna final antes de pasar al estado 'Follow Up'.",
         };
       }
       return { isValid: true };
