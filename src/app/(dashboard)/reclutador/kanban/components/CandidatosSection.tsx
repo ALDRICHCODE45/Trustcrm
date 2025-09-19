@@ -138,14 +138,14 @@ export const CandidatesSectionReclutador = ({
   };
 
   const handleCandidateUpdated = async (
-    updatedCandidate: PersonWithRelations,
+    updatedCandidate: PersonWithRelations
   ) => {
     // obtener los candidatos actualizados
     await fetchCandidates();
   };
 
   const handleCandidateCreated = async (
-    candidateData: CreateCandidateFormData,
+    candidateData: CreateCandidateFormData
   ) => {
     try {
       const result = await addCandidate(candidateData);
@@ -354,12 +354,12 @@ export const CandidatesSectionReclutador = ({
   // Función para manejar la selección de candidatos para la terna
   const handleCandidateSelectionForTerna = (
     candidateId: string,
-    isSelected: boolean,
+    isSelected: boolean
   ) => {
     setSelectedCandidatesForTerna((prev) =>
       isSelected
         ? [...prev, candidateId]
-        : prev.filter((id) => id !== candidateId),
+        : prev.filter((id) => id !== candidateId)
     );
   };
 
@@ -389,7 +389,7 @@ export const CandidatesSectionReclutador = ({
       const response = await validarTerna(
         vacancyId,
         selectedCandidatesForTerna,
-        date,
+        date
       );
 
       if (!response.ok) {
@@ -709,7 +709,7 @@ export const CandidatesSectionReclutador = ({
                                       description="¿Estás seguro de querer seleccionar este candidato?"
                                       onConfirm={() =>
                                         handleMarkCandidateAsContratado(
-                                          candidato.id,
+                                          candidato.id
                                         )
                                       }
                                       trigger={
@@ -773,7 +773,7 @@ export const CandidatesSectionReclutador = ({
                         </div>
                       </CardContent>
                     </Card>
-                  ),
+                  )
                 )}
               </div>
             </ScrollArea>
@@ -893,12 +893,12 @@ export const CandidatesSectionReclutador = ({
                         <Checkbox
                           id={`candidate-${candidate.id}`}
                           checked={selectedCandidatesForTerna.includes(
-                            candidate.id,
+                            candidate.id
                           )}
                           onCheckedChange={(checked) =>
                             handleCandidateSelectionForTerna(
                               candidate.id,
-                              checked as boolean,
+                              checked as boolean
                             )
                           }
                         />
@@ -936,7 +936,7 @@ export const CandidatesSectionReclutador = ({
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent
-                          className="w-auto overflow-hidden p-0 z-[9999]"
+                          className="w-auto overflow-hidden p-0 z-[999999999]"
                           align="start"
                         >
                           <Calendar
