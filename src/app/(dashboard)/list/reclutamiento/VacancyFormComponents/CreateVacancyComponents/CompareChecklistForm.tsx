@@ -272,7 +272,7 @@ export const CompareChecklistForm = ({
           <span>Checklist (Comparar)</span>
         </Button>
       </SheetTrigger>
-      <SheetContent className="min-w-[40vw] z-[9999] min-h-[500px] overflow-y-auto">
+      <SheetContent className="min-w-[40vw] z-[999999999] min-h-[500px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Comparación Requisitos vs Candidato</SheetTitle>
           <SheetDescription>

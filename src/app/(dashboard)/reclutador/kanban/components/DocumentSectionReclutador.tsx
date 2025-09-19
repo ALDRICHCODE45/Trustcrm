@@ -373,7 +373,7 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
               <CloudUpload /> <span>Documento Extra</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="z-[9999] flex flex-col gap-0 overflow-y-visible p-0 sm:max-w-lg [&>button:last-child]:top-3.5">
+          <DialogContent className="z-[999999999] flex flex-col gap-0 overflow-y-visible p-0 sm:max-w-lg [&>button:last-child]:top-3.5">
             <DialogHeader className="contents space-y-0 text-left">
               <DialogTitle className="border-b px-6 py-4 text-base">
                 Añadir documento
@@ -515,7 +515,7 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
                               align="end"
-                              className="z-[9999]"
+                              className="z-[999999999]"
                             >
                               <DropdownMenuItem
                                 className="cursor-pointer"
@@ -534,7 +534,7 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
                                     <span>Eliminar</span>
                                   </DropdownMenuItem>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent className="z-[9999]">
+                                <AlertDialogContent className="z-[999999999]">
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>
                                       ¿Estás seguro de querer eliminar el Job
@@ -636,7 +636,7 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
                               </DropdownMenuTrigger>
                               <DropdownMenuContent
                                 align="end"
-                                className="z-[9999]"
+                                className="z-[999999999]"
                               >
                                 <DropdownMenuItem
                                   className="cursor-pointer"
@@ -657,7 +657,7 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
                                       <span>Eliminar</span>
                                     </DropdownMenuItem>
                                   </AlertDialogTrigger>
-                                  <AlertDialogContent className="z-[9999]">
+                                  <AlertDialogContent className="z-[999999999]">
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>
                                         ¿Estás seguro de querer eliminar este
@@ -756,7 +756,10 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="z-[9999]">
+                        <DropdownMenuContent
+                          align="end"
+                          className="z-[999999999]"
+                        >
                           <DropdownMenuItem
                             className="cursor-pointer"
                             onClick={() =>
@@ -779,7 +782,7 @@ export const DocumentsSectionReclutador: React.FC<DocumentsSectionProps> = ({
                                 <span>Eliminar</span>
                               </DropdownMenuItem>
                             </AlertDialogTrigger>
-                            <AlertDialogContent className="z-[9999]">
+                            <AlertDialogContent className="z-[999999999]">
                               <AlertDialogHeader>
                                 <AlertDialogTitle>
                                   ¿Estás seguro de querer eliminar este

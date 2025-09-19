@@ -81,7 +81,7 @@ export const CreateJobDescriptionDialog = ({
           <span>Job Description</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="z-[9999] max-w-2xl">
+      <DialogContent className="z-[999999999] max-w-2xl">
         <DialogHeader>
           <DialogTitle>Añadir Job Description</DialogTitle>
           <DialogDescription>

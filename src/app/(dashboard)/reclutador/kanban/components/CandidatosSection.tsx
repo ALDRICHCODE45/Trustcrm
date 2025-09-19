@@ -683,7 +683,7 @@ export const CandidatesSectionReclutador = ({
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
                                   align="end"
-                                  className="w-40 z-[9999]"
+                                  className="w-40 z-[9999999]"
                                 >
                                   {candidato.vacanciesContratado &&
                                   candidato.vacanciesContratado.length > 0 ? (

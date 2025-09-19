@@ -262,7 +262,7 @@ export const CommentsSectionReclutador: React.FC<CommentsSectionProps> = ({
                 <Plus className="h-3 w-3 mr-1" /> Añadir
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto z-[9999]">
+            <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto z-[999999999]">
               <DialogHeader>
                 <DialogTitle>Nuevo Comentario</DialogTitle>
                 <Separator />
@@ -472,7 +472,7 @@ export const CommentsSectionReclutador: React.FC<CommentsSectionProps> = ({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
                               align="end"
-                              className="w-40 z-[9999]"
+                              className="w-40 z-[999999999]"
                             >
                               <DropdownMenuItem
                                 onClick={() => handleDelete(comentario)}
@@ -566,7 +566,7 @@ export const CommentsSectionReclutador: React.FC<CommentsSectionProps> = ({
 
       {/* Dialog para confirmar eliminación */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] z-[9999]">
+        <DialogContent className="sm:max-w-[425px] z-[999999999]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
               <AlertCircle className="h-5 w-5" />
