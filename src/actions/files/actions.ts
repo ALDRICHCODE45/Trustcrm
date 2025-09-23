@@ -84,38 +84,55 @@ export const deleteFile = async (fileKey: string, interactionId: string) => {
 };
 
 export async function uploadFile(formData: FormData) {
-  const file = formData.get("file") as File;
+  try {
+    const file = formData.get("file") as File;
 
-  if (!file) {
+    if (!file) {
+      return {
+        ok: false,
+        message: "No se ha proporcionado ningún archivo",
+      };
+    }
+
+    // Comprobar el tamaño del archivo (50MB máximo)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      return {
+        ok: false,
+        message: `El archivo excede el tamaño máximo permitido de ${Math.round(maxSize / (1024 * 1024))}MB`,
+      };
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const key = `${randomUUID()}-${file.name}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.DO_SPACES_BUCKET!, // "propleflow"
+      Key: key,
+      Body: buffer,
+      ContentType: file.type,
+      ACL: "public-read",
+    });
+
+    await s3.send(command);
+
+    const fileUrl = `https://${process.env
+      .DO_SPACES_BUCKET!}.nyc3.digitaloceanspaces.com/${key}`;
+
+    return {
+      ok: true,
+      success: true,
+      url: fileUrl,
+      fileName: file.name,
+      fileType: file.type,
+      size: file.size,
+    };
+  } catch (error) {
+    console.error("Error al subir el archivo:", error);
     return {
       ok: false,
-      message: "No file provided",
+      message: error instanceof Error ? error.message : "Error inesperado al subir el archivo",
     };
   }
-
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const key = `${randomUUID()}-${file.name}`;
-
-  const command = new PutObjectCommand({
-    Bucket: process.env.DO_SPACES_BUCKET!, // "propleflow"
-    Key: key,
-    Body: buffer,
-    ContentType: file.type,
-    ACL: "public-read",
-  });
-
-  await s3.send(command);
-
-  const fileUrl = `https://${process.env
-    .DO_SPACES_BUCKET!}.nyc3.digitaloceanspaces.com/${key}`;
-
-  return {
-    ok: true,
-    success: true,
-    url: fileUrl,
-    fileName: file.name,
-    fileType: file.type,
-    size: file.size,
-  };
 }
