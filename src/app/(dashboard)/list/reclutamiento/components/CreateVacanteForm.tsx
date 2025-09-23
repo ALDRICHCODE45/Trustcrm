@@ -373,8 +373,17 @@ const BasicInformationTab = ({
   const [open, setOpen] = useState<boolean>(false);
   const [value, setValue] = useState<string>("");
 
+  const adjustToBusinessDay = (date: Date): Date => {
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 6) { // Saturday
+      return addDays(date, 2); // Move to Monday
+    } else if (dayOfWeek === 0) { // Sunday
+      return addDays(date, 1); // Move to Monday
+    }
+    return date;
+  };
+
   useEffect(() => {
-    //Todo: cambiar la fecha de entrega en base a la prioridad
     if (fechaAsignacion && prioridad) {
       let fechaEntrega: Date;
       if (prioridad === VacancyPrioridad.Alta) {
@@ -384,6 +393,8 @@ const BasicInformationTab = ({
       } else {
         fechaEntrega = addDays(fechaAsignacion, 15);
       }
+      // Ajustar la fecha de entrega para que no caiga en fin de semana
+      fechaEntrega = adjustToBusinessDay(fechaEntrega);
       form.setValue("fechaEntrega", fechaEntrega);
     }
   }, [fechaAsignacion, prioridad, form]);
