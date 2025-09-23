@@ -122,7 +122,11 @@ const uploadFileFromExcel = async (filePath: string) => {
       });
     }
   } catch (e) {
-    throw new Error("Error el subir los leads");
+    if (e instanceof Error) {
+      throw new Error(e.message);
+    } else {
+      throw new Error(String(e));
+    }
   }
 };
 
