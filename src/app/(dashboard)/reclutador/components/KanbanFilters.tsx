@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -35,7 +36,7 @@ import { VacancyWithRelations } from "./ReclutadorColumns";
 
 export interface FilterState {
   searchTerm: string;
-  reclutadorId: string | null;
+  reclutadorIds: string[]; // Cambiado de string | null a string[]
   clienteId: string | null;
   tipo: VacancyTipo | null;
   fechaAsignacion: { from: Date | null; to: Date | null };
@@ -61,7 +62,7 @@ export function KanbanFilters({
 }: KanbanFiltersProps) {
   const [filters, setFilters] = useState<FilterState>({
     searchTerm: "",
-    reclutadorId: null,
+    reclutadorIds: [], // Cambiado a array vacío
     clienteId: null,
     tipo: null,
     fechaAsignacion: { from: null, to: null },
@@ -99,10 +100,19 @@ export function KanbanFilters({
     onFilterChange(newFilters);
   };
 
+  // Función específica para manejar cambios en reclutadores
+  const handleReclutadorToggle = (reclutadorId: string, checked: boolean) => {
+    const newReclutadorIds = checked
+      ? [...filters.reclutadorIds, reclutadorId]
+      : filters.reclutadorIds.filter((id) => id !== reclutadorId);
+
+    handleFilterChange("reclutadorIds", newReclutadorIds);
+  };
+
   const clearFilters = () => {
     const clearedFilters: FilterState = {
       searchTerm: "",
-      reclutadorId: null,
+      reclutadorIds: [], // Cambiado a array vacío
       clienteId: null,
       tipo: null,
       fechaAsignacion: { from: null, to: null },
@@ -129,6 +139,10 @@ export function KanbanFilters({
       };
       setFilters(newFilters);
       onFilterChange(newFilters);
+    } else if (filterKey === "reclutadorIds") {
+      const newFilters = { ...filters, reclutadorIds: [] };
+      setFilters(newFilters);
+      onFilterChange(newFilters);
     } else {
       const newFilters = { ...filters, [filterKey]: null };
       setFilters(newFilters);
@@ -138,7 +152,7 @@ export function KanbanFilters({
 
   const hasActiveFilters =
     filters.searchTerm ||
-    filters.reclutadorId ||
+    filters.reclutadorIds.length > 0 || // Cambiado para array
     filters.clienteId ||
     filters.tipo ||
     filters.fechaAsignacion.from ||
@@ -150,7 +164,7 @@ export function KanbanFilters({
 
   const activeFiltersCount = [
     filters.searchTerm,
-    filters.reclutadorId,
+    filters.reclutadorIds.length > 0 ? true : false, // Cambiado para array
     filters.clienteId,
     filters.tipo,
     filters.fechaAsignacion.from || filters.fechaAsignacion.to,
@@ -263,7 +277,7 @@ export function KanbanFilters({
           </div>
         </div>
 
-        {/* Reclutador - Siempre visible */}
+        {/* Reclutador con Checkbox - Siempre visible */}
         <div className={cn("space-y-2", isMinimalistView && "space-y-1")}>
           {!isMinimalistView && (
             <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -271,31 +285,71 @@ export function KanbanFilters({
               Reclutador
             </label>
           )}
-          <Select
-            value={filters.reclutadorId || "todos"}
-            onValueChange={(value) =>
-              handleFilterChange(
-                "reclutadorId",
-                value === "todos" ? null : value
-              )
-            }
-          >
-            <SelectTrigger className={cn(isMinimalistView && "h-8 text-sm")}>
-              <SelectValue
-                placeholder={
-                  isMinimalistView ? "Reclutador" : "Seleccionar reclutador"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos los reclutadores</SelectItem>
-              {reclutadores.map((reclutador) => (
-                <SelectItem key={reclutador.id} value={reclutador.id}>
-                  {reclutador.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  filters.reclutadorIds.length === 0 && "text-muted-foreground",
+                  isMinimalistView && "h-8 text-sm"
+                )}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                {filters.reclutadorIds.length === 0
+                  ? isMinimalistView
+                    ? "Reclutador"
+                    : "Seleccionar reclutadores"
+                  : filters.reclutadorIds.length === 1
+                  ? reclutadores.find((r) => r.id === filters.reclutadorIds[0])
+                      ?.name
+                  : `${filters.reclutadorIds.length} reclutadores`}
+                <ChevronDown className="ml-auto h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" align="start">
+              <div className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium">Reclutadores</h4>
+                  {filters.reclutadorIds.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleFilterChange("reclutadorIds", [])}
+                      className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Limpiar
+                    </Button>
+                  )}
+                </div>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {reclutadores.map((reclutador) => (
+                    <div
+                      key={reclutador.id}
+                      className="flex items-center space-x-2"
+                    >
+                      <Checkbox
+                        id={reclutador.id}
+                        checked={filters.reclutadorIds.includes(reclutador.id)}
+                        onCheckedChange={(checked) =>
+                          handleReclutadorToggle(
+                            reclutador.id,
+                            checked as boolean
+                          )
+                        }
+                      />
+                      <label
+                        htmlFor={reclutador.id}
+                        className="text-sm cursor-pointer flex-1"
+                      >
+                        {reclutador.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Cliente - Siempre visible */}
@@ -565,15 +619,18 @@ export function KanbanFilters({
             </Badge>
           )}
 
-          {filters.reclutadorId && (
+          {filters.reclutadorIds.length > 0 && (
             <Badge variant="outline" className="flex items-center gap-1">
               <span>
-                Reclutador:{" "}
-                {reclutadores.find((r) => r.id === filters.reclutadorId)?.name}
+                Reclutador{filters.reclutadorIds.length > 1 ? "es" : ""}:{" "}
+                {filters.reclutadorIds.length === 1
+                  ? reclutadores.find((r) => r.id === filters.reclutadorIds[0])
+                      ?.name
+                  : `${filters.reclutadorIds.length} seleccionados`}
               </span>
               <X
                 className="h-3 w-3 cursor-pointer hover:text-red-500"
-                onClick={() => clearSingleFilter("reclutadorId")}
+                onClick={() => clearSingleFilter("reclutadorIds")}
               />
             </Badge>
           )}

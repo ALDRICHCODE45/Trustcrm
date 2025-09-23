@@ -922,7 +922,7 @@ export const KanbanBoardPage = ({
   const [isMinimalistView, setIsMinimalistView] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     searchTerm: "",
-    reclutadorId: null,
+    reclutadorIds: [], // Cambiado de reclutadorId: null
     clienteId: null,
     tipo: null,
     fechaAsignacion: { from: null, to: null },
@@ -971,10 +971,10 @@ export const KanbanBoardPage = ({
       );
     }
 
-    // Filtro por reclutador
-    if (filterState.reclutadorId) {
-      filtered = filtered.filter(
-        (v) => v.reclutadorId === filterState.reclutadorId
+    // Filtro por reclutadores (cambiado para soportar múltiples)
+    if (filterState.reclutadorIds.length > 0) {
+      filtered = filtered.filter((v) =>
+        filterState.reclutadorIds.includes(v.reclutadorId)
       );
     }
 
@@ -1351,7 +1351,7 @@ export const KanbanBoardPage = ({
 
   const isAnyFilterApplied =
     filters.searchTerm ||
-    filters.reclutadorId ||
+    filters.reclutadorIds.length > 0 || // Cambiado para array
     filters.clienteId ||
     filters.tipo ||
     filters.fechaAsignacion.from ||
@@ -1523,7 +1523,7 @@ export const KanbanBoardPage = ({
                       onClick={() =>
                         handleFilterChange({
                           searchTerm: "",
-                          reclutadorId: null,
+                          reclutadorIds: [], // Cambiado a array vacío
                           clienteId: null,
                           tipo: null,
                           fechaAsignacion: { from: null, to: null },

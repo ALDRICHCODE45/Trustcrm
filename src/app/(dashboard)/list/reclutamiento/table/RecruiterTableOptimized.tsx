@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -61,6 +62,8 @@ import {
   X,
   SearchIcon,
   Maximize2,
+  Users,
+  ChevronDown,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DateRange } from "react-day-picker";
@@ -82,6 +85,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import QuickStatsDialog from "@/app/(dashboard)/reclutador/components/QuickStatsDialog";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
+import { cn } from "@/lib/utils";
 
 // Función de filtro personalizada para rangos de fechas
 const dateRangeFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
@@ -229,6 +233,21 @@ function TableFilters<TData, TValue>({
     } finally {
       setIsExporting(false);
     }
+  };
+
+  // Función específica para manejar cambios en reclutadores
+  const handleReclutadorToggle = (reclutadorId: string, checked: boolean) => {
+    const newRecruiter = checked
+      ? [...currentRecruiter, reclutadorId]
+      : currentRecruiter.filter((id) => id !== reclutadorId);
+
+    setCurrentRecruiter(newRecruiter);
+    if (newRecruiter.length === 0) {
+      table.getColumn("reclutador")?.setFilterValue(undefined);
+    } else {
+      table.getColumn("reclutador")?.setFilterValue(newRecruiter);
+    }
+    table.setPageIndex(0);
   };
 
   const resetFilters = useCallback(() => {
@@ -591,7 +610,7 @@ function TableFilters<TData, TValue>({
             </Select>
           </div>
 
-          {/* Filtro de Reclutador - Ahora con múltiple selección */}
+          {/* Filtro de Reclutador con Checkbox - Modificado */}
           <div className={`space-y-${isCompact ? "1" : "2"}`}>
             <Label
               htmlFor="recruiter-filter"
@@ -599,98 +618,76 @@ function TableFilters<TData, TValue>({
             >
               Reclutadores
             </Label>
-            <Select
-              value=""
-              onValueChange={(value) => {
-                if (!currentRecruiter.includes(value)) {
-                  // Solo agregar nuevo reclutador si no está ya seleccionado
-                  const newRecruiter = [...currentRecruiter, value];
-                  setCurrentRecruiter(newRecruiter);
-                  table.getColumn("reclutador")?.setFilterValue(newRecruiter);
-                  table.setPageIndex(0);
-                }
-              }}
-            >
-              <SelectTrigger
-                className={`${isCompact ? "h-8 text-xs" : "h-9 text-sm"}`}
-              >
-                <SelectValue
-                  placeholder={
-                    isCompact ? "Reclutadores" : "Seleccionar reclutadores"
-                  }
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    currentRecruiter.length === 0 && "text-muted-foreground",
+                    isCompact ? "h-8 text-xs" : "h-9 text-sm"
+                  )}
                 >
+                  <Users className="mr-2 h-4 w-4" />
                   {currentRecruiter.length === 0
                     ? isCompact
                       ? "Reclutadores"
-                      : "Seleccionar reclutadores"
+                      : "Seleccionar"
                     : currentRecruiter.length === 1
-                    ? reclutadores
-                        .find((r) => r.id === currentRecruiter[0])
-                        ?.name?.split(" ")[0]
+                    ? reclutadores.find((r) => r.id === currentRecruiter[0])
+                        ?.name
                     : `${currentRecruiter.length} reclutadores`}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {reclutadores.map((recruiter) => (
-                  <SelectItem
-                    key={recruiter.id}
-                    value={recruiter.id}
-                    disabled={currentRecruiter.includes(recruiter.id)}
-                  >
-                    {recruiter.name}
-                  </SelectItem>
-                ))}
-                {reclutadores.length === 0 && (
-                  <SelectItem value="" disabled>
-                    No hay reclutadores disponibles
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-
-            {currentRecruiter.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {currentRecruiter.map((recruiterId) => {
-                  const recruiter = reclutadores.find(
-                    (r) => r.id === recruiterId
-                  );
-                  return (
-                    <Badge
-                      key={recruiterId}
-                      variant="secondary"
-                      className="flex items-center gap-1"
-                    >
-                      {recruiter?.name?.split(" ")[0] ||
-                        "Reclutador desconocido"}
+                  <ChevronDown className="ml-auto h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-0" align="start">
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Reclutadores</h4>
+                    {currentRecruiter.length > 0 && (
                       <Button
-                        type="button"
                         variant="ghost"
                         size="sm"
-                        className="h-auto p-0 hover:bg-transparent"
                         onClick={() => {
-                          const newRecruiter = currentRecruiter.filter(
-                            (r) => r !== recruiterId
-                          );
-                          setCurrentRecruiter(newRecruiter);
-                          if (newRecruiter.length === 0) {
-                            table
-                              .getColumn("reclutador")
-                              ?.setFilterValue(undefined);
-                          } else {
-                            table
-                              .getColumn("reclutador")
-                              ?.setFilterValue(newRecruiter);
-                          }
-                          table.setPageIndex(0);
+                          setCurrentRecruiter([]);
+                          table
+                            .getColumn("reclutador")
+                            ?.setFilterValue(undefined);
                         }}
+                        className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
                       >
-                        <X className="h-3 w-3" />
+                        Limpiar
                       </Button>
-                    </Badge>
-                  );
-                })}
-              </div>
-            )}
+                    )}
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {reclutadores.map((reclutador) => (
+                      <div
+                        key={reclutador.id}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={reclutador.id}
+                          checked={currentRecruiter.includes(reclutador.id)}
+                          onCheckedChange={(checked) =>
+                            handleReclutadorToggle(
+                              reclutador.id,
+                              checked as boolean
+                            )
+                          }
+                        />
+                        <label
+                          htmlFor={reclutador.id}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {reclutador.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Filtro de Tipo */}
