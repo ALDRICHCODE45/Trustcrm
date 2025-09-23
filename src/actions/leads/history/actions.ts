@@ -1,4 +1,5 @@
 "use server";
+import { auth } from "@/lib/auth";
 import prisma from "@/lib/db";
 import { LeadStatus } from "@prisma/client";
 
@@ -38,6 +39,39 @@ export const editLeadHistoryById = async (data: Args) => {
     return {
       ok: false,
       message: "Error al editar el historial del lead",
+    };
+  }
+};
+
+interface createLeadHistoryArgs {
+  leadId: string;
+  status: LeadStatus;
+  changedAt: Date;
+}
+
+export const createLeadHistory = async ({ changedAt, leadId, status }: createLeadHistoryArgs) => {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        ok: false,
+        message: "No autorizado",
+      };
+    }
+    //crear el lead history
+    await prisma.leadStatusHistory.create({
+      data: {
+        leadId,
+        status,
+        changedAt,
+        changedById: session.user.id,
+      },
+    });
+    return { ok: true, message: "Historial creado correctamente" };
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Error al crear el historial del lead",
     };
   }
 };

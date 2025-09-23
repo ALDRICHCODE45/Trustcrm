@@ -4,6 +4,7 @@ import {
   CalendarIcon,
   LinkIcon,
   Loader2,
+  Plus,
   SquarePen,
   UserX,
 } from "lucide-react";
@@ -64,6 +65,7 @@ import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { editLeadHistoryById } from "@/actions/leads/history/actions";
 import { useUsers } from "@/hooks/users/use-users";
+import { AddHistoryDialog } from "./historyComponents/AddHistoryDialog";
 
 interface Props {
   lead: LeadWithRelations;
@@ -103,6 +105,7 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
   const [contactos, setContactos] = useState<ContactWithRelations[]>(
     lead?.contactos || []
   );
+  const [addHistoryDialog, setAddHistoryDialog] = useState<boolean>(false);
 
   const [linkVerify, setLinkVerfy] = useState(lead.link);
   const [historyEditing, setHistoryEditing] = useState<string | null>(null);
@@ -358,6 +361,16 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
               <TabsContent value="history" className="py-4">
                 <div className="h-[400px] rounded-md border">
                   <ScrollArea className="h-full p-4">
+                    {loggedUser.role === Role.Admin && (
+                      <Button
+                        onClick={() => setAddHistoryDialog(true)}
+                        variant="outline"
+                        className="mb-3 w-full"
+                      >
+                        <Plus />
+                        Agregar Historial
+                      </Button>
+                    )}
                     {lead?.statusHistory?.length > 0 ? (
                       <div className="space-y-3">
                         {lead.statusHistory.map((item, index) => (
@@ -610,6 +623,14 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
           </div>
           {/* Footer con botones */}
         </div>
+
+        {loggedUser.role === Role.Admin && (
+          <AddHistoryDialog
+            isOpen={addHistoryDialog}
+            setIsOpen={setAddHistoryDialog}
+            leadId={lead.id}
+          />
+        )}
       </SheetContent>
     </>
   );
