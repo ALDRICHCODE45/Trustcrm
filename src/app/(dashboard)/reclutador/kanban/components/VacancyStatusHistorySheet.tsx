@@ -63,7 +63,7 @@ const getStatusDisplayName = (status: VacancyEstado) => {
     default:
       return status;
   }
-};
+}
 
 export const VacancyStatusHistorySheet = ({
   vacanteId,

@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  BoltIcon,
   Building,
   CalendarIcon,
   CheckCircle2,
@@ -12,12 +11,9 @@ import {
   CircleAlertIcon,
   ClipboardCheck,
   Clock,
-  CopyPlusIcon,
   FileCheck2,
-  FilesIcon,
   FileText,
   History,
-  Layers2Icon,
   ListCheck,
   ListCollapse,
   SquareUser,
@@ -44,7 +40,7 @@ import {
 import { VacancyDetailsChecklist } from "./VacancyDetailsChecklist";
 import { DrawerVacancyDetails } from "./DrawerVacancyDetails";
 import { useVacancyDetails } from "@/hooks/vacancy/use-vacancies";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { toast } from "sonner";
 import { VacancyStatusHistorySheet } from "./VacancyStatusHistorySheet";
@@ -65,13 +61,11 @@ import {
   AlertDialogContent,
   AlertDialogTitle,
   AlertDialogHeader,
-  AlertDialogTrigger,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { requestTernaValidationAction } from "@/actions/vacantes/checklist/actions";
 
 interface DetailsSectionProps {
   vacanteId: string;

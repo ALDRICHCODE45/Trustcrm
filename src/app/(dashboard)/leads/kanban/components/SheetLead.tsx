@@ -1,6 +1,12 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, LinkIcon, UserX } from "lucide-react";
+import {
+  CalendarIcon,
+  LinkIcon,
+  Loader2,
+  SquarePen,
+  UserX,
+} from "lucide-react";
 import { SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeadWithRelations } from "../page";
@@ -20,6 +26,43 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { DialogTitle } from "@radix-ui/react-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { useForm, Controller } from "react-hook-form";
+import {
+  EditLeadHistoryFormData,
+  EditLeadHistorySchema,
+} from "@/zod/LeadHistory";
+import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
+import { editLeadHistoryById } from "@/actions/leads/history/actions";
 
 interface Props {
   lead: LeadWithRelations;
@@ -59,13 +102,82 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
   const [contactos, setContactos] = useState<ContactWithRelations[]>(
     lead?.contactos || []
   );
+
   const [linkVerify, setLinkVerfy] = useState(lead.link);
+  const [historyEditing, setHistoryEditing] = useState<string | null>(null);
+  const [historyDate, setHistoryDate] = useState<Date | undefined>(undefined);
+  const [dialogEditOpen, setDialogEditOpen] = useState(false);
 
   useEffect(() => {
     if (!/^https?:\/\//i.test(lead.link)) {
       setLinkVerfy(`https://${lead.link}`);
     }
   }, [lead]);
+
+  const {
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<EditLeadHistoryFormData>({
+    resolver: zodResolver(EditLeadHistorySchema),
+    defaultValues: {
+      status: lead.status,
+      changedAt: new Date().toDateString(),
+    },
+  });
+
+  const onSubmit = async (data: { changedAt: string; status: string }) => {
+    try {
+      if (!historyEditing) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            message="Selecciona un historial para editar"
+            type="error"
+            onClick={() => toast.dismiss(t)}
+            title="Error"
+          />
+        ));
+        return;
+      }
+      //hacer el llamado a la accion
+      const dataToSend = {
+        id: historyEditing,
+        changedAt: new Date(data.changedAt),
+        status: data.status as LeadStatus,
+      };
+      const response = await editLeadHistoryById(dataToSend);
+      if (!response.ok) {
+        toast.custom((t) => (
+          <ToastCustomMessage
+            message={response.message || "Error al actualizar el historial"}
+            type="error"
+            onClick={() => toast.dismiss(t)}
+            title="Error"
+          />
+        ));
+        return;
+      }
+
+      toast.custom((t) => (
+        <ToastCustomMessage
+          message={"Historial actualizado correctamente. Refresca la pagina para ver los cambios"}
+          type="success"
+          onClick={() => toast.dismiss(t)}
+          title="Accion exitosa"
+        />
+      ));
+    } catch (e) {
+      toast.custom((t) => (
+        <ToastCustomMessage
+          message="Error al actualizar el historial"
+          type="error"
+          onClick={() => toast.dismiss(t)}
+          title="Error"
+        />
+      ));
+    }
+  };
 
   return (
     <>
@@ -229,28 +341,233 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
                 <div className="h-[400px] rounded-md border">
                   <ScrollArea className="h-full p-4">
                     {lead?.statusHistory?.length > 0 ? (
-                      <div className="space-y-3 pr-4">
+                      <div className="space-y-3">
                         {lead.statusHistory.map((item, index) => (
-                          <div
-                            key={index}
-                            className="flex justify-between items-center text-sm border-b pb-3"
-                          >
-                            <div>
-                              <span className="font-medium">
-                                {leadStatusMap[item.status]}
-                              </span>
-                              <p className="text-muted-foreground text-xs">
-                                Por: {item.changedBy.name}
-                              </p>
-                            </div>
-                            <span className="text-xs text-muted-foreground">
-                              {format(
-                                new Date(item.changedAt),
-                                "dd/MM/yy HH:mm",
-                                { locale: es }
-                              )}
-                            </span>
-                          </div>
+                          <>
+                            <Card
+                              key={index}
+                              className="group relative p-4 border border-border/50 hover:border-border transition-all duration-200 hover:shadow-sm bg-card/50 backdrop-blur-sm"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 space-y-2">
+                                  {/* Status principal */}
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-primary/60"></div>
+                                    <span className="font-medium text-foreground leading-tight">
+                                      {leadStatusMap[item.status]}
+                                    </span>
+                                  </div>
+
+                                  {/* Información secundaria */}
+                                  <div className="space-y-1 pl-4">
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <span className="w-1 h-1 rounded-full bg-muted-foreground/40"></span>
+                                      Por:{" "}
+                                      <span className="font-medium">
+                                        {item.changedBy.name}
+                                      </span>
+                                    </p>
+                                    <p className="text-xs text-muted-foreground/80 font-mono">
+                                      {format(
+                                        new Date(item.changedAt),
+                                        "dd/MM/yy HH:mm",
+                                        { locale: es }
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Botón de edición */}
+                                <div className="shrink-0">
+                                  <button
+                                    onClick={() => {
+                                      setHistoryEditing(item.id);
+                                      setDialogEditOpen(true);
+                                    }}
+                                    className="w-8 h-8 rounded-md bg-muted/50 hover:bg-muted border border-transparent hover:border-border/50 flex items-center justify-center transition-all duration-200 opacity-60 hover:opacity-100 group-hover:opacity-100"
+                                    aria-label="Editar"
+                                  >
+                                    <SquarePen
+                                      size={14}
+                                      className="text-muted-foreground hover:text-foreground transition-colors"
+                                    />
+                                  </button>
+                                </div>
+                              </div>
+                            </Card>
+                            <Dialog
+                              key={index}
+                              open={dialogEditOpen}
+                              onOpenChange={setDialogEditOpen}
+                            >
+                              <DialogContent className="z-50">
+                                <form
+                                  onSubmit={handleSubmit(onSubmit)}
+                                  className="space-y-4"
+                                >
+                                  <DialogHeader>
+                                    <DialogTitle>
+                                      Editar el Historial
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                      Al cambiar el historial, el resultado de
+                                      los reportes se verá afectado.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="flex flex-col gap-2">
+                                    <Label htmlFor="status" className="px-1">
+                                      Status
+                                    </Label>
+                                    <Controller
+                                      name="status"
+                                      control={control}
+                                      render={({ field }) => (
+                                        <Select
+                                          onValueChange={field.onChange}
+                                          value={field.value}
+                                        >
+                                          <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Selecciona un estado" />
+                                          </SelectTrigger>
+                                          <SelectContent className="w-full">
+                                            <SelectGroup>
+                                              <SelectLabel>Estado</SelectLabel>
+                                              <SelectItem
+                                                value={LeadStatus.Contacto}
+                                              >
+                                                Contacto
+                                              </SelectItem>
+                                              <SelectItem
+                                                value={LeadStatus.SocialSelling}
+                                              >
+                                                Social Selling
+                                              </SelectItem>
+                                              <SelectItem
+                                                value={
+                                                  LeadStatus.ContactoCalido
+                                                }
+                                              >
+                                                Contacto Calido
+                                              </SelectItem>
+                                              <SelectItem
+                                                value={LeadStatus.CitaAgendada}
+                                              >
+                                                Cita Agendada
+                                              </SelectItem>
+                                              <SelectItem
+                                                value={LeadStatus.CitaAtendida}
+                                              >
+                                                Cita Atendida
+                                              </SelectItem>
+                                              <SelectItem
+                                                value={LeadStatus.CitaValidada}
+                                              >
+                                                Cita Validada
+                                              </SelectItem>
+                                              <SelectItem
+                                                value={LeadStatus.Asignadas}
+                                              >
+                                                Posiciones Asignadas
+                                              </SelectItem>
+                                              <SelectItem
+                                                value={LeadStatus.StandBy}
+                                              >
+                                                Stand By
+                                              </SelectItem>
+                                            </SelectGroup>
+                                          </SelectContent>
+                                        </Select>
+                                      )}
+                                    />
+                                    {errors.status && (
+                                      <p className="text-sm text-red-500">
+                                        {errors.status.message}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Controller
+                                      name="changedAt"
+                                      control={control}
+                                      render={({ field }) => (
+                                        <div className="flex flex-col gap-2">
+                                          <Label htmlFor="date">
+                                            Fecha de cambio
+                                          </Label>
+                                          <Popover>
+                                            <PopoverTrigger asChild>
+                                              <Button
+                                                variant="outline"
+                                                className={cn(
+                                                  "w-full justify-start text-left font-normal",
+                                                  !field.value &&
+                                                    "text-muted-foreground"
+                                                )}
+                                              >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {field.value ? (
+                                                  format(field.value, "PPP", {
+                                                    locale: es,
+                                                  })
+                                                ) : (
+                                                  <span>Seleccionar fecha</span>
+                                                )}
+                                              </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent
+                                              className="w-auto p-0"
+                                              align="start"
+                                            >
+                                              <Calendar
+                                                mode="single"
+                                                selected={new Date(field.value)}
+                                                onSelect={(date) => {
+                                                  field.onChange(
+                                                    date?.toISOString()
+                                                  );
+                                                }}
+                                                locale={es}
+                                                captionLayout="dropdown"
+                                              />
+                                            </PopoverContent>
+                                          </Popover>
+                                          {errors.changedAt && (
+                                            <p className="text-sm text-destructive">
+                                              {errors.changedAt.message}
+                                            </p>
+                                          )}
+                                        </div>
+                                      )}
+                                    />
+                                  </div>
+                                  <DialogFooter>
+                                    <DialogClose asChild>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        disabled={isSubmitting}
+                                      >
+                                        Cancelar
+                                      </Button>
+                                    </DialogClose>
+                                    <Button
+                                      type="submit"
+                                      disabled={isSubmitting}
+                                    >
+                                      {isSubmitting ? (
+                                        <>
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          Guardando...
+                                        </>
+                                      ) : (
+                                        "Guardar cambios"
+                                      )}
+                                    </Button>
+                                  </DialogFooter>
+                                </form>
+                              </DialogContent>
+                            </Dialog>
+                          </>
                         ))}
                       </div>
                     ) : (
