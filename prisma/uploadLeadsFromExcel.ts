@@ -1,23 +1,18 @@
 //Archivo para subir leads desde archivo excel con un script
 //ejecutar con: bunx tsx prisma/uploadLeadsFromExcel.ts
 import { PrismaClient } from "@prisma/client";
-import { addDays, format } from "date-fns";
-import { es } from "date-fns/locale";
+import { addDays } from "date-fns";
 import * as fs from "fs";
 import path from "path";
 import * as XLSX from "xlsx";
 
 const prisma = new PrismaClient();
 
-//funcion helper para convertir fecha de excel a fecha de js
-function convertAndFormatExcelDate(
-  excelSerialDate: number,
-  formatString = "yyyy-MM-dd HH:mm:ss"
-) {
+// funcion helper para convertir fecha serial de Excel a Date JS
+function convertExcelSerialToDate(excelSerialDate: number): Date {
   const excelEpoch = new Date(1899, 11, 30);
   const convertedDate = addDays(excelEpoch, excelSerialDate);
-
-  return format(convertedDate, formatString, { locale: es });
+  return convertedDate;
 }
 
 // Tipo para definir la estructura de tus datos Excel
@@ -110,6 +105,11 @@ const uploadFileFromExcel = async (filePath: string) => {
         origenId = newOrigen.id;
       }
 
+      const createdAtDate = convertExcelSerialToDate(creation);
+      if (isNaN(createdAtDate.getTime())) {
+        throw new Error(`Fecha inválida en fila con empresa: ${empresa}`);
+      }
+
       await prisma.lead.create({
         data: {
           generadorId: generador.id,
@@ -117,7 +117,7 @@ const uploadFileFromExcel = async (filePath: string) => {
           sectorId: sectorId,
           origenId: origenId,
           link: web,
-          createdAt: convertAndFormatExcelDate(creation),
+          createdAt: createdAtDate,
         },
       });
     }
