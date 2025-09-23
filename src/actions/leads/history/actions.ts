@@ -49,7 +49,11 @@ interface createLeadHistoryArgs {
   changedAt: Date;
 }
 
-export const createLeadHistory = async ({ changedAt, leadId, status }: createLeadHistoryArgs) => {
+export const createLeadHistory = async ({
+  changedAt,
+  leadId,
+  status,
+}: createLeadHistoryArgs) => {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -72,6 +76,42 @@ export const createLeadHistory = async ({ changedAt, leadId, status }: createLea
     return {
       ok: false,
       message: "Error al crear el historial del lead",
+    };
+  }
+};
+
+interface deleteLeadHistoryByIdArgs {
+  id: string;
+}
+
+export const deleteLeadHistoryById = async ({
+  id,
+}: deleteLeadHistoryByIdArgs) => {
+  try {
+    //buscar el lead history por id
+    const history = await prisma.leadStatusHistory.findUnique({
+      where: {
+        id,
+      },
+    });
+    if (!history) {
+      return {
+        ok: false,
+        message: "Historial no encontrado",
+      };
+    }
+
+    //eliminar el historial del lead
+    await prisma.leadStatusHistory.delete({
+      where: {
+        id,
+      },
+    });
+    return { ok: true, message: "Historial eliminado correctamente" };
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Error al eliminar el historial del lead",
     };
   }
 };

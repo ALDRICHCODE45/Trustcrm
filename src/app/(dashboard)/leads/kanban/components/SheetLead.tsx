@@ -6,6 +6,7 @@ import {
   Loader2,
   Plus,
   SquarePen,
+  TrashIcon,
   UserX,
 } from "lucide-react";
 import { SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -63,9 +64,10 @@ import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
-import { editLeadHistoryById } from "@/actions/leads/history/actions";
+import { deleteLeadHistoryById, editLeadHistoryById } from "@/actions/leads/history/actions";
 import { useUsers } from "@/hooks/users/use-users";
 import { AddHistoryDialog } from "./historyComponents/AddHistoryDialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface Props {
   lead: LeadWithRelations;
@@ -199,6 +201,50 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
       ));
     }
   };
+
+
+  const handleDeleteHistory = async(historyId:string) =>{
+    try {
+      //llamada a la accion
+      const response = await deleteLeadHistoryById({id:historyId})
+      if(!response.ok){
+        toast.custom((t) => (
+          <ToastCustomMessage
+            message={response.message || "Error al eliminar el historial"}
+            type="error"
+            onClick={() => toast.dismiss(t)}
+            title="Error"
+          />
+        ));
+        return;
+      }
+
+      toast.custom((t) => (
+        <ToastCustomMessage
+          message={
+            "Historial eliminado correctamente. Refresca la pagina para ver los cambios"
+          }
+          type="success"
+          onClick={() => toast.dismiss(t)}
+          title="Accion exitosa"
+        />
+      ));
+
+
+    }catch(e){
+      toast.custom((t) => (
+        <ToastCustomMessage
+          message="Error al eliminar el historial"
+          type="error"
+          onClick={() => toast.dismiss(t)}
+          title="Error"
+        />
+      ));
+
+    }
+
+  }
+
 
   return (
     <>
@@ -410,20 +456,36 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
 
                                 {/* Botón de edición */}
                                 {loggedUser.role === Role.Admin && (
-                                  <div className="shrink-0">
-                                    <button
-                                      onClick={() => {
-                                        setHistoryEditing(item.id);
-                                        setDialogEditOpen(true);
-                                      }}
-                                      className="w-8 h-8 rounded-md bg-muted/50 hover:bg-muted border border-transparent hover:border-border/50 flex items-center justify-center transition-all duration-200 opacity-60 hover:opacity-100 group-hover:opacity-100"
-                                      aria-label="Editar"
-                                    >
-                                      <SquarePen
-                                        size={14}
-                                        className="text-muted-foreground hover:text-foreground transition-colors"
+                                  <div className="flex flex-col items-center gap-2">
+                                    <div className="shrink-0">
+                                      <Button
+                                        size={"icon"}
+                                        variant="outline"
+                                        onClick={() => {
+                                          setHistoryEditing(item.id);
+                                          setDialogEditOpen(true);
+                                        }}
+                                        aria-label="Editar"
+                                      >
+                                        <SquarePen className="text-muted-foreground hover:text-foreground transition-colors" />
+                                      </Button>
+                                    </div>
+                                    <div className="shrink-0">
+                                      <ConfirmDialog
+                                        onConfirm={()=>handleDeleteHistory(item.id)}
+                                        title="Eliminar Historial"
+                                        description="¿Estás seguro de que deseas eliminar este historial? Esta acción no se puede deshacer."
+                                        trigger={
+                                          <Button
+                                            onClick={() => {}}
+                                            variant="destructive"
+                                            size={"icon"}
+                                          >
+                                            <TrashIcon />
+                                          </Button>
+                                        }
                                       />
-                                    </button>
+                                    </div>
                                   </div>
                                 )}
                               </div>
