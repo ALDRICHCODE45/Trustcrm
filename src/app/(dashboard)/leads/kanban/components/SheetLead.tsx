@@ -10,7 +10,7 @@ import {
 import { SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeadWithRelations } from "../page";
-import { LeadStatus } from "@prisma/client";
+import { LeadStatus, Role } from "@prisma/client";
 import {
   ContactoCard,
   ContactWithRelations,
@@ -63,6 +63,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { editLeadHistoryById } from "@/actions/leads/history/actions";
+import { useUsers } from "@/hooks/users/use-users";
 
 interface Props {
   lead: LeadWithRelations;
@@ -108,6 +109,12 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
   const [historyDate, setHistoryDate] = useState<Date | undefined>(undefined);
   const [dialogEditOpen, setDialogEditOpen] = useState(false);
 
+  const { loggedUser, fetchLoggedUser } = useUsers();
+
+  useEffect(() => {
+    fetchLoggedUser();
+  }, [fetchLoggedUser]);
+
   useEffect(() => {
     if (!/^https?:\/\//i.test(lead.link)) {
       setLinkVerfy(`https://${lead.link}`);
@@ -126,6 +133,14 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
       changedAt: new Date().toDateString(),
     },
   });
+
+  if (!loggedUser) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <Loader2 className="animate-spin h-6 w-6 text-muted-foreground" />
+      </div>
+    );
+  }
 
   const onSubmit = async (data: { changedAt: string; status: string }) => {
     try {
@@ -146,6 +161,7 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
         changedAt: new Date(data.changedAt),
         status: data.status as LeadStatus,
       };
+
       const response = await editLeadHistoryById(dataToSend);
       if (!response.ok) {
         toast.custom((t) => (
@@ -161,7 +177,9 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
 
       toast.custom((t) => (
         <ToastCustomMessage
-          message={"Historial actualizado correctamente. Refresca la pagina para ver los cambios"}
+          message={
+            "Historial actualizado correctamente. Refresca la pagina para ver los cambios"
+          }
           type="success"
           onClick={() => toast.dismiss(t)}
           title="Accion exitosa"
@@ -378,21 +396,23 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
                                 </div>
 
                                 {/* Botón de edición */}
-                                <div className="shrink-0">
-                                  <button
-                                    onClick={() => {
-                                      setHistoryEditing(item.id);
-                                      setDialogEditOpen(true);
-                                    }}
-                                    className="w-8 h-8 rounded-md bg-muted/50 hover:bg-muted border border-transparent hover:border-border/50 flex items-center justify-center transition-all duration-200 opacity-60 hover:opacity-100 group-hover:opacity-100"
-                                    aria-label="Editar"
-                                  >
-                                    <SquarePen
-                                      size={14}
-                                      className="text-muted-foreground hover:text-foreground transition-colors"
-                                    />
-                                  </button>
-                                </div>
+                                {loggedUser.role === Role.Admin && (
+                                  <div className="shrink-0">
+                                    <button
+                                      onClick={() => {
+                                        setHistoryEditing(item.id);
+                                        setDialogEditOpen(true);
+                                      }}
+                                      className="w-8 h-8 rounded-md bg-muted/50 hover:bg-muted border border-transparent hover:border-border/50 flex items-center justify-center transition-all duration-200 opacity-60 hover:opacity-100 group-hover:opacity-100"
+                                      aria-label="Editar"
+                                    >
+                                      <SquarePen
+                                        size={14}
+                                        className="text-muted-foreground hover:text-foreground transition-colors"
+                                      />
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </Card>
                             <Dialog
