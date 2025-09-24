@@ -87,6 +87,7 @@ export const CandidatesSectionReclutador = ({
   user_logged,
 }: CandidatesSectionProps) => {
   // Usar el hook optimizado para candidatos
+
   const {
     candidates,
     isLoading,

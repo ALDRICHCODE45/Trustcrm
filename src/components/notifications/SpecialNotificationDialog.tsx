@@ -73,11 +73,12 @@ export const SpecialNotificationDialog = ({
             </div>
           </DialogHeader>
 
-          {notification.type === "VACANCY_ASSIGNED" && (
-            <Card>
-              <CardHeader>{notification.message}</CardHeader>
-            </Card>
-          )}
+          {notification.type === "VACANCY_ASSIGNED" ||
+            (notification.type === "VACANCY_STATUS_CHANGED" && (
+              <Card>
+                <CardHeader>{notification.message}</CardHeader>
+              </Card>
+            ))}
 
           {/* Mensaje destacado sobre documentos requeridos */}
           {notification.type === "VACANCY_ASSIGNED" && (

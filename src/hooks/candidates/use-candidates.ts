@@ -14,10 +14,12 @@ import {
   unvalidateTernaAction,
   getTernaHistory,
   deleteHistoryTernaAction,
+  getVacancyDetails,
 } from "@/actions/vacantes/actions";
 import { PersonWithRelations } from "@/app/(dashboard)/list/reclutamiento/components/FinalTernaSheet";
 import { CreateCandidateFormData } from "@/zod/createCandidateSchema";
 import { FileMetadata } from "@/hooks/use-file-upload";
+import { createReclutadorConfirmValidation } from "@/actions/notifications/special-notifications";
 
 /**
  * Hook personalizado optimizado para manejar candidatos de una vacante
@@ -246,7 +248,19 @@ export const useCandidates = (vacancyId?: string) => {
       if (!response.ok) {
         throw new Error(response.message || "Error al validar la terna");
       }
+
+      const vacancy = await getVacancyDetails(vacancyId);
+      if (!vacancy.ok) {
+        throw new Error("Error al obtener los detalles de la vacante");
+      }
+
+      await createReclutadorConfirmValidation(
+        `Hola Reclutador!! La terna de tu vacante ${vacancy.vacancy?.posicion} ha sido correctamente validada!! `,
+        vacancyId
+      );
+
       return response;
+
     } catch (e) {
       throw new Error("Error al validar la terna");
     }
