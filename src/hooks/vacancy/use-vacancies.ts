@@ -1,3 +1,4 @@
+import { createReclutadorConfirmValidation } from "@/actions/notifications/special-notifications";
 import { getVacancies, getVacancyDetails } from "@/actions/vacantes/actions";
 import {
   completePerfilMuestraAndNotify,
@@ -62,6 +63,17 @@ export const useVacancyDetails = (vacancyId?: string) => {
     try {
       if (!vacancyId) return;
       const response = await ValidateChecklistAction(vacancyId);
+      //obtener los detalles de las vacantes
+      const vacancy = await getVacancyDetails(vacancyId);
+      if (!vacancy.ok) {
+        setError("Error al obtener los detalles de la vacante");
+        return;
+      }
+
+      await createReclutadorConfirmValidation(
+        `Hola Reclutador!! El checklist de tu vacante  ${vacancy.vacancy?.posicion} ha sido correctamente validado!! `,
+        vacancyId
+      );
       if (!response.ok) {
         setError("Error al validar el checklist");
       }
@@ -78,6 +90,16 @@ export const useVacancyDetails = (vacancyId?: string) => {
     try {
       if (!vacancyId) return;
       const response = await ValidatePerfilMuestraAction(vacancyId);
+      const vacancy = await getVacancyDetails(vacancyId);
+      if (!vacancy.ok) {
+        setError("Error al obtener los detalles de la vacante");
+        return;
+      }
+
+      await createReclutadorConfirmValidation(
+        `Hola Reclutador!! El Perfil Muestra de tu vacante ${vacancy.vacancy?.posicion} ha sido correctamente validado!! `,
+        vacancyId
+      );
       if (!response.ok) {
         setError("Error al validar el perfil muestra");
         return;
@@ -136,6 +158,17 @@ export const useVacancyDetails = (vacancyId?: string) => {
         setError("Error al solicitar la validación del checklist");
         return;
       }
+
+      const vacancy = await getVacancyDetails(vacancyId);
+      if (!vacancy.ok) {
+        setError("Error al obtener los detalles de la vacante");
+        return;
+      }
+
+      await createReclutadorConfirmValidation(
+        `Hola Reclutador!! La terna de tu vacante ${vacancy.vacancy?.posicion} ha sido correctamente validada!! `,
+        vacancyId
+      );
     } catch (e) {
       setError("Error al solicitar la validación del checklist");
     } finally {

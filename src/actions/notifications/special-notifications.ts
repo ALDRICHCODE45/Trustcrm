@@ -275,3 +275,52 @@ export const createVacancyAssignedNotification = async (
     };
   }
 };
+
+export const createReclutadorConfirmValidation = async (
+  message: string,
+  vacancyId: string
+) => {
+  try {
+    if (!message || !vacancyId) {
+      return {
+        ok: false,
+        message: "Los datos para crear la notificacion son incompletos",
+      };
+    }
+
+    const vacancy = await prisma.vacancy.findUnique({
+      where: { id: vacancyId },
+      include: {
+        reclutador: true,
+      },
+    });
+
+    if (!vacancy) {
+      return {
+        ok: false,
+        message: "No se encontró la vacante para crear la notificación",
+      };
+    }
+
+    await prisma.specialNotification.create({
+      data: {
+        type: "VACANCY_STATUS_CHANGED",
+        title: "Validación Completada",
+        message: message,
+        recipientId: vacancy.reclutadorId,
+        priority: SpecialNotificationPriority.MEDIUM,
+      },
+    });
+
+    revalidatePath("/");
+    return {
+      ok: true,
+      message: "Notificación especial creada correctamente",
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      message: "Error al crear la notificación de validación",
+    };
+  }
+};
