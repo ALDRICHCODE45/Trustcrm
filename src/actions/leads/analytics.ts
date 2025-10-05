@@ -1,5 +1,5 @@
-import { LeadStatus } from "@/lib/data";
 import prisma from "@/lib/db";
+import { LeadStatus } from "@prisma/client";
 
 // Función para obtener el estado de los leads en un rango de fechas
 async function getLeadsStatusInDateRange(startDate: Date, endDate: Date) {

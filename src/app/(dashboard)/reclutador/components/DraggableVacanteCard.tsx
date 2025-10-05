@@ -1,10 +1,10 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { VacanteCard } from "./VacanteCard";
-import type { Vacante } from "@/lib/data";
+import { VacancyWithRelations } from "./ReclutadorColumns";
 
 interface DraggableVacanteCardProps {
-  vacante: Vacante;
+  vacante: VacancyWithRelations;
   onClick: () => void;
 }
 

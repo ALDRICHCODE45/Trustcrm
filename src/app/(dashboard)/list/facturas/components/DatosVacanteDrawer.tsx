@@ -8,11 +8,9 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { vacantes } from "@/lib/data";
 
 export const DatosVacantesDrawer = ({ row }: { row: any }) => {
   const vacanteId = row.original.vacanteId;
-  const vacante = vacantes.find((v) => v.id === vacanteId);
   return (
     <Drawer>
       <DrawerTrigger asChild>
@@ -32,9 +30,7 @@ export const DatosVacantesDrawer = ({ row }: { row: any }) => {
         <div className="p-4">
           <Card className="w-full max-w-md mx-auto mb-[30px]">
             <CardHeader>
-              <CardTitle className="text-xl font-bold">
-                Vacante #{vacante?.id}
-              </CardTitle>
+              <CardTitle className="text-xl font-bold">Vacante #</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
@@ -42,7 +38,7 @@ export const DatosVacantesDrawer = ({ row }: { row: any }) => {
                   Reclutador
                 </span>
                 <span className="text-sm font-semibold">
-                  {vacante?.reclutador?.name}
+                  NOMBRE DEL RECLUTADOS
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -50,7 +46,7 @@ export const DatosVacantesDrawer = ({ row }: { row: any }) => {
                   Contratado
                 </span>
                 <span className="text-sm font-semibold">
-                  {vacante?.candidatoContratado?.nombre}
+                  candidato contratado
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -58,14 +54,16 @@ export const DatosVacantesDrawer = ({ row }: { row: any }) => {
                   Salario
                 </span>
                 <span className="text-sm font-semibold">
-                  ${vacante?.salario.toLocaleString()}
+                  salario de la vacante
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">
                   Fee (%)
                 </span>
-                <span className="text-sm font-semibold">{vacante?.fee}%</span>
+                <span className="text-sm font-semibold">
+                  fee de la vacante%
+                </span>
               </div>
             </CardContent>
           </Card>

@@ -1,6 +1,5 @@
 import { ReactElement } from "react";
 import { cuentaColumns } from "./cuentaColumns";
-import { Cuenta, cuentaData } from "@/lib/data";
 import { DataTable } from "@/components/Table";
 import { ColumnDef } from "@tanstack/react-table";
 import { auth } from "@/lib/auth";
@@ -14,17 +13,20 @@ export const metadata: Metadata = {
   title: "Trust | Cuentas",
 };
 
+/**
+ * Falta implementar las facturas, ESTE APARTADO TIENE DATOS DE PRUEBA.
+ *
+ */
+
 const fetchFacturas = async () => {
-  return new Promise<{ columns: ColumnDef<Cuenta>[]; data: Cuenta[] }>(
-    (resolve) => {
-      setTimeout(() => {
-        resolve({
-          columns: cuentaColumns,
-          data: cuentaData,
-        });
-      }, 200);
-    },
-  );
+  return new Promise<{ columns: ColumnDef<any>[]; data: any[] }>((resolve) => {
+    setTimeout(() => {
+      resolve({
+        columns: cuentaColumns,
+        data: [],
+      });
+    }, 200);
+  });
 };
 
 export default async function Cuentas({}: pageProps): Promise<ReactElement> {

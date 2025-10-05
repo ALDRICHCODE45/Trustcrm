@@ -8,11 +8,9 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { clientesData } from "@/lib/data";
 
 export const DatosClienteDrawer = ({ row }: { row: any }) => {
   const clientId = row.original.clientId;
-  const client = clientesData.find((cliente) => cliente.id === clientId);
 
   return (
     <Drawer>
@@ -33,34 +31,36 @@ export const DatosClienteDrawer = ({ row }: { row: any }) => {
         <div className="p-4">
           <Card className="w-full max-w-md mx-auto mb-[30px]">
             <CardHeader>
-              <CardTitle className="text-xl font-bold">
-                Cliente #{client?.clienteId}
-              </CardTitle>
+              <CardTitle className="text-xl font-bold">Cliente #</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">
                   Régimen Fiscal
                 </span>
-                <span className="text-sm font-semibold">{client?.regimen}</span>
+                <span className="text-sm font-semibold">
+                  Nombre del cliente
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">
                   RFC
                 </span>
-                <span className="text-sm font-semibold">{client?.rfc}</span>
+                <span className="text-sm font-semibold">RFC DEL CLIENTE</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">
                   Código Postal
                 </span>
-                <span className="text-sm font-semibold">{client?.cp}</span>
+                <span className="text-sm font-semibold">
+                  CODIGO POSTAL DEL CLIENTE
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">
                   Tipo de Persona
                 </span>
-                <span className="text-sm font-semibold">{client?.tipo}</span>
+                <span className="text-sm font-semibold">TIPO DE CLIENTE</span>
               </div>
             </CardContent>
           </Card>

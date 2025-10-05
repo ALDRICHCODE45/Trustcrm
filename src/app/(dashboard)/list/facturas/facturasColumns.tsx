@@ -1,12 +1,17 @@
 "use client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Factura } from "@/lib/data";
 import { ColumnDef } from "@tanstack/react-table";
 import { DatosClienteDrawer } from "./components/DatosCliente";
 import { DatosVacantesDrawer } from "./components/DatosVacanteDrawer";
 import { ActionsFactura } from "./components/ActionsFactura";
 
-export const facturasColumns: ColumnDef<Factura>[] = [
+/**
+ * Las factuars aun no estan implementadas, utilizamos por el momento any para los datos
+ * y pasamos [un array vacio] para que no de error
+ *
+ */
+
+export const facturasColumns: ColumnDef<any>[] = [
   {
     id: "select",
     header: ({ table }) => (

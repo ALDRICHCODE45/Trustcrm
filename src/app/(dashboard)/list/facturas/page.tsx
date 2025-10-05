@@ -1,6 +1,5 @@
 import { ReactElement } from "react";
 import { DataTable } from "@/components/Table";
-import { dataFactura, Factura } from "@/lib/data";
 import { facturasColumns } from "./facturasColumns";
 import { ColumnDef } from "@tanstack/react-table";
 import { auth } from "@/lib/auth";
@@ -14,17 +13,20 @@ export const metadata: Metadata = {
   title: "Trust | Facturas",
 };
 
+/**
+ * Falta implementar las facturas, ESTE APARTADO TIENE DATOS DE PRUEBA.
+ *
+ */
+
 const fetchFacturas = async () => {
-  return new Promise<{ columns: ColumnDef<Factura>[]; data: Factura[] }>(
-    (resolve) => {
-      setTimeout(() => {
-        resolve({
-          columns: facturasColumns,
-          data: dataFactura,
-        });
+  return new Promise<{ columns: ColumnDef<any>[]; data: any[] }>((resolve) => {
+    setTimeout(() => {
+      resolve({
+        columns: facturasColumns,
+        data: [],
       });
-    },
-  );
+    });
+  });
 };
 
 export default async function FacturasPage({}: pageProps): Promise<ReactElement> {

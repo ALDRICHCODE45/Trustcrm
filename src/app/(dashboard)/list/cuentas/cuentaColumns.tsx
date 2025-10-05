@@ -1,10 +1,13 @@
 "use client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Cuenta } from "@/lib/data";
 import { ColumnDef } from "@tanstack/react-table";
 import { CuentasActions } from "./components/CuentasActions";
 
-export const cuentaColumns: ColumnDef<Cuenta>[] = [
+/**
+ * Falta implementar las facturas, ESTE APARTADO TIENE DATOS DE PRUEBA.
+ *
+ */
+export const cuentaColumns: ColumnDef<any>[] = [
   {
     id: "select",
     header: ({ table }) => (

@@ -29,8 +29,8 @@ import { z } from "zod";
 import { CalendarIcon, FilterX, Search } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Vacante } from "@/lib/data";
 import { Table } from "@tanstack/react-table";
+import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
 
 // Validación de formulario con zod
 const FilterSchema = z.object({
@@ -48,7 +48,7 @@ const FilterSchema = z.object({
 type FilterValues = z.infer<typeof FilterSchema>;
 
 interface FilterBarProps {
-  table: Table<Vacante>;
+  table: Table<VacancyWithRelations>;
   reclutadores: string[];
   estados: string[];
   tipos: string[];

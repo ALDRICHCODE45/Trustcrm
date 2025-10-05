@@ -6,11 +6,12 @@ import {
 } from "@/components/ui/card";
 import { Building, Calendar, Clock } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Vacante } from "../../../../lib/data";
 import { Badge } from "@/components/ui/badge";
+import { VacancyWithRelations } from "./ReclutadorColumns";
+import { format } from "date-fns";
 
 interface VacanteCardProps {
-  vacante: Vacante;
+  vacante: VacancyWithRelations;
   onClick: () => void;
 }
 const getTipoColor = (tipo: string) => {
@@ -33,7 +34,7 @@ export const VacanteCard: React.FC<VacanteCardProps> = ({
   >
     <CardHeader className="p-4 pb-2">
       <div className="flex justify-between items-start">
-        <h3 className="font-medium text-base">{vacante.puesto}</h3>
+        <h3 className="font-medium text-base">{vacante.posicion}</h3>
       </div>
       <div className="flex items-center text-sm text-muted-foreground mt-1">
         <Building className="h-3.5 w-3.5 mr-1" />
@@ -44,7 +45,7 @@ export const VacanteCard: React.FC<VacanteCardProps> = ({
       <div className="flex items-center text-sm mt-2">
         <Avatar className="h-6 w-6 mr-2">
           <AvatarImage
-            src={vacante.reclutador.photo}
+            src={vacante.reclutador.image ?? ""}
             alt={vacante.reclutador.name}
             className="h-full w-full object-cover"
           />
@@ -55,7 +56,8 @@ export const VacanteCard: React.FC<VacanteCardProps> = ({
       <div className="flex items-center text-sm mt-2">
         <Calendar className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
         <span className="text-muted-foreground">
-          Entrega: {vacante.fechaEntrega}
+          Entrega:
+          {vacante.fechaEntrega && format(vacante.fechaEntrega, "mm/dd/yyy")}
         </span>
       </div>
     </CardContent>

@@ -17,7 +17,10 @@ interface NotificationSettingsProps {
   onNotificationChange: (enabled: boolean, recipients: string[]) => void;
 }
 
-export function NotificationSettings({ users, onNotificationChange }: NotificationSettingsProps) {
+export function NotificationSettings({
+  users,
+  onNotificationChange,
+}: NotificationSettingsProps) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
@@ -28,9 +31,9 @@ export function NotificationSettings({ users, onNotificationChange }: Notificati
 
   const handleUserSelect = (value: string) => {
     const newSelectedUsers = selectedUsers.includes(value)
-      ? selectedUsers.filter(id => id !== value)
+      ? selectedUsers.filter((id) => id !== value)
       : [...selectedUsers, value];
-    
+
     setSelectedUsers(newSelectedUsers);
     onNotificationChange(notificationsEnabled, newSelectedUsers);
   };
@@ -70,4 +73,4 @@ export function NotificationSettings({ users, onNotificationChange }: Notificati
       )}
     </div>
   );
-} 
+}

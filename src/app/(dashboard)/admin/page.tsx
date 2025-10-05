@@ -41,13 +41,11 @@ export default async function Dashboardpage() {
 
   return (
     <>
-      <div>
-        <AdminPage
-          userCount={userCount}
-          clientsCount={clientsCount}
-          userId={session?.user.id as string}
-        />
-      </div>
+      <AdminPage
+        userCount={userCount}
+        clientsCount={clientsCount}
+        userId={session?.user.id as string}
+      />
     </>
   );
 }

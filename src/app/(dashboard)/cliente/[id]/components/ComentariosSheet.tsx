@@ -31,7 +31,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Comentario } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, Clock, MessageCircleMore, Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -44,8 +43,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { Comment } from "@prisma/client";
 
-export const ComentariosSheet = ({ comments }: { comments: Comentario[] }) => {
+//=========================================================
+//Este componente tiene datos mock y no esta implementado correctamente
+//=========================================================
+
+export const ComentariosSheet = ({ comments }: { comments: Comment[] }) => {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -86,45 +90,45 @@ export const ComentariosSheet = ({ comments }: { comments: Comentario[] }) => {
                   <Badge
                     variant="outline"
                     className={`flex items-center gap-1 ${
-                      comentario.tipo === "Tarea"
+                      comentario.taskId === "Tarea"
                         ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800"
                         : "bg-gray-50 dark:bg-gray-800/30 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
                     }`}
                   >
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        comentario.tipo === "Tarea"
+                        comentario.taskId === "Tarea"
                           ? "bg-blue-600 dark:bg-blue-400"
                           : "bg-gray-500 dark:bg-gray-400"
                       }`}
                     ></div>
-                    {comentario.tipo}
+                    {comentario.taskId ? "Tarea" : "Comentario"}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock size={14} className="text-gray-400" />
                   <p className="text-xs text-gray-400">
-                    Lun {comentario.fecha} • {comentario.hora}
+                    Lun {comentario.authorId} • {comentario.authorId}
                   </p>
                 </div>
               </CardHeader>
               <CardContent className="p-3 pt-1">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {comentario.texto}
+                  {comentario.authorId}
                 </p>
               </CardContent>
               <CardFooter className="flex flex-row items-center justify-between w-full p-3 pt-2 border-t border-gray-100 dark:border-gray-800">
                 <p className="text-xs text-gray-400">
                   By:
                   <span className="text-gray-500 dark:text-gray-300">
-                    {comentario.autor.name} {comentario.autor.rol}
+                    {comentario.authorId} {comentario.authorId}
                   </span>
                 </p>
-                {comentario.tipo === "Tarea" && comentario.fechaEntrega && (
+                {comentario.taskId && comentario.authorId && (
                   <p className="text-xs text-gray-400">
                     Entrega:{" "}
                     <span className="font-medium text-gray-600 dark:text-gray-300">
-                      {comentario.fechaEntrega}
+                      {comentario.authorId}
                     </span>
                   </p>
                 )}

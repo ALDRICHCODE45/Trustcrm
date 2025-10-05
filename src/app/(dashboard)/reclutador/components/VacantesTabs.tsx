@@ -1,4 +1,3 @@
-import { Vacante } from "@/lib/data";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -29,20 +28,24 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { VacancyWithRelations } from "./ReclutadorColumns";
+import { format } from "date-fns";
 
 interface DetailsSectionProps {
-  vacante: Vacante;
+  vacante: VacancyWithRelations;
 }
 
 interface CandidatesSectionProps {
-  vacante: Vacante;
+  vacante: VacancyWithRelations;
 }
 
 interface CommentsSectionProps {
-  vacante: Vacante;
+  vacante: VacancyWithRelations;
 }
 
-export const VacanteTabs: React.FC<{ vacante: Vacante }> = ({ vacante }) => (
+export const VacanteTabs: React.FC<{ vacante: VacancyWithRelations }> = ({
+  vacante,
+}) => (
   <Tabs defaultValue="detalles">
     <TabsList className="grid w-full grid-cols-4">
       <TabsTrigger value="detalles">Detalles</TabsTrigger>
@@ -65,7 +68,7 @@ export const VacanteTabs: React.FC<{ vacante: Vacante }> = ({ vacante }) => (
   </Tabs>
 );
 interface DocumentsSectionProps {
-  vacante: Vacante;
+  vacante: VacancyWithRelations;
 }
 const DocumentsSection: React.FC<DocumentsSectionProps> = ({ vacante }) => (
   <div className="space-y-6 mt-4">
@@ -238,9 +241,9 @@ const CandidatesSection: React.FC<CandidatesSectionProps> = ({ vacante }) => (
               <div className="flex items-center gap-4">
                 {/* Avatar */}
                 <Avatar className="h-14 w-14 border-2 border-primary/10">
-                  <AvatarImage src={candidato.foto} alt={candidato.nombre} />
+                  <AvatarImage src={"/profile"} alt={candidato.name} />
                   <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
-                    {candidato.nombre
+                    {candidato.name
                       .split(" ")
                       .map((n) => n[0])
                       .join("")}
@@ -249,15 +252,15 @@ const CandidatesSection: React.FC<CandidatesSectionProps> = ({ vacante }) => (
 
                 {/* Detalles del candidato */}
                 <div className="flex-1 space-y-1">
-                  <p className="font-medium text-sm">{candidato.nombre}</p>
+                  <p className="font-medium text-sm">{candidato.name}</p>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <div className="flex items-center">
                       <Mail className="h-3 w-3 mr-1 opacity-70" />
-                      <span>{candidato.correo}</span>
+                      <span>{candidato.email}</span>
                     </div>
                     <div className="flex items-center">
                       <Phone className="h-3 w-3 mr-1 opacity-70" />
-                      <span>{candidato.telefono}</span>
+                      <span>{candidato.phone}</span>
                     </div>
                   </div>
                 </div>
@@ -328,7 +331,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ vacante }) => (
           <div className="relative pb-2">
             <div className="absolute left-4 top-0 bottom-0 w-px bg-border"></div>
 
-            {vacante.comentarios.map((comentario, index) => (
+            {vacante.Comments.map((comentario, index) => (
               <div key={comentario.id} className="relative mb-6 last:mb-0">
                 {/* Indicador de tiempo */}
                 <div className="absolute left-4 top-0 -translate-x-1/2 w-2 h-2 rounded-full bg-primary z-10"></div>
@@ -339,26 +342,26 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ vacante }) => (
                       <div className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
                           <AvatarImage
-                            src={comentario.autor.photo}
-                            alt={comentario.autor.name}
+                            src={comentario.author.image ?? "/profile"}
+                            alt={comentario.author.name}
                             className="w-full h-full object-cover"
                           />
                           <AvatarFallback>
-                            {comentario.autor.name.charAt(0)}
+                            {comentario.author.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-medium leading-none">
-                            {comentario.autor.name}
+                            {comentario.author.name}
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            {comentario.autor.rol || "Reclutador"}
+                            {comentario.author.role || "Reclutador"}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
-                          {comentario.fecha}
+                          {format(comentario.createdAt, "mm/dd/yy")}
                         </Badge>
                         {index === 0 && (
                           <Badge variant="secondary" className="text-xs">
@@ -369,7 +372,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ vacante }) => (
                     </div>
                   </CardHeader>
                   <CardContent className="p-4 pt-2">
-                    <p className="text-sm">{comentario.texto}</p>
+                    <p className="text-sm">{comentario.content}</p>
                   </CardContent>
                 </Card>
               </div>
@@ -397,7 +400,7 @@ const DetailsSection: React.FC<DetailsSectionProps> = ({ vacante }) => (
         <div className="flex items-center gap-2">
           <Avatar className="h-10 w-10">
             <AvatarImage
-              src={vacante.reclutador.photo}
+              src={vacante.reclutador.image ?? "/profile.jpg"}
               alt={vacante.reclutador.name}
               className="w-full h-full object-cover"
             />
@@ -426,7 +429,9 @@ const DetailsSection: React.FC<DetailsSectionProps> = ({ vacante }) => (
             <span className="text-sm text-muted-foreground">
               Fecha entrega:
             </span>
-            <span className="ml-2 font-medium">{vacante.fechaEntrega}</span>
+            <span className="ml-2 font-medium">
+              {vacante.fechaEntrega && format(vacante.fechaEntrega, "mm/dd/yy")}
+            </span>
           </div>
           <div className="flex items-center">
             <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -452,16 +457,16 @@ const DetailsSection: React.FC<DetailsSectionProps> = ({ vacante }) => (
             <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
               <div
                 className={`h-full ${
-                  vacante.tiempoTranscurrido > 30
+                  vacante.tiempoTranscurrido! > 30
                     ? "bg-red-500"
-                    : vacante.tiempoTranscurrido > 15
-                      ? "bg-amber-500"
-                      : "bg-green-500"
+                    : vacante.tiempoTranscurrido! > 15
+                    ? "bg-amber-500"
+                    : "bg-green-500"
                 }`}
                 style={{
                   width: `${Math.min(
                     100,
-                    (vacante.tiempoTranscurrido / 45) * 100,
+                    (vacante.tiempoTranscurrido! / 45) * 100
                   )}%`,
                 }}
               ></div>
@@ -488,7 +493,7 @@ const DetailsSection: React.FC<DetailsSectionProps> = ({ vacante }) => (
           <CardContent className="pt-4">
             <div className="text-sm text-muted-foreground">Salario</div>
             <div className="text-2xl font-semibold mt-1">
-              ${vacante.salario.toLocaleString()}
+              ${vacante.salario!}
             </div>
           </CardContent>
         </Card>
@@ -504,7 +509,7 @@ const DetailsSection: React.FC<DetailsSectionProps> = ({ vacante }) => (
           <CardContent className="pt-4">
             <div className="text-sm text-muted-foreground">Valor factura</div>
             <div className="text-2xl font-semibold mt-1">
-              ${vacante.valorFactura.toLocaleString()}
+              ${vacante.valorFactura}
             </div>
           </CardContent>
         </Card>
@@ -523,7 +528,7 @@ const DetailsSection: React.FC<DetailsSectionProps> = ({ vacante }) => (
               <div>
                 <h4 className="font-medium">Candidato contratado</h4>
                 <p className="text-muted-foreground text-sm">
-                  {vacante.candidatoContratado.nombre}
+                  {vacante.candidatoContratado.name}
                 </p>
               </div>
             </div>

@@ -68,19 +68,11 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DateRange } from "react-day-picker";
 import { DateRangePicker } from "../../../../../components/DateRangePicker";
-import {
-  clientesData,
-  Oficina,
-  Role,
-  UsersData,
-  Vacante,
-} from "../../../../../lib/data";
 import { toast } from "sonner";
 import CreateVacanteForm from "../components/CreateVacanteForm";
-import { Client, User, VacancyTipo } from "@prisma/client";
+import { Client, Oficina, User, VacancyTipo } from "@prisma/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Router } from "next/router";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import QuickStatsDialog from "@/app/(dashboard)/reclutador/components/QuickStatsDialog";
@@ -572,8 +564,8 @@ function TableFilters<TData, TValue>({
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value="all">Todas las oficinas</SelectItem>
-                  <SelectItem value={Oficina.uno}>Oficina 1</SelectItem>
-                  <SelectItem value={Oficina.dos}>Oficina 2</SelectItem>
+                  <SelectItem value={Oficina.Oficina1}>Oficina 1</SelectItem>
+                  <SelectItem value={Oficina.Oficina2}>Oficina 2</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
