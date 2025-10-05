@@ -21,19 +21,19 @@ const nextConfig = {
       },
     ],
   },
-   // Permitir conexiones externas
-   async headers() {
+  // Permitir conexiones externas
+  async headers() {
     return [
       {
-        source: '/:path*',
+        source: "/:path*",
         headers: [
           {
-            key: 'Access-Control-Allow-Origin',
-            value: '*',
+            key: "Access-Control-Allow-Origin",
+            value: "*",
           },
         ],
       },
-    ]
+    ];
   },
 };
 
