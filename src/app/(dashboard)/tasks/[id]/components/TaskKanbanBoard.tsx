@@ -2,12 +2,27 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from "@hello-pangea/dnd";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  UniqueIdentifier,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { restrictToWindowEdges } from "@dnd-kit/modifiers";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -64,6 +79,82 @@ interface Props {
   initialTasks: TaskWithUsers[];
   sharedTasks?: TaskWithUsers[]; // Tareas compartidas contigo
 }
+
+// Componente Sortable para las tareas
+interface SortableTaskCardProps {
+  task: TaskWithUsers;
+  onToggleStatus: (taskId: string) => void;
+  onDelete: (taskId: string) => void;
+  onEdit: (id: string, data: EditData) => void;
+}
+
+const SortableTaskCard = ({
+  task,
+  onToggleStatus,
+  onDelete,
+  onEdit,
+}: SortableTaskCardProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`${
+        isDragging ? "rotate-2 shadow-xl opacity-95 scale-105" : ""
+      } transition-all duration-200`}
+    >
+      <TaskCard
+        activity={task}
+        onToggleStatus={onToggleStatus}
+        onDelete={onDelete}
+        onEdit={onEdit}
+      />
+    </div>
+  );
+};
+
+// Componente Droppable para las columnas
+interface DroppableColumnProps {
+  id: string;
+  children: React.ReactNode;
+  isDraggingOver?: boolean;
+}
+
+const DroppableColumn = ({
+  id,
+  children,
+  isDraggingOver,
+}: DroppableColumnProps) => {
+  return (
+    <div
+      className={`transition-colors rounded-xl border ${
+        isDraggingOver
+          ? "bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-600"
+          : "bg-slate-50/50 dark:bg-slate-800/20 border-slate-200 dark:border-slate-700"
+      }`}
+    >
+      <ScrollArea className="h-[75vh] w-full rounded-xl">
+        <div className="min-h-[60vh] p-4">{children}</div>
+      </ScrollArea>
+    </div>
+  );
+};
 
 const columns: Column[] = [
   {
@@ -188,6 +279,19 @@ export const TaskKanbanBoard = ({
 }: Props) => {
   const [tasks, setTasks] = useState<TaskWithUsers[]>(initialTasks);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+
+  // Configurar sensores para @dnd-kit
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Actualizar tasks cuando cambie initialTasks
   useEffect(() => {
@@ -199,90 +303,102 @@ export const TaskKanbanBoard = ({
     return tasks.filter((task) => task.status === status);
   };
 
+  // Manejar inicio del drag
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id);
+  };
+
   // Manejar drag and drop
-  const handleDragEnd = async (result: DropResult) => {
-    const { destination, source, draggableId } = result;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
 
-    if (!destination) return;
-
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
+    if (!over) {
+      setActiveId(null);
       return;
     }
 
-    const task = tasks.find((t) => t.id === draggableId);
-    if (!task) return;
+    const activeId = active.id as string;
+    const overId = over.id as string;
 
-    // Si el movimiento es dentro de la misma columna (reordenamiento)
-    if (destination.droppableId === source.droppableId) {
-      const newTasks = Array.from(tasks);
-      const sourceColumnTasks = newTasks.filter(
-        (t) => t.status === source.droppableId
-      );
-      const otherTasks = newTasks.filter(
-        (t) => t.status !== source.droppableId
-      );
-
-      // Reordenar dentro de la columna
-      const [movedTask] = sourceColumnTasks.splice(source.index, 1);
-      sourceColumnTasks.splice(destination.index, 0, movedTask);
-
-      // Combinar todas las tareas manteniendo el orden
-      const reorderedTasks = [...otherTasks, ...sourceColumnTasks];
-
-      setTasks(reorderedTasks);
-      toast.custom((t) => (
-        <ToastCustomMessage
-          title="Orden actualizado"
-          message="El orden de las tareas se ha actualizado correctamente"
-          type="success"
-          onClick={() => {
-            toast.dismiss(t);
-          }}
-        />
-      ));
+    // Encontrar la tarea que se está moviendo
+    const activeTask = tasks.find((task) => task.id === activeId);
+    if (!activeTask) {
+      setActiveId(null);
       return;
     }
 
-    // Si el movimiento es entre columnas diferentes (cambio de estado)
-    const newStatus = destination.droppableId as TaskStatus;
+    // Determinar el estado de destino
+    let newStatus: TaskStatus;
+    if (overId === "Pending" || overId === "Done") {
+      newStatus = overId as TaskStatus;
+    } else {
+      // Si se suelta sobre otra tarea, usar el estado de esa tarea
+      const overTask = tasks.find((task) => task.id === overId);
+      newStatus = overTask?.status || activeTask.status;
+    }
 
-    if (task.status !== newStatus) {
-      // Actualizar optimisticamente el estado local
-      const updatedTasks = tasks.map((t) =>
-        t.id === draggableId ? { ...t, status: newStatus } : t
+    // Si no hay cambio de estado, solo reordenar
+    if (activeTask.status === newStatus) {
+      const tasksInColumn = tasks.filter((task) => task.status === newStatus);
+      const activeIndex = tasksInColumn.findIndex(
+        (task) => task.id === activeId
       );
-      setTasks(updatedTasks);
+      const overIndex = tasksInColumn.findIndex((task) => task.id === overId);
 
-      try {
-        await toggleTaskStatus(user.id, draggableId);
+      if (activeIndex !== overIndex) {
+        const reorderedTasks = arrayMove(tasksInColumn, activeIndex, overIndex);
+        const otherTasks = tasks.filter((task) => task.status !== newStatus);
+        setTasks([...otherTasks, ...reorderedTasks]);
+
         toast.custom((t) => (
           <ToastCustomMessage
-            title="Estado actualizado"
-            message="El estado de la tarea se ha actualizado correctamente"
+            title="Orden actualizado"
+            message="El orden de las tareas se ha actualizado correctamente"
             type="success"
             onClick={() => {
               toast.dismiss(t);
             }}
           />
         ));
-      } catch (error) {
-        // Revertir cambio si hay error
-        setTasks(tasks);
-        toast.custom((t) => (
-          <ToastCustomMessage
-            title="Error"
-            message="Error al actualizar"
-            type="error"
-            onClick={() => {
-              toast.dismiss(t);
-            }}
-          />
-        ));
       }
+      setActiveId(null);
+      return;
     }
+
+    // Cambio de estado entre columnas
+    const updatedTasks = tasks.map((task) =>
+      task.id === activeId ? { ...task, status: newStatus } : task
+    );
+    setTasks(updatedTasks);
+
+    try {
+      await toggleTaskStatus(user.id, activeId);
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Estado actualizado"
+          message="El estado de la tarea se ha actualizado correctamente"
+          type="success"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
+    } catch (error) {
+      // Revertir cambio si hay error
+      setTasks(tasks);
+      toast.custom((t) => (
+        <ToastCustomMessage
+          title="Error"
+          message="Error al actualizar"
+          type="error"
+          onClick={() => {
+            toast.dismiss(t);
+          }}
+        />
+      ));
+    }
+
+    setActiveId(null);
   };
 
   // Función para cambiar el estado de una tarea
@@ -501,8 +617,14 @@ export const TaskKanbanBoard = ({
         />
       </div>
 
-      {/* Kanban Board con 3 columnas */}
-      <DragDropContext onDragEnd={handleDragEnd}>
+      {/* Kanban Board con @dnd-kit */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        modifiers={[restrictToWindowEdges]}
+      >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Columnas de tareas propias (con drag & drop) */}
           {columns.map((column) => {
@@ -539,86 +661,55 @@ export const TaskKanbanBoard = ({
                   )}
                 </div>
 
-                {/* Contenido de la columna con borde distintivo */}
-                <Droppable droppableId={column.id}>
-                  {(provided, snapshot) => (
-                    <div
-                      className={`transition-colors rounded-xl border ${
-                        snapshot.isDraggingOver
-                          ? "bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-600"
-                          : "bg-slate-50/50 dark:bg-slate-800/20 border-slate-200 dark:border-slate-700"
-                      }`}
-                    >
-                      <ScrollArea className="h-[75vh] w-full rounded-xl">
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.droppableProps}
-                          className="min-h-[60vh] p-4"
-                        >
-                          <div className="space-y-3">
-                            {columnTasks.map((task, index) => (
-                              <Draggable
-                                key={task.id}
-                                draggableId={task.id}
-                                index={index}
-                              >
-                                {(provided, snapshot) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
-                                    className={`${
-                                      snapshot.isDragging
-                                        ? "rotate-2 shadow-xl opacity-95 scale-105"
-                                        : ""
-                                    } transition-all duration-200`}
-                                  >
-                                    <TaskCard
-                                      activity={task}
-                                      onToggleStatus={toggleActivityStatus}
-                                      onDelete={deleteActivity}
-                                      onEdit={onEdit}
-                                    />
-                                  </div>
-                                )}
-                              </Draggable>
-                            ))}
-                            {provided.placeholder}
-                          </div>
-
-                          {columnTasks.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-12 text-center">
-                              <div
-                                className={`p-4 rounded-lg ${column.bgColor} mb-3`}
-                              >
-                                {column.icon}
-                              </div>
-                              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
-                                No hay tareas {column.title.toLowerCase()}
-                              </p>
-                              {column.id === "Pending" && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-sm"
-                                  onClick={() => setIsAddDialogOpen(true)}
-                                >
-                                  <Plus className="w-4 h-4 mr-2" />
-                                  Crear primera tarea
-                                </Button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </ScrollArea>
+                {/* Contenido de la columna */}
+                <SortableContext
+                  items={columnTasks.map((task) => task.id)}
+                  strategy={verticalListSortingStrategy}
+                  id={column.id}
+                >
+                  <DroppableColumn id={column.id}>
+                    <div className="space-y-3">
+                      {columnTasks.map((task) => (
+                        <SortableTaskCard
+                          key={task.id}
+                          task={task}
+                          onToggleStatus={toggleActivityStatus}
+                          onDelete={deleteActivity}
+                          onEdit={onEdit}
+                        />
+                      ))}
                     </div>
-                  )}
-                </Droppable>
+
+                    {columnTasks.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div
+                          className={`p-4 rounded-lg ${column.bgColor} mb-3`}
+                        >
+                          {column.icon}
+                        </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+                          No hay tareas {column.title.toLowerCase()}
+                        </p>
+                        {column.id === "Pending" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-sm"
+                            onClick={() => setIsAddDialogOpen(true)}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Crear primera tarea
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </DroppableColumn>
+                </SortableContext>
               </div>
             );
           })}
 
-          {/* Tercera columna: Tareas compartidas (sin drag & drop) con borde distintivo */}
+          {/* Tercera columna: Tareas compartidas (sin drag & drop) */}
           <div className="space-y-4">
             {/* Header de columna compartidas */}
             <div className="flex items-center justify-between">
@@ -638,7 +729,7 @@ export const TaskKanbanBoard = ({
               </div>
             </div>
 
-            {/* Contenido de tareas compartidas con borde distintivo */}
+            {/* Contenido de tareas compartidas */}
             <div className="border rounded-xl bg-slate-50/50 dark:bg-slate-800/20 border-slate-200 dark:border-slate-700 transition-colors">
               <ScrollArea className="h-[75vh] w-full rounded-xl">
                 <div className="min-h-[60vh] p-4">
@@ -663,7 +754,21 @@ export const TaskKanbanBoard = ({
             </div>
           </div>
         </div>
-      </DragDropContext>
+
+        {/* DragOverlay para mostrar el elemento que se está arrastrando */}
+        <DragOverlay>
+          {activeId ? (
+            <div className="rotate-2 shadow-xl opacity-95 scale-105">
+              <TaskCard
+                activity={tasks.find((task) => task.id === activeId)!}
+                onToggleStatus={() => {}}
+                onDelete={() => {}}
+                onEdit={() => {}}
+              />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 };

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 export function checkRoleRedirect(
   userRole: Role | undefined,
-  allowedRoles: Role[],
+  allowedRoles: Role[]
 ) {
   if (!userRole) redirect("/sign-in?error=unauthorized");
 

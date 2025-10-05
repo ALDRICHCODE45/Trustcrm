@@ -7,16 +7,13 @@ import Lightbox from "yet-another-react-lightbox-lite";
 import "yet-another-react-lightbox-lite/styles.css";
 import { Badge } from "@/components/ui/badge";
 import { EditUserProfile } from "@/app/(dashboard)/list/users/components/EditUserDropDown";
-import {
-  ActivityProfileSheet,
-  TaskWithUsers,
-} from "@/app/(dashboard)/list/reclutamiento/components/ActivityProfileSheet";
+import { TaskWithUsers } from "@/app/(dashboard)/list/reclutamiento/components/ActivityProfileSheet";
 import { UserInfoCard } from "@/app/(dashboard)/list/reclutamiento/components/UserInfoCard";
 import { ChangePassword } from "@/app/(dashboard)/list/users/components/ChangePassword";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Calendar, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import {
   Tooltip,
