@@ -106,7 +106,7 @@ const data: {
         {
           title: "Reportes",
           url: "/leads/reportes",
-          roles: [Role.Admin],
+          roles: [Role.Admin, Role.GL],
         },
       ],
     },

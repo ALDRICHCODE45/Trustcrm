@@ -29,7 +29,7 @@ import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { editUserSchema } from "@/zod/editUserSchema";
 import { toast } from "sonner";
-import UploadProfileImage from "@/components/comp-543";
+import UploadProfileImage from "@/components/UploadProfileImage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog,
@@ -59,7 +59,7 @@ export function EditUserProfile({
 }) {
   const { id } = useParams();
   const [canEditEmail, setCanEditEmail] = useState<boolean>(true);
-  const [index, setIndex] = useState<number>();
+  const [_index, setIndex] = useState<number>();
   const [dialogConfirmOpen, setDialogConfirmOpen] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     user.ingreso ? new Date(user.ingreso) : undefined

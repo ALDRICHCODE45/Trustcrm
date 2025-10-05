@@ -76,20 +76,20 @@ export const Announcments: React.FC = () => {
   const markAsRead = (id: string) => {
     setNotifications(
       notifications.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification,
-      ),
+        notification.id === id ? { ...notification, read: true } : notification
+      )
     );
   };
 
   const markAllAsRead = () => {
     setNotifications(
-      notifications.map((notification) => ({ ...notification, read: true })),
+      notifications.map((notification) => ({ ...notification, read: true }))
     );
   };
 
   const deleteNotification = (id: string) => {
     setNotifications(
-      notifications.filter((notification) => notification.id !== id),
+      notifications.filter((notification) => notification.id !== id)
     );
   };
 
@@ -240,7 +240,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         {
           "": !notification.read,
           "bg-transparent": notification.read,
-        },
+        }
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -254,7 +254,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           <p
             className={cn(
               "text-sm leading-none",
-              !notification.read && "font-medium",
+              !notification.read && "font-medium"
             )}
           >
             {notification.title}
@@ -273,7 +273,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         <div
           className={cn(
             "flex space-x-1 transition-opacity",
-            isHovered ? "opacity-100" : "opacity-0",
+            isHovered ? "opacity-100" : "opacity-0"
           )}
         >
           {!notification.read && (
