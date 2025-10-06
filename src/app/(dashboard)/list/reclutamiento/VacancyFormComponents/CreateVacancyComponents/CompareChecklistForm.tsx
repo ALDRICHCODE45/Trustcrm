@@ -23,6 +23,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { Prisma } from "@prisma/client";
+import { Textarea } from "@/components/ui/textarea";
 
 type VacancyWithChecklistAndFeedback = Prisma.VacancyGetPayload<{
   include: {
@@ -290,42 +291,43 @@ export const CompareChecklistForm = ({
               </h3>
 
               <form onSubmit={handleSubmitEditar(handleEditValidationSubmit)}>
-                <div className="grid grid-cols-2 gap-8 mb-6">
-                  {/* Columna 1: Requisitos */}
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-muted-foreground">
-                      Requisitos
-                    </h4>
-                    {requisitosConFeedback.map((item, index) => (
-                      <div key={item.id} className="grid gap-3">
-                        <Label htmlFor={`req-edit-${item.id}`}>
+                <div className="space-y-6 mb-6">
+                  {requisitosConFeedback.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="grid grid-cols-2 gap-4 items-start"
+                    >
+                      {/* Columna 1: Requisito */}
+                      <div className="grid gap-3">
+                        <Label
+                          htmlFor={`req-edit-${item.id}`}
+                          className="font-medium text-muted-foreground"
+                        >
                           Requisito {index + 1}
                         </Label>
-                        <Input
+                        <Textarea
                           id={`req-edit-${item.id}`}
                           defaultValue={item.content}
                           disabled
-                          className="bg-muted"
+                          className="bg-muted min-h-[60px] resize-none"
+                          rows={3}
                         />
                       </div>
-                    ))}
-                  </div>
 
-                  {/* Columna 2: Feedback para editar */}
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-muted-foreground">
-                      Feedback (Editar)
-                    </h4>
-                    {requisitosConFeedback.map((item, index) => (
-                      <div key={item.id} className="grid gap-3">
-                        <Label htmlFor={`edit-${item.id}`}>
-                          Editar Feedback {index + 1}
+                      {/* Columna 2: Feedback para editar */}
+                      <div className="grid gap-3">
+                        <Label
+                          htmlFor={`edit-${item.id}`}
+                          className="font-medium text-muted-foreground"
+                        >
+                          Feedback (Editar)
                         </Label>
-                        <Input
+                        <Textarea
                           id={`edit-${item.id}`}
                           {...registerEditar(`ediciones.${index}.feedback`)}
                           placeholder="Editar feedback existente..."
-                          type="text"
+                          className="min-h-[60px] resize-none"
+                          rows={3}
                         />
                         {/* Campo oculto para el requisitoId */}
                         <input
@@ -334,8 +336,8 @@ export const CompareChecklistForm = ({
                           value={item.id}
                         />
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="flex justify-end mb-6">
@@ -359,42 +361,43 @@ export const CompareChecklistForm = ({
               </h3>
 
               <form onSubmit={handleSubmitNuevos(handleValidationSubmit)}>
-                <div className="grid grid-cols-2 gap-8 mb-6">
-                  {/* Columna 1: Requisitos */}
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-muted-foreground">
-                      Requisitos
-                    </h4>
-                    {validacionesSinFeedback.map((item, index) => (
-                      <div key={item.id} className="grid gap-3">
-                        <Label htmlFor={`req-new-${item.id}`}>
+                <div className="space-y-6 mb-6">
+                  {validacionesSinFeedback.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="grid grid-cols-2 gap-4 items-start"
+                    >
+                      {/* Columna 1: Requisito */}
+                      <div className="grid gap-3">
+                        <Label
+                          htmlFor={`req-new-${item.id}`}
+                          className="font-medium text-muted-foreground"
+                        >
                           Requisito {index + 1}
                         </Label>
-                        <Input
+                        <Textarea
                           id={`req-new-${item.id}`}
                           defaultValue={item.content}
                           disabled
-                          className="bg-muted"
+                          className="bg-muted min-h-[60px] resize-none"
+                          rows={3}
                         />
                       </div>
-                    ))}
-                  </div>
 
-                  {/* Columna 2: Nuevo feedback */}
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-muted-foreground">
-                      Nuevo Feedback
-                    </h4>
-                    {validacionesSinFeedback.map((item, index) => (
-                      <div key={item.id} className="grid gap-3">
-                        <Label htmlFor={`validation-${item.id}`}>
-                          Feedback para Requisito {index + 1}
+                      {/* Columna 2: Nuevo feedback */}
+                      <div className="grid gap-3">
+                        <Label
+                          htmlFor={`validation-${item.id}`}
+                          className="font-medium text-muted-foreground"
+                        >
+                          Nuevo Feedback
                         </Label>
-                        <Input
+                        <Textarea
                           id={`validation-${item.id}`}
                           {...registerNuevos(`validaciones.${index}.feedback`)}
                           placeholder="Ej: El candidato cumple con este requisito porque..."
-                          type="text"
+                          className="min-h-[60px] resize-none"
+                          rows={3}
                         />
                         {/* Campo oculto para el requisitoId */}
                         <input
@@ -405,8 +408,8 @@ export const CompareChecklistForm = ({
                           value={item.id}
                         />
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="flex justify-end">
