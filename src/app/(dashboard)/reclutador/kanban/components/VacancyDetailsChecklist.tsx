@@ -454,7 +454,7 @@ export const VacancyDetailsChecklist = ({
                         {...control.register(`nuevosRequisitos.${index}.valor`)}
                         placeholder="Escribe el requisito aquí..."
                         type="text"
-                        className="text-sm"
+                        className="text-sm text-black"
                       />
                     </div>
                   ))}
