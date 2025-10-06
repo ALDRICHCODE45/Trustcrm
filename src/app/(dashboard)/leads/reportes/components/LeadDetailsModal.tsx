@@ -21,7 +21,7 @@ import { LeadDetail } from "@/actions/leads/reports";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Copy, ExternalLink, Calendar } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface LeadDetailsModalProps {
   isOpen: boolean;
@@ -76,8 +76,7 @@ export function LeadDetailsModal({
 }: LeadDetailsModalProps) {
   const handleCopyLeadId = (leadId: string) => {
     navigator.clipboard.writeText(leadId);
-    toast({
-      title: "ID copiado",
+    toast.message("ID copiado", {
       description: "El ID del lead se ha copiado al portapapeles",
     });
   };
@@ -85,8 +84,7 @@ export function LeadDetailsModal({
   const handleCopyAllEmpresas = () => {
     const empresas = leads.map((lead) => lead.empresa).join("\n");
     navigator.clipboard.writeText(empresas);
-    toast({
-      title: "Lista copiada",
+    toast.message("Lista copiada", {
       description: `Se copiaron ${leads.length} nombres de empresas`,
     });
   };

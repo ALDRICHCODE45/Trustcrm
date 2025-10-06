@@ -1,24 +1,17 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertTriangle, CheckCircle, X, Loader2, BellRing } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { AlertTriangle, CheckCircle, Loader2, BellRing } from "lucide-react";
 import { SpecialNotificationWithRelations } from "@/hooks/useSpecialNotifications";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardHeader } from "../ui/card";
 import { VacanteTabs } from "@/app/(dashboard)/reclutador/components/kanbanReclutadorBoard";
-import { Role } from "@prisma/client";
 import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
 import { useUsers } from "@/hooks/users/use-users";
 

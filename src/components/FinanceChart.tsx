@@ -39,8 +39,8 @@ export const FinanceChart = () => {
   };
 
   return (
-    <Card className=" shadow-sm">
-      <CardHeader className="pb-2">
+    <Card className="shadow-sm h-[400px] flex flex-col">
+      <CardHeader className="pb-2 flex-shrink-0">
         <div className="flex justify-between items-center">
           <div>
             <CardTitle className="text-base">Finanzas</CardTitle>
@@ -51,13 +51,12 @@ export const FinanceChart = () => {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
+      <CardContent className="flex-1 pb-4 min-h-0">
+        <ChartContainer config={chartConfig} className="h-full w-full">
           <LineChart
             accessibilityLayer
             data={data}
-            margin={{ left: 12, right: 12, top: 20, bottom: 10 }}
-            height={300}
+            margin={{ left: 12, right: 12, top: 10, bottom: 5 }}
           >
             <CartesianGrid
               vertical={false}

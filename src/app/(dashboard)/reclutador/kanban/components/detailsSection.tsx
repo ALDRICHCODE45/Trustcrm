@@ -494,7 +494,7 @@ export const DetailsSectionReclutador = ({
                     />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="z-[9999]">
+                <DropdownMenuContent className="z-[99999999999999]">
                   <DropdownMenuItem
                     onClick={() => {
                       setIsRequestingPerfilMuestraValidation(true);

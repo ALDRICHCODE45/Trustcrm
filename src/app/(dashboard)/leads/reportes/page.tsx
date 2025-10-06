@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { ReportFilters } from "./components/ReportFilters";
 import { ReportTable } from "./components/ReportTable";
@@ -13,9 +12,9 @@ import {
   LeadReportData,
   LeadDetail,
 } from "@/actions/leads/reports";
-import { toast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, TrendingUp, FileText } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { TrendingUp, FileText } from "lucide-react";
+import { toast } from "sonner";
 
 interface ReportFilters {
   generadorId?: string;
@@ -59,10 +58,8 @@ export default function ReportesPage() {
         setGeneradores(data);
       } catch (error) {
         console.error("Error al cargar generadores:", error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar los generadores de leads",
-          variant: "destructive",
+        toast.message("Error", {
+          description: "No se pudieron cargar los leads",
         });
       }
     };
@@ -109,16 +106,13 @@ export default function ReportesPage() {
       setSummary(summaryResult);
       setHasGeneratedReport(true);
 
-      toast({
-        title: "Reporte generado",
+      toast.message("Reporte generado", {
         description: `Se generó el reporte con ${reportResult.length} registros`,
       });
     } catch (error) {
       console.error("Error al generar reporte:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo generar el reporte. Intenta nuevamente.",
-        variant: "destructive",
+      toast.message("Error", {
+        description: `No se pudo generar el reporte. Intenta nuevamente.`,
       });
     } finally {
       setIsLoading(false);
