@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
-import prisma from "@/lib/db";
+import { auth } from "@/core/lib/auth";
+import prisma from "@/core/lib/db";
 import { NextResponse } from "next/server";
 
 export async function PATCH(

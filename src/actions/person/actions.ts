@@ -5,10 +5,10 @@ import {
   createLeadPersonSchema,
   editLeadPersonSchema,
 } from "@/zod/createLeadPersonSchema";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { revalidatePath } from "next/cache";
 import { deleteAnyFile, deleteFile, uploadFile } from "../files/actions";
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 
 export const uploadNewCvToCandidate = async (personId: string, file: File) => {
   try {

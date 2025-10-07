@@ -26,7 +26,7 @@ export function LoginForm() {
 
   const credentialsAction = async (
     prevState: FormState,
-    formData: FormData,
+    formData: FormData
   ) => {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
@@ -62,7 +62,7 @@ export function LoginForm() {
 
   const [state, formAction, isPending] = useActionState(
     credentialsAction,
-    undefined,
+    undefined
   );
 
   return (

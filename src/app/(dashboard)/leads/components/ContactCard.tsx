@@ -80,7 +80,6 @@ import {
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format, set } from "date-fns";
 import { es } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 import { createTaskFromContact } from "@/actions/tasks/actions";
 import Link from "next/link";
 import {
@@ -92,6 +91,7 @@ import { LeadWithRelations } from "../kanban/page";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { addEtiqueta } from "@/actions/leads/actions";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/core/lib/utils";
 
 const getEtiquetaColor = (etiqueta: LeadStatus | "none") => {
   switch (etiqueta) {

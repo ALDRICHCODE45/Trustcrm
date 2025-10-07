@@ -3,11 +3,11 @@ import { DataTable } from "@/components/Table";
 import { clientesColumns, ClientWithRelations } from "./columns";
 import { ColumnDef } from "@tanstack/react-table";
 import { checkRoleRedirect } from "../../../helpers/checkRoleRedirect";
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 import { LeadOrigen, Role, User } from "@prisma/client";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { CreateClientModal } from "./components/CreateClienteModal";
 
 interface pageProps {}

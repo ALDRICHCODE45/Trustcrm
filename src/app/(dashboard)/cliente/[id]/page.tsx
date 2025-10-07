@@ -5,8 +5,8 @@ import { CardGeneralInformation } from "./components/CardGeneralInformation";
 import { ResumenFinancieroCard } from "./components/ResumenFinancieroCard";
 import { ClientesContactosCard } from "./components/ClientesContactosCard";
 import { ClientTabsWrapper } from "./components/ClientTabsWrapper";
-import prisma from "@/lib/db";
-import { auth } from "@/lib/auth";
+import prisma from "@/core/lib/db";
+import { auth } from "@/core/lib/auth";
 import { ClientWithRelations } from "../../list/clientes/columns";
 
 interface PageProps {

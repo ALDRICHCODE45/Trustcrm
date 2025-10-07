@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { LeadStatus, Oficina } from "@prisma/client";
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {

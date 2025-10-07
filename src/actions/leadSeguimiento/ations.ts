@@ -1,7 +1,7 @@
 "use server";
 import { Attachment } from "@/app/(dashboard)/leads/components/ContactCard";
-import { auth } from "@/lib/auth";
-import prisma from "@/lib/db";
+import { auth } from "@/core/lib/auth";
+import prisma from "@/core/lib/db";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { deleteFile } from "../files/actions";

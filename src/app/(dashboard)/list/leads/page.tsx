@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 import { checkRoleRedirect } from "@/app/helpers/checkRoleRedirect";
 import { Role } from "@prisma/client";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { Metadata } from "next";
 import { LeadWithRelations } from "../../leads/kanban/page";
 import { LeadsPageClient } from "../../leads/LeadsPageClient";

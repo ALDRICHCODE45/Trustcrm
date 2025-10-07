@@ -60,7 +60,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Attachment } from "./ContactCard";
 import { deleteFile, uploadFile } from "@/actions/files/actions";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 import {
   Tooltip,
   TooltipContent,

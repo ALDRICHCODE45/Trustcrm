@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 
 export async function GET(request: Request) {
   try {

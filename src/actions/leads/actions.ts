@@ -1,12 +1,12 @@
 "use server";
 import { createLeadSchema } from "@/zod/createLeadSchema";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { parseWithZod } from "@conform-to/zod";
 import { checkSession } from "@/hooks/auth/checkSession";
 import { editLeadZodSchema } from "@/zod/editLeadSchema";
 import { revalidatePath } from "next/cache";
 import { User, Role, LeadStatus } from "@prisma/client";
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 
 export const addEtiqueta = async (
   contactoId: string,

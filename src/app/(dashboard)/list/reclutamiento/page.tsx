@@ -1,12 +1,12 @@
 import { type ReactElement } from "react";
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 import { checkRoleRedirect } from "../../../helpers/checkRoleRedirect";
 import { Role } from "@prisma/client";
 import { Metadata } from "next";
 import { RecruiterTable } from "./table/RecruiterTableOptimized";
 
 import CreateVacanteForm from "./components/CreateVacanteForm";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import {
   reclutadorColumns,
   VacancyWithRelations,

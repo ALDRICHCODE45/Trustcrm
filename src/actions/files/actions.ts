@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import {
   S3Client,
   PutObjectCommand,

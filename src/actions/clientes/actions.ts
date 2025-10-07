@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { revalidatePath } from "next/cache";
 import { editClientSchema, EditClientFormData } from "@/zod/editClientSchema";
 import { CreateClientFormData } from "@/zod/createClientSchema";

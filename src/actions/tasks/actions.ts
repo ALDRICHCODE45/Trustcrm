@@ -1,5 +1,5 @@
 "use server";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { checkSession } from "@/hooks/auth/checkSession";
 import { NotificationType, Role, TaskStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";

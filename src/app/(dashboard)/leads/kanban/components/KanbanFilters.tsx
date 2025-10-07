@@ -17,11 +17,10 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { CalendarIcon, FilterIcon, SearchIcon, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Oficina, User } from "@prisma/client";
 import { LeadWithRelations } from "../page";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/core/lib/utils";
 
 interface KanbanFiltersProps {
   onFilterChange: (filters: FilterState) => void;

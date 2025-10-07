@@ -68,7 +68,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { PreplacementDialog } from "./PreplacementDialog";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 import QuickStatsDialog from "./QuickStatsDialog";
 import CreateVacanteForm from "../../list/reclutamiento/components/CreateVacanteForm";
 

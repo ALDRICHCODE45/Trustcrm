@@ -1,5 +1,5 @@
 "use server";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { Role, VacancyEstado } from "@prisma/client";
 
 export interface ReclutadorStats {

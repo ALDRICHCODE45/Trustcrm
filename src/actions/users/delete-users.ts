@@ -1,6 +1,6 @@
 "use server";
 import { checkSession } from "@/hooks/auth/checkSession";
-import prisma from "@/lib/db"; // tu instancia de Prisma
+import prisma from "@/core/lib/db"; // tu instancia de Prisma
 import { UserState } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 

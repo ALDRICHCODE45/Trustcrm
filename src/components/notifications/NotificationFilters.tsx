@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 import { NotificationStatus, NotificationType } from "@prisma/client";
 import { DateRange } from "react-day-picker";
 

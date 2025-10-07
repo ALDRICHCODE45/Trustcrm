@@ -24,7 +24,9 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ]
+      ], 
+      "@/core": ["./src/core/*"],
+      "@/features/": ["./src/features/*"]
     },
     "target": "ES2017"
   },

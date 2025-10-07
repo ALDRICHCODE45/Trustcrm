@@ -2,7 +2,7 @@ import { ReactElement } from "react";
 import { DataTable } from "@/components/Table";
 import { facturasColumns } from "./facturasColumns";
 import { ColumnDef } from "@tanstack/react-table";
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 import { Role } from "@prisma/client";
 import { checkRoleRedirect } from "../../../helpers/checkRoleRedirect";
 import { Metadata } from "next";

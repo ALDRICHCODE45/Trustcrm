@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { LeadStatus } from "@prisma/client";
 
 // Función para obtener el estado de los leads en un rango de fechas

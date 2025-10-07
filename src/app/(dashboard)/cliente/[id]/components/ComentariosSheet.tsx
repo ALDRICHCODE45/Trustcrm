@@ -31,7 +31,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import { CalendarIcon, Clock, MessageCircleMore, Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Calendar } from "@/components/ui/calendar";
@@ -44,6 +43,7 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Comment } from "@prisma/client";
+import { cn } from "@/core/lib/utils";
 
 //=========================================================
 //Este componente tiene datos mock y no esta implementado correctamente

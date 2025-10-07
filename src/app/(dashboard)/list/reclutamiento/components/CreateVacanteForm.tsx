@@ -68,7 +68,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { createVacancyAssignedNotification } from "@/actions/notifications/special-notifications";
 import {
@@ -375,9 +375,11 @@ const BasicInformationTab = ({
 
   const adjustToBusinessDay = (date: Date): Date => {
     const dayOfWeek = date.getDay();
-    if (dayOfWeek === 6) { // Saturday
+    if (dayOfWeek === 6) {
+      // Saturday
       return addDays(date, 2); // Move to Monday
-    } else if (dayOfWeek === 0) { // Sunday
+    } else if (dayOfWeek === 0) {
+      // Sunday
       return addDays(date, 1); // Move to Monday
     }
     return date;

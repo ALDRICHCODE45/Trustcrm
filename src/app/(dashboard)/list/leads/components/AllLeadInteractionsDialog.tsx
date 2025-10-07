@@ -28,9 +28,14 @@ import {
   AlertTriangle,
   Clock,
 } from "lucide-react";
-import { ContactInteractionWithRelations, getAllInteractionsByLeadId, getTasksByInteractionId, TaskWithUsers } from "@/actions/leadSeguimiento/ations";
+import {
+  ContactInteractionWithRelations,
+  getAllInteractionsByLeadId,
+  getTasksByInteractionId,
+  TaskWithUsers,
+} from "@/actions/leadSeguimiento/ations";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,7 +69,9 @@ export function AllLeadInteractionsDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Estado para manejar múltiples diálogos de tareas vinculadas
-  const [openLinkedTasksDialogs, setOpenLinkedTasksDialogs] = useState<Record<string, boolean>>({});
+  const [openLinkedTasksDialogs, setOpenLinkedTasksDialogs] = useState<
+    Record<string, boolean>
+  >({});
 
   const fetchInteractions = useCallback(async () => {
     if (!leadId || !open) return;
@@ -106,29 +113,27 @@ export function AllLeadInteractionsDialog({
     return format(date, "eee dd/MM/yyyy", { locale: es });
   };
 
-  const groupedInteractions = interactions.reduce(
-    (acc, interaction) => {
-      const contactName = interaction.contacto.name;
-      if (!acc[contactName]) {
-        acc[contactName] = [];
-      }
-      acc[contactName].push(interaction);
-      return acc;
-    },
-    {} as Record<string, ContactInteractionWithRelations[]>,
-  );
+  const groupedInteractions = interactions.reduce((acc, interaction) => {
+    const contactName = interaction.contacto.name;
+    if (!acc[contactName]) {
+      acc[contactName] = [];
+    }
+    acc[contactName].push(interaction);
+    return acc;
+  }, {} as Record<string, ContactInteractionWithRelations[]>);
 
   // Ordenar las interacciones de cada contacto por fecha (más recientes primero)
-  Object.keys(groupedInteractions).forEach(contactName => {
-    groupedInteractions[contactName].sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  Object.keys(groupedInteractions).forEach((contactName) => {
+    groupedInteractions[contactName].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   });
 
   // Ordenar los contactos por la interacción más reciente
   const sortedContactNames = Object.keys(groupedInteractions).sort((a, b) => {
-    const latestA = groupedInteractions[a][0]?.createdAt || '';
-    const latestB = groupedInteractions[b][0]?.createdAt || '';
+    const latestA = groupedInteractions[a][0]?.createdAt || "";
+    const latestB = groupedInteractions[b][0]?.createdAt || "";
     return new Date(latestB).getTime() - new Date(latestA).getTime();
   });
 
@@ -136,10 +141,13 @@ export function AllLeadInteractionsDialog({
   const totalContacts = Object.keys(groupedInteractions).length;
 
   // Función para manejar el estado de los diálogos de tareas vinculadas
-  const handleLinkedTasksDialogChange = (interactionId: string, open: boolean) => {
-    setOpenLinkedTasksDialogs(prev => ({
+  const handleLinkedTasksDialogChange = (
+    interactionId: string,
+    open: boolean
+  ) => {
+    setOpenLinkedTasksDialogs((prev) => ({
       ...prev,
-      [interactionId]: open
+      [interactionId]: open,
     }));
   };
 
@@ -174,8 +182,8 @@ export function AllLeadInteractionsDialog({
           ) : error ? (
             <div className="text-center py-12 text-red-500">
               <p>Error: {error}</p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={fetchInteractions}
                 className="mt-4"
               >
@@ -189,8 +197,9 @@ export function AllLeadInteractionsDialog({
                 No hay interacciones registradas
               </p>
               <p className="text-sm">
-                Los contactos de esta empresa aún no tienen interacciones registradas.
-                Para agregar una interacción, ve a la sección de contactos y haz clic en &quot;Seguimiento&quot;.
+                Los contactos de esta empresa aún no tienen interacciones
+                registradas. Para agregar una interacción, ve a la sección de
+                contactos y haz clic en &quot;Seguimiento&quot;.
               </p>
             </div>
           ) : (
@@ -206,7 +215,8 @@ export function AllLeadInteractionsDialog({
                           {contactName}
                         </h3>
                         <Badge variant="secondary" className="ml-auto">
-                          {groupedInteractions[contactName].length} interacciones
+                          {groupedInteractions[contactName].length}{" "}
+                          interacciones
                         </Badge>
                       </div>
 
@@ -219,7 +229,7 @@ export function AllLeadInteractionsDialog({
                               "border-l-4 bg-card rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow relative group",
                               interaction.attachmentUrl
                                 ? "border-l-blue-500"
-                                : "border-l-primary",
+                                : "border-l-primary"
                             )}
                           >
                             {/* Header de la interacción */}
@@ -245,12 +255,12 @@ export function AllLeadInteractionsDialog({
                                   <Calendar className="h-3 w-3" />
                                   <span>
                                     {getTimeAgo(
-                                      new Date(interaction.createdAt),
+                                      new Date(interaction.createdAt)
                                     )}
                                   </span>
                                 </div>
                               </div>
-                              
+
                               {/* Dropdown de opciones */}
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -262,9 +272,17 @@ export function AllLeadInteractionsDialog({
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="z-[999]">
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="z-[999]"
+                                >
                                   <DropdownMenuItem
-                                    onClick={() => handleLinkedTasksDialogChange(interaction.id, true)}
+                                    onClick={() =>
+                                      handleLinkedTasksDialogChange(
+                                        interaction.id,
+                                        true
+                                      )
+                                    }
                                     className="cursor-pointer"
                                   >
                                     <ClipboardList className="opacity-60 h-4 w-4 mr-2" />
@@ -312,8 +330,15 @@ export function AllLeadInteractionsDialog({
                             {/* Diálogo para ver tareas vinculadas */}
                             <LinkedTasksMiniDialog
                               interactionId={interaction.id}
-                              open={openLinkedTasksDialogs[interaction.id] || false}
-                              onOpenChange={(open) => handleLinkedTasksDialogChange(interaction.id, open)}
+                              open={
+                                openLinkedTasksDialogs[interaction.id] || false
+                              }
+                              onOpenChange={(open) =>
+                                handleLinkedTasksDialogChange(
+                                  interaction.id,
+                                  open
+                                )
+                              }
                             />
                           </div>
                         ))}
@@ -347,7 +372,7 @@ const LinkedTasksMiniDialog = ({
   const [error, setError] = useState<string | null>(null);
 
   // Función para cargar las tareas vinculadas
-  const loadLinkedTasks = useCallback( async () => {
+  const loadLinkedTasks = useCallback(async () => {
     if (!interactionId || !open) return;
 
     setLoading(true);
@@ -362,14 +387,14 @@ const LinkedTasksMiniDialog = ({
     } finally {
       setLoading(false);
     }
-  },[interactionId, open])
+  }, [interactionId, open]);
 
   // Cargar tareas cuando se abre el diálogo
   useEffect(() => {
     if (open) {
       loadLinkedTasks();
     }
-  }, [open, interactionId,loadLinkedTasks]);
+  }, [open, interactionId, loadLinkedTasks]);
 
   // Función para obtener el estado visual de la tarea
   const getTaskStatusInfo = (task: TaskWithUsers) => {
@@ -441,8 +466,8 @@ const LinkedTasksMiniDialog = ({
           ) : error ? (
             <div className="text-center py-8 text-red-500">
               <p>Error: {error}</p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={loadLinkedTasks}
                 className="mt-2"
                 size="sm"
@@ -470,7 +495,7 @@ const LinkedTasksMiniDialog = ({
                         className={cn(
                           "border-l-4 bg-card rounded-lg p-3 shadow-sm transition-colors hover:bg-muted/50",
                           statusInfo.borderColor,
-                          statusInfo.bgColor,
+                          statusInfo.bgColor
                         )}
                       >
                         <div className="flex justify-between items-start gap-3">
@@ -489,7 +514,7 @@ const LinkedTasksMiniDialog = ({
                             </Badge>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
                           <div className="flex items-center gap-2">
                             <span>Asignada a:</span>
@@ -515,11 +540,9 @@ const LinkedTasksMiniDialog = ({
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             <span>
-                              {format(
-                                new Date(task.dueDate),
-                                "dd/MM/yyyy",
-                                { locale: es },
-                              )}
+                              {format(new Date(task.dueDate), "dd/MM/yyyy", {
+                                locale: es,
+                              })}
                             </span>
                           </div>
                         </div>

@@ -1,5 +1,5 @@
 "use server";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { VacancyEstado } from "@prisma/client";
 
 //Funciones para obtener cuantas vacantes asigandadas | En placement, etc... hay por cliente

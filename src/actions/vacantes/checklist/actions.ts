@@ -1,6 +1,6 @@
 "use server";
-import { auth } from "@/lib/auth";
-import prisma from "@/lib/db";
+import { auth } from "@/core/lib/auth";
+import prisma from "@/core/lib/db";
 import { revalidatePath } from "next/cache";
 import {
   NotificationType,

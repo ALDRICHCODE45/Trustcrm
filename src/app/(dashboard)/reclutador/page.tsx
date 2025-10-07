@@ -6,10 +6,10 @@ import {
 } from "./components/ReclutadorColumns";
 import { ToastAlerts } from "@/components/ToastAlerts";
 import { checkRoleRedirect } from "../../helpers/checkRoleRedirect";
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 import { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 
 export interface PageProps {}
 const fetchReclutadores = async () => {

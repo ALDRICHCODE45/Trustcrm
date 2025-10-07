@@ -1,7 +1,7 @@
 "use server";
 
-import { auth } from "@/lib/auth";
-import prisma from "@/lib/db";
+import { auth } from "@/core/lib/auth";
+import prisma from "@/core/lib/db";
 import { Role, User } from "@prisma/client";
 
 export const getReclutadores = async (): Promise<{

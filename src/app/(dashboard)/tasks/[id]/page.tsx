@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import React from "react";
 import { TaskKanbanBoard } from "./components/TaskKanbanBoard";
 import { getSharedTasks } from "@/actions/tasks/actions";

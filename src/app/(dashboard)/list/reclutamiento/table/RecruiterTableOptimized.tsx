@@ -77,7 +77,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import QuickStatsDialog from "@/app/(dashboard)/reclutador/components/QuickStatsDialog";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 
 // Función de filtro personalizada para rangos de fechas
 const dateRangeFilterFn: FilterFn<any> = (row, columnId, filterValue) => {

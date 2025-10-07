@@ -33,7 +33,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 import {
   CalendarIcon,
   Clock,

@@ -1,8 +1,8 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 import { AdminPage } from "./components/AdminPage";
 import { Role } from "@prisma/client";
 import { checkRoleRedirect } from "../../helpers/checkRoleRedirect";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 

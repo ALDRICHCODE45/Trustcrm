@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 import { LeadStatus } from "@prisma/client";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { format } from "date-fns";

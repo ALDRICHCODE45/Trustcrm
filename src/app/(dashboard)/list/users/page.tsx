@@ -1,8 +1,8 @@
 import { UserColumns } from "./columns";
 import { type ReactElement } from "react";
 import { UsersTable } from "./table/UsersTable";
-import { auth } from "@/lib/auth";
-import prisma from "@/lib/db";
+import { auth } from "@/core/lib/auth";
+import prisma from "@/core/lib/db";
 import { Role } from "@prisma/client";
 import { checkRoleRedirect } from "@/app/helpers/checkRoleRedirect";
 import { Metadata } from "next";

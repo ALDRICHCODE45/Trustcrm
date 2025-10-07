@@ -2,7 +2,7 @@ import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import prisma from "./db";
-import { LogAction, UserState } from "@prisma/client";
+import { LogAction, Role, User, UserState } from "@prisma/client";
 
 class InvalidLoginError extends CredentialsSignin {
   code = "Invalid identifier or password";
@@ -16,7 +16,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: {},
       },
       authorize: async (credentials) => {
-        let user = null;
+        let user: User | null = null;
 
         // logic to verify if the user exists
         user = await prisma.user.findUnique({
@@ -31,6 +31,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           // No user found, so this is their first attempt to login
           throw new InvalidLoginError();
         }
+
+        //creare el log de inicio de sesion
         await prisma.log.create({
           data: {
             action: LogAction.Ingresar,
@@ -48,18 +50,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     updateAge: 60 * 60, // Actualizar cada hora
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, session, trigger }) {
+      // Durante el login inicial, 'user' contiene los datos del usuario retornado por authorize()
       if (user) {
-        token.role = user.role;
+        token.role = user.role as string;
         token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
       }
+      // Durante las actualizaciones del token (trigger: "update")
+      if (trigger === "update" && session?.user) {
+        token.role = session.user.role as string;
+        token.id = session.user.id;
+        token.name = session.user.name;
+        token.email = session.user.email;
+      }
+
+      console.log("JWT callback:", {
+        trigger,
+        hasUser: !!user,
+        tokenId: token.id,
+        tokenRole: token.role,
+      });
       return token;
     },
-    async session({ session, token }) {
-      if (token) {
-        session.user.role = token.role as string;
+    async session({ session, token, trigger }) {
+      if (token && session.user) {
+        session.user.role = token.role as Role;
         session.user.id = token.id as string;
       }
+
       return session;
     },
   },

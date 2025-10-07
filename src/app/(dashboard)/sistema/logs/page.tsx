@@ -1,11 +1,11 @@
 import { DataTable } from "@/components/Table";
 import { type ReactElement } from "react";
 import { logsColumns } from "./components/logsColumns";
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 import { checkRoleRedirect } from "../../../helpers/checkRoleRedirect";
 import { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 
 export interface pageProps {}
 

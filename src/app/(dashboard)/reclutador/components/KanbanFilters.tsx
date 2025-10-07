@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,7 +30,7 @@ import {
   Tag,
   Clock,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 import { VacancyTipo, User, Client } from "@prisma/client";
 import { VacancyWithRelations } from "./ReclutadorColumns";
 

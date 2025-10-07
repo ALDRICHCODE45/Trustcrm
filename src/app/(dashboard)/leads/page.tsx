@@ -1,8 +1,8 @@
 import { type ReactElement } from "react";
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 import { Role } from "@prisma/client";
 import { checkRoleRedirect } from "@/app/helpers/checkRoleRedirect";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { LeadWithRelations } from "./kanban/page";
 import { unstable_noStore as noStore } from "next/cache";
 import { LeadsPageClient } from "./LeadsPageClient";

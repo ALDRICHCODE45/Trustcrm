@@ -24,7 +24,7 @@ import { CalendarIcon, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 import { toast } from "sonner";
 import { TaskWithUsers } from "./TaskKanbanBoard";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";

@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrigenesSections } from "./components/OrigenesSection";
 import {

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 import { Role } from "@prisma/client";
 import { unstable_noStore } from "next/cache";
 

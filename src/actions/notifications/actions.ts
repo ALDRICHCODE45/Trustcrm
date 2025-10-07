@@ -1,5 +1,5 @@
 "use server";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { NotificationStatus, NotificationType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 

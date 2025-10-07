@@ -70,7 +70,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import {
   createTask,
@@ -161,7 +161,7 @@ const EditActivityDialog = ({
   const [title, setTitle] = useState(activity.title || "");
   const [description, setDescription] = useState(activity.description || "");
   const [date, setDate] = useState<Date | undefined>(
-    new Date(activity.dueDate) || new Date(),
+    new Date(activity.dueDate) || new Date()
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -291,13 +291,17 @@ const EditActivityDialog = ({
                     disabled={isSubmitting}
                     className={cn(
                       "justify-start text-left font-normal",
-                      !date && "text-muted-foreground",
+                      !date && "text-muted-foreground"
                     )}
                     aria-expanded="false"
                     aria-haspopup="dialog"
                     aria-label={
                       date
-                        ? `Fecha seleccionada: ${format(date, "d 'de' MMMM, yyyy", { locale: es })}`
+                        ? `Fecha seleccionada: ${format(
+                            date,
+                            "d 'de' MMMM, yyyy",
+                            { locale: es }
+                          )}`
                         : "Seleccionar fecha límite"
                     }
                   >
@@ -618,7 +622,9 @@ const ActivityCard = ({
     <Card
       className={`p-4 border-l-4 ${dueDateInfo.borderColor} ${dueDateInfo.bgColor} transition-colors hover:bg-muted/50`}
       role="article"
-      aria-label={`Tarea: ${activity.title}, ${isTaskDone ? "completada" : "pendiente"}`}
+      aria-label={`Tarea: ${activity.title}, ${
+        isTaskDone ? "completada" : "pendiente"
+      }`}
     >
       <div className="flex justify-between items-start gap-3">
         <div className="flex-1 min-w-0">
@@ -809,10 +815,10 @@ export const ActivityProfileSheet = ({
 
   // Filtrar actividades
   const pendingActivities = tasks.filter(
-    (activity) => activity.status === "Pending",
+    (activity) => activity.status === "Pending"
   );
   const completedActivities = tasks.filter(
-    (activity) => activity.status === "Done",
+    (activity) => activity.status === "Done"
   );
 
   const addActivity = async (activityData: {
@@ -829,7 +835,7 @@ export const ActivityProfileSheet = ({
     formData.append("userId", user.id);
     formData.append(
       "notifyOnComplete",
-      activityData.notifyOnComplete.toString(),
+      activityData.notifyOnComplete.toString()
     );
     activityData.notificationRecipients.forEach((recipientId) => {
       formData.append("notificationRecipients", recipientId);
@@ -1122,13 +1128,17 @@ export const AddActivityDialog = ({
                     disabled={isSubmitting}
                     className={cn(
                       "justify-start text-left font-normal",
-                      !date && "text-muted-foreground",
+                      !date && "text-muted-foreground"
                     )}
                     aria-expanded="false"
                     aria-haspopup="dialog"
                     aria-label={
                       date
-                        ? `Fecha seleccionada: ${format(date, "d 'de' MMMM, yyyy", { locale: es })}`
+                        ? `Fecha seleccionada: ${format(
+                            date,
+                            "d 'de' MMMM, yyyy",
+                            { locale: es }
+                          )}`
                         : "Seleccionar fecha límite"
                     }
                   >

@@ -1,8 +1,8 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/core/lib/auth";
 import KanbanLeadsBoard from "./ClientPage";
 import { log } from "console";
 import { Role, LeadStatus } from "@prisma/client";
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 import { Prisma } from "@prisma/client";
 import { Metadata } from "next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

@@ -1,7 +1,7 @@
 "use server";
 
-import { auth } from "@/lib/auth";
-import prisma from "@/lib/db";
+import { auth } from "@/core/lib/auth";
+import prisma from "@/core/lib/db";
 import { CreateCandidateFormData } from "@/zod/createCandidateSchema";
 import { uploadFile } from "../files/actions";
 import { FileMetadata } from "@/hooks/use-file-upload";

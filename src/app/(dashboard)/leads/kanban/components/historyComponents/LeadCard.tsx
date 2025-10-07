@@ -10,13 +10,14 @@ import {
 import { UserIcon } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 import { leadStatusMap } from "@/app/(dashboard)/list/leads/components/LeadChangeStatus";
 
 interface LeadCardProps {
   leadId: string;
   lead: {
     empresa: string;
+
     estados: Array<{
       status: LeadStatus;
       date: Date;
@@ -65,13 +66,13 @@ export function LeadCard({ leadId, lead }: LeadCardProps) {
               key={idx}
               className={cn(
                 "flex justify-between items-center py-2 px-3 rounded-md",
-                idx % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/50" : "",
+                idx % 2 === 0 ? "bg-slate-50 dark:bg-slate-800/50" : ""
               )}
             >
               <Badge
                 className={cn(
                   "text-white font-medium px-2 py-1 transition-colors",
-                  getStatusColor(estado.status),
+                  getStatusColor(estado.status)
                 )}
               >
                 {leadStatusMap[estado.status]}

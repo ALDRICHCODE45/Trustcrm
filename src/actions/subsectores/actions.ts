@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/lib/db";
+import prisma from "@/core/lib/db";
 
 export const createSubSector = async (subSector: string) => {
   try {

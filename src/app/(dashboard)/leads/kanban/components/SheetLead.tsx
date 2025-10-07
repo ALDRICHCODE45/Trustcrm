@@ -60,11 +60,14 @@ import {
   EditLeadHistoryFormData,
   EditLeadHistorySchema,
 } from "@/zod/LeadHistory";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
-import { deleteLeadHistoryById, editLeadHistoryById } from "@/actions/leads/history/actions";
+import {
+  deleteLeadHistoryById,
+  editLeadHistoryById,
+} from "@/actions/leads/history/actions";
 import { useUsers } from "@/hooks/users/use-users";
 import { AddHistoryDialog } from "./historyComponents/AddHistoryDialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -202,12 +205,11 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
     }
   };
 
-
-  const handleDeleteHistory = async(historyId:string) =>{
+  const handleDeleteHistory = async (historyId: string) => {
     try {
       //llamada a la accion
-      const response = await deleteLeadHistoryById({id:historyId})
-      if(!response.ok){
+      const response = await deleteLeadHistoryById({ id: historyId });
+      if (!response.ok) {
         toast.custom((t) => (
           <ToastCustomMessage
             message={response.message || "Error al eliminar el historial"}
@@ -229,9 +231,7 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
           title="Accion exitosa"
         />
       ));
-
-
-    }catch(e){
+    } catch (e) {
       toast.custom((t) => (
         <ToastCustomMessage
           message="Error al eliminar el historial"
@@ -240,11 +240,8 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
           title="Error"
         />
       ));
-
     }
-
-  }
-
+  };
 
   return (
     <>
@@ -472,7 +469,9 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
                                     </div>
                                     <div className="shrink-0">
                                       <ConfirmDialog
-                                        onConfirm={()=>handleDeleteHistory(item.id)}
+                                        onConfirm={() =>
+                                          handleDeleteHistory(item.id)
+                                        }
                                         title="Eliminar Historial"
                                         description="¿Estás seguro de que deseas eliminar este historial? Esta acción no se puede deshacer."
                                         trigger={

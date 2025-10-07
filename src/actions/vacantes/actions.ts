@@ -1,7 +1,7 @@
 "use server";
 import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
-import { auth } from "@/lib/auth";
-import prisma from "@/lib/db";
+import { auth } from "@/core/lib/auth";
+import prisma from "@/core/lib/db";
 import {
   VacancyTipo,
   VacancyEstado,
