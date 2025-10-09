@@ -12,7 +12,6 @@ import {
   getFilteredRowModel,
   VisibilityState,
   FilterFn,
-  Row,
   ColumnOrderState,
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
@@ -130,18 +129,6 @@ const dateRangeFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
   return true;
 };
 
-// Función de filtro personalizada para múltiples estados
-const multiStatusFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
-  if (!filterValue || !Array.isArray(filterValue) || filterValue.length === 0) {
-    return true;
-  }
-
-  const cellValue = row.getValue(columnId);
-  if (!cellValue) return false;
-
-  return filterValue.includes(cellValue);
-};
-
 // Tipos
 export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -164,16 +151,16 @@ interface TableFiltersProps<TData, TValue> {
   onGlobalFilterChange?: (value: string) => void;
   currentStatus: string[];
   setCurrentStatus: (newStatus: string[]) => void;
-  currentClient: string;
-  setCurrentClient: (newClient: string) => void;
+  currentClient: string[];
+  setCurrentClient: (newClient: string[]) => void;
   currentRecruiter: string[];
   setCurrentRecruiter: (newRecruiter: string[]) => void;
-  currentTipo: string;
-  setCurrentTipo: (newTipo: string) => void;
+  currentTipo: string[];
+  setCurrentTipo: (newTipo: string[]) => void;
   dateRange: DateRange | undefined;
   setDateRange: (newRange: DateRange | undefined) => void;
-  currentOficina: Oficina | "all";
-  setCurrentOficina: (newOficina: Oficina | "all") => void;
+  currentOficina: Oficina[];
+  setCurrentOficina: (newOficina: Oficina[]) => void;
   reclutadores: User[];
   clientes: Client[];
   isCompact?: boolean;
@@ -183,7 +170,6 @@ interface TableFiltersProps<TData, TValue> {
 
 function TableFilters<TData, TValue>({
   table,
-  filterPlaceholder = "Filtrar...",
   onGlobalFilterChange,
   currentStatus,
   setCurrentStatus,
@@ -200,7 +186,6 @@ function TableFilters<TData, TValue>({
   reclutadores,
   clientes,
   isCompact = false,
-  showTopActions,
   setShowTopActions,
 }: TableFiltersProps<TData, TValue>) {
   const [isExporting, setIsExporting] = useState(false);
@@ -213,6 +198,11 @@ function TableFilters<TData, TValue>({
     { value: "Perdida", label: "Perdida" },
     { value: "Placement", label: "Placement" },
     { value: "PrePlacement", label: "Pre Placement" },
+  ];
+
+  const oficinaOptions = [
+    { value: Oficina.Oficina1, label: "Oficina 1" },
+    { value: Oficina.Oficina2, label: "Oficina 2" },
   ];
 
   const handleExport = async () => {
@@ -242,13 +232,73 @@ function TableFilters<TData, TValue>({
     table.setPageIndex(0);
   };
 
+  // Función específica para manejar cambios en clientes
+  const handleClientToggle = (clientId: string, checked: boolean) => {
+    const newClient = checked
+      ? [...currentClient, clientId]
+      : currentClient.filter((id) => id !== clientId);
+
+    setCurrentClient(newClient);
+    if (newClient.length === 0) {
+      table.getColumn("cliente")?.setFilterValue(undefined);
+    } else {
+      table.getColumn("cliente")?.setFilterValue(newClient);
+    }
+    table.setPageIndex(0);
+  };
+
+  // Función específica para manejar cambios en estados
+  const handleStatusToggle = (statusValue: string, checked: boolean) => {
+    const newStatus = checked
+      ? [...currentStatus, statusValue]
+      : currentStatus.filter((s) => s !== statusValue);
+
+    setCurrentStatus(newStatus);
+    if (newStatus.length === 0) {
+      table.getColumn("estado")?.setFilterValue(undefined);
+    } else {
+      table.getColumn("estado")?.setFilterValue(newStatus);
+    }
+    table.setPageIndex(0);
+  };
+
+  // Función específica para manejar cambios en oficinas
+  const handleOficinaToggle = (oficinaValue: Oficina, checked: boolean) => {
+    const newOficina = checked
+      ? [...currentOficina, oficinaValue]
+      : currentOficina.filter((o) => o !== oficinaValue);
+
+    setCurrentOficina(newOficina);
+    if (newOficina.length === 0) {
+      table.getColumn("oficina")?.setFilterValue(undefined);
+    } else {
+      table.getColumn("oficina")?.setFilterValue(newOficina);
+    }
+    table.setPageIndex(0);
+  };
+
+  // Función específica para manejar cambios en tipos
+  const handleTipoToggle = (tipoValue: string, checked: boolean) => {
+    const newTipo = checked
+      ? [...currentTipo, tipoValue]
+      : currentTipo.filter((t) => t !== tipoValue);
+
+    setCurrentTipo(newTipo);
+    if (newTipo.length === 0) {
+      table.getColumn("tipo")?.setFilterValue(undefined);
+    } else {
+      table.getColumn("tipo")?.setFilterValue(newTipo);
+    }
+    table.setPageIndex(0);
+  };
+
   const resetFilters = useCallback(() => {
     setCurrentStatus([]);
-    setCurrentClient("all");
+    setCurrentClient([]);
     setCurrentRecruiter([]);
-    setCurrentTipo("all");
+    setCurrentTipo([]);
     setDateRange(undefined);
-    setCurrentOficina("all");
+    setCurrentOficina([]);
     table.getColumn("estado")?.setFilterValue(undefined);
     table.getColumn("cliente")?.setFilterValue(undefined);
     table.getColumn("reclutador")?.setFilterValue(undefined);
@@ -282,10 +332,12 @@ function TableFilters<TData, TValue>({
 
   const clearFilters = [
     {
-      condition: currentOficina !== "all",
-      label: `Oficina: ${currentOficina}`,
+      condition: currentOficina.length > 0,
+      label: `Oficinas: ${currentOficina.length} seleccionada${
+        currentOficina.length > 1 ? "s" : ""
+      }`,
       clear: () => {
-        setCurrentOficina("all");
+        setCurrentOficina([]);
         table.getColumn("oficina")?.setFilterValue(undefined);
       },
     },
@@ -300,10 +352,12 @@ function TableFilters<TData, TValue>({
       },
     },
     {
-      condition: currentClient !== "all",
-      label: `Cliente: ${currentClient}`,
+      condition: currentClient.length > 0,
+      label: `Clientes: ${currentClient.length} seleccionado${
+        currentClient.length > 1 ? "s" : ""
+      }`,
       clear: () => {
-        setCurrentClient("all");
+        setCurrentClient([]);
         table.getColumn("cliente")?.setFilterValue(undefined);
       },
     },
@@ -318,10 +372,12 @@ function TableFilters<TData, TValue>({
       },
     },
     {
-      condition: currentTipo !== "all",
-      label: `Tipo: ${currentTipo}`,
+      condition: currentTipo.length > 0,
+      label: `Tipos: ${currentTipo.length} seleccionado${
+        currentTipo.length > 1 ? "s" : ""
+      }`,
       clear: () => {
-        setCurrentTipo("all");
+        setCurrentTipo([]);
         table.getColumn("tipo")?.setFilterValue(undefined);
       },
     },
@@ -447,7 +503,7 @@ function TableFilters<TData, TValue>({
               : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
           }`}
         >
-          {/* Filtro de Estado - Ahora con múltiple selección */}
+          {/* Filtro de Estado - Con múltiple selección mediante checkboxes */}
           <div className={`space-y-${isCompact ? "1" : "2"}`}>
             <Label
               htmlFor="status-filter"
@@ -455,97 +511,74 @@ function TableFilters<TData, TValue>({
             >
               Estados
             </Label>
-            <Select
-              value=""
-              onValueChange={(value) => {
-                if (!currentStatus.includes(value)) {
-                  // Solo agregar nuevo estado si no está ya seleccionado
-                  const newStatus = [...currentStatus, value];
-                  setCurrentStatus(newStatus);
-                  table.getColumn("estado")?.setFilterValue(newStatus);
-                  table.setPageIndex(0);
-                }
-              }}
-            >
-              <SelectTrigger
-                className={`${isCompact ? "h-8 text-xs" : "h-9 text-sm"}`}
-              >
-                <SelectValue
-                  placeholder={isCompact ? "Estados" : "Seleccionar estados"}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    currentStatus.length === 0 && "text-muted-foreground",
+                    isCompact ? "h-8 text-xs" : "h-9 text-sm"
+                  )}
                 >
+                  <Filter className="mr-2 h-4 w-4" />
                   {currentStatus.length === 0
                     ? isCompact
                       ? "Estados"
-                      : "Seleccionar estados"
+                      : "Seleccionar"
                     : currentStatus.length === 1
                     ? statusOptions.find((s) => s.value === currentStatus[0])
                         ?.label
                     : `${currentStatus.length} estados`}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map((status) => (
-                  <SelectItem
-                    key={status.value}
-                    value={status.value}
-                    disabled={currentStatus.includes(status.value)}
-                  >
-                    {status.label}
-                  </SelectItem>
-                ))}
-                {statusOptions.length === 0 && (
-                  <SelectItem value="" disabled>
-                    No hay estados disponibles
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-
-            {currentStatus.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {currentStatus.map((statusValue) => {
-                  const status = statusOptions.find(
-                    (s) => s.value === statusValue
-                  );
-                  return (
-                    <Badge
-                      key={statusValue}
-                      variant="secondary"
-                      className="flex items-center gap-1"
-                    >
-                      {status?.label || "Estado desconocido"}
+                  <ChevronDown className="ml-auto h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-0" align="start">
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Estados</h4>
+                    {currentStatus.length > 0 && (
                       <Button
-                        type="button"
                         variant="ghost"
                         size="sm"
-                        className="h-auto p-0 hover:bg-transparent"
                         onClick={() => {
-                          const newStatus = currentStatus.filter(
-                            (s) => s !== statusValue
-                          );
-                          setCurrentStatus(newStatus);
-                          if (newStatus.length === 0) {
-                            table
-                              .getColumn("estado")
-                              ?.setFilterValue(undefined);
-                          } else {
-                            table
-                              .getColumn("estado")
-                              ?.setFilterValue(newStatus);
-                          }
-                          table.setPageIndex(0);
+                          setCurrentStatus([]);
+                          table.getColumn("estado")?.setFilterValue(undefined);
                         }}
+                        className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
                       >
-                        <X className="h-3 w-3" />
+                        Limpiar
                       </Button>
-                    </Badge>
-                  );
-                })}
-              </div>
-            )}
+                    )}
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {statusOptions.map((status) => (
+                      <div
+                        key={status.value}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={status.value}
+                          checked={currentStatus.includes(status.value)}
+                          onCheckedChange={(checked) =>
+                            handleStatusToggle(status.value, checked as boolean)
+                          }
+                        />
+                        <label
+                          htmlFor={status.value}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {status.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
-          {/* Filtro de Oficina */}
+          {/* Filtro de Oficina - Con múltiple selección mediante checkboxes */}
           <div className={`space-y-${isCompact ? "1" : "2"}`}>
             <Label
               htmlFor="oficina-filter"
@@ -553,22 +586,77 @@ function TableFilters<TData, TValue>({
             >
               Oficina
             </Label>
-            <Select value={currentOficina} onValueChange={setCurrentOficina}>
-              <SelectTrigger
-                className={`${isCompact ? "h-8 text-xs" : "h-9 text-sm"}`}
-              >
-                <SelectValue
-                  placeholder={isCompact ? "Oficina" : "Todas las oficinas"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">Todas las oficinas</SelectItem>
-                  <SelectItem value={Oficina.Oficina1}>Oficina 1</SelectItem>
-                  <SelectItem value={Oficina.Oficina2}>Oficina 2</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    currentOficina.length === 0 && "text-muted-foreground",
+                    isCompact ? "h-8 text-xs" : "h-9 text-sm"
+                  )}
+                >
+                  <Filter className="mr-2 h-4 w-4" />
+                  {currentOficina.length === 0
+                    ? isCompact
+                      ? "Oficinas"
+                      : "Seleccionar"
+                    : currentOficina.length === 1
+                    ? `Oficina ${
+                        currentOficina[0] === Oficina.Oficina1 ? "1" : "2"
+                      }`
+                    : `${currentOficina.length} oficinas`}
+                  <ChevronDown className="ml-auto h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-0" align="start">
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Oficinas</h4>
+                    {currentOficina.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setCurrentOficina([]);
+                          table.getColumn("oficina")?.setFilterValue(undefined);
+                        }}
+                        className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Limpiar
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      {oficinaOptions.map((oficina) => (
+                        <div
+                          key={oficina.value}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={oficina.value}
+                            checked={currentOficina.includes(oficina.value)}
+                            onCheckedChange={(checked) =>
+                              handleOficinaToggle(
+                                oficina.value,
+                                checked as boolean
+                              )
+                            }
+                          />
+                          <label
+                            htmlFor={oficina.value}
+                            className="text-sm cursor-pointer flex-1"
+                          >
+                            {oficina.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Filtro de Cliente */}
@@ -577,29 +665,73 @@ function TableFilters<TData, TValue>({
               htmlFor="client-filter"
               className={`text-xs font-medium ${isCompact ? "sr-only" : ""}`}
             >
-              Cliente
+              Clientes
             </Label>
-            <Select value={currentClient} onValueChange={setCurrentClient}>
-              <SelectTrigger
-                className={`${isCompact ? "h-8 text-xs" : "h-9 text-sm"}`}
-              >
-                <SelectValue
-                  placeholder={isCompact ? "Cliente" : "Todos los clientes"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">Todos los clientes</SelectItem>
-                  {clientes
-                    .filter((cliente) => cliente.cuenta)
-                    .map((cliente) => (
-                      <SelectItem key={cliente.id} value={cliente.cuenta!}>
-                        {cliente.cuenta}
-                      </SelectItem>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    currentClient.length === 0 && "text-muted-foreground",
+                    isCompact ? "h-8 text-xs" : "h-9 text-sm"
+                  )}
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  {currentClient.length === 0
+                    ? isCompact
+                      ? "Clientes"
+                      : "Seleccionar"
+                    : currentClient.length === 1
+                    ? clientes.find((c) => c.id === currentClient[0])?.cuenta
+                    : `${currentClient.length} clientes`}
+                  <ChevronDown className="ml-auto h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-0" align="start">
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Clientes</h4>
+                    {currentClient.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setCurrentClient([]);
+                          table.getColumn("cliente")?.setFilterValue(undefined);
+                        }}
+                        className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Limpiar
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {clientes.map((client) => (
+                      <div
+                        key={client.id}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={client.id}
+                          checked={currentClient.includes(client.id)}
+                          onCheckedChange={(checked) =>
+                            handleClientToggle(client.id, checked as boolean)
+                          }
+                        />
+                        <label
+                          htmlFor={client.id}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {client.cuenta}
+                        </label>
+                      </div>
                     ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Filtro de Reclutador con Checkbox - Modificado */}
@@ -626,8 +758,11 @@ function TableFilters<TData, TValue>({
                       ? "Reclutadores"
                       : "Seleccionar"
                     : currentRecruiter.length === 1
-                    ? reclutadores.find((r) => r.id === currentRecruiter[0])
-                        ?.name
+                    ? reclutadores
+                        .find((r) => r.id === currentRecruiter[0])
+                        ?.name.split(" ")
+                        .at(0)
+                        ?.toString()
                     : `${currentRecruiter.length} reclutadores`}
                   <ChevronDown className="ml-auto h-4 w-4" />
                 </Button>
@@ -672,7 +807,7 @@ function TableFilters<TData, TValue>({
                           htmlFor={reclutador.id}
                           className="text-sm cursor-pointer flex-1"
                         >
-                          {reclutador.name}
+                          {reclutador.name.split(" ").at(0)}
                         </label>
                       </div>
                     ))}
@@ -682,7 +817,7 @@ function TableFilters<TData, TValue>({
             </Popover>
           </div>
 
-          {/* Filtro de Tipo */}
+          {/* Filtro de Tipo - Con múltiple selección mediante checkboxes */}
           <div className={`space-y-${isCompact ? "1" : "2"}`}>
             <Label
               htmlFor="tipo-filter"
@@ -690,23 +825,104 @@ function TableFilters<TData, TValue>({
             >
               Tipo
             </Label>
-            <Select value={currentTipo} onValueChange={setCurrentTipo}>
-              <SelectTrigger
-                className={`${isCompact ? "h-8 text-xs" : "h-9 text-sm"}`}
-              >
-                <SelectValue
-                  placeholder={isCompact ? "Tipo" : "Todos los tipos"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">Todos los tipos</SelectItem>
-                  <SelectItem value={VacancyTipo.Nueva}>Nueva</SelectItem>
-                  <SelectItem value={VacancyTipo.Garantia}>Garantia</SelectItem>
-                  <SelectItem value={VacancyTipo.Recompra}>Recompra</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    currentTipo.length === 0 && "text-muted-foreground",
+                    isCompact ? "h-8 text-xs" : "h-9 text-sm"
+                  )}
+                >
+                  <Filter className="mr-2 h-4 w-4" />
+                  {currentTipo.length === 0
+                    ? isCompact
+                      ? "Tipos"
+                      : "Seleccionar"
+                    : currentTipo.length === 1
+                    ? currentTipo[0]
+                    : `${currentTipo.length} tipos`}
+                  <ChevronDown className="ml-auto h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-0" align="start">
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Tipos</h4>
+                    {currentTipo.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setCurrentTipo([]);
+                          table.getColumn("tipo")?.setFilterValue(undefined);
+                        }}
+                        className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Limpiar
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tipo-nueva"
+                        checked={currentTipo.includes(VacancyTipo.Nueva)}
+                        onCheckedChange={(checked) =>
+                          handleTipoToggle(
+                            VacancyTipo.Nueva,
+                            checked as boolean
+                          )
+                        }
+                      />
+                      <label
+                        htmlFor="tipo-nueva"
+                        className="text-sm cursor-pointer flex-1"
+                      >
+                        Nueva
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tipo-garantia"
+                        checked={currentTipo.includes(VacancyTipo.Garantia)}
+                        onCheckedChange={(checked) =>
+                          handleTipoToggle(
+                            VacancyTipo.Garantia,
+                            checked as boolean
+                          )
+                        }
+                      />
+                      <label
+                        htmlFor="tipo-garantia"
+                        className="text-sm cursor-pointer flex-1"
+                      >
+                        Garantía
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tipo-recompra"
+                        checked={currentTipo.includes(VacancyTipo.Recompra)}
+                        onCheckedChange={(checked) =>
+                          handleTipoToggle(
+                            VacancyTipo.Recompra,
+                            checked as boolean
+                          )
+                        }
+                      />
+                      <label
+                        htmlFor="tipo-recompra"
+                        className="text-sm cursor-pointer flex-1"
+                      >
+                        Recompra
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Filtro de Rango de Fechas */}
@@ -1120,14 +1336,14 @@ export function RecruiterTable<TData, TValue>({
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [currentStatus, setCurrentStatus] = useState<string[]>([]);
   const [currentRecruiter, setCurrentRecruiter] = useState<string[]>([]);
-  const [currentClient, setCurrentClient] = useState("all");
-  const [currentTipo, setCurrentTipo] = useState("all");
+  const [currentClient, setCurrentClient] = useState<string[]>([]);
+  const [currentTipo, setCurrentTipo] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [currentOficina, setCurrentOficina] = useState<Oficina | "all">("all");
+  const [currentOficina, setCurrentOficina] = useState<Oficina[]>([]);
   const [tableData, setTableData] = useState<TData[]>(data);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([]);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, _setCurrentPage] = useState(0);
   const [showTopActions, setShowTopActions] = useState(true);
 
   // Memoizar los datos de la tabla para evitar re-renderizaciones innecesarias
@@ -1214,58 +1430,45 @@ export function RecruiterTable<TData, TValue>({
     [table]
   );
 
-  const handleStatusChange = useCallback(
-    (value: string[]) => {
-      setCurrentStatus(value);
-      if (value.length === 0) {
-        table.getColumn("estado")?.setFilterValue(undefined);
-      } else {
-        table.getColumn("estado")?.setFilterValue(value);
-      }
-      table.setPageIndex(0);
-    },
-    [table]
-  );
-
   const handleClientChange = useCallback(
-    (value: string) => {
-      if (value === "all") {
-        table.getColumn("cliente")?.setFilterValue(undefined);
-        setCurrentClient("all");
-        return;
-      }
+    (value: string[]) => {
       setCurrentClient(value);
-      table.getColumn("cliente")?.setFilterValue(value);
+      const columna = table.getColumn("cliente");
+      if (value.length === 0) {
+        table.getColumn("cliente")?.setFilterValue(undefined);
+        console.log("columna", columna);
+      } else {
+        console.log({});
+        table.getColumn("cliente")?.setFilterValue(value);
+
+        console.log("columna", columna?.getFilterValue());
+      }
       table.setPageIndex(0);
     },
     [table]
   );
 
   const handleTipoChange = useCallback(
-    (value: string) => {
-      if (value === "all") {
-        table.getColumn("tipo")?.setFilterValue(undefined);
-        setCurrentTipo("all");
-        return;
-      }
+    (value: string[]) => {
       setCurrentTipo(value);
-      table.getColumn("tipo")?.setFilterValue(value);
+      if (value.length === 0) {
+        table.getColumn("tipo")?.setFilterValue(undefined);
+      } else {
+        table.getColumn("tipo")?.setFilterValue(value);
+      }
       table.setPageIndex(0);
     },
     [table]
   );
 
-  const handleOficinaChange = useCallback(
-    (value: string) => {
-      if (value === "all") {
-        table.getColumn("oficina")?.setFilterValue(undefined);
-        setCurrentOficina("all");
-        return;
+  const handleRecruiterChange = useCallback(
+    (value: string[]) => {
+      setCurrentRecruiter(value);
+      if (value.length === 0) {
+        table.getColumn("reclutador")?.setFilterValue(undefined);
+      } else {
+        table.getColumn("reclutador")?.setFilterValue(value);
       }
-
-      setCurrentOficina(value as Oficina);
-
-      table.getColumn("oficina")?.setFilterValue(value as Oficina);
       table.setPageIndex(0);
     },
     [table]
@@ -1279,6 +1482,18 @@ export function RecruiterTable<TData, TValue>({
         return;
       }
       table.getColumn("asignacion")?.setFilterValue(range);
+      table.setPageIndex(0);
+    },
+    [table]
+  );
+  const handleOficinaChange = useCallback(
+    (value: Oficina[]) => {
+      setCurrentOficina(value);
+      if (value.length === 0) {
+        table.getColumn("oficina")?.setFilterValue(undefined);
+      } else {
+        table.getColumn("oficina")?.setFilterValue(value);
+      }
       table.setPageIndex(0);
     },
     [table]
@@ -1369,11 +1584,11 @@ export function RecruiterTable<TData, TValue>({
         filterPlaceholder={filterPlaceholder}
         onGlobalFilterChange={handleGlobalFilterChange}
         currentStatus={currentStatus}
-        setCurrentStatus={handleStatusChange}
+        setCurrentStatus={setCurrentStatus}
         currentClient={currentClient}
         setCurrentClient={handleClientChange}
         currentRecruiter={currentRecruiter}
-        setCurrentRecruiter={setCurrentRecruiter}
+        setCurrentRecruiter={handleRecruiterChange}
         currentTipo={currentTipo}
         setCurrentTipo={handleTipoChange}
         dateRange={dateRange}

@@ -65,13 +65,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.name = session.user.name;
         token.email = session.user.email;
       }
-
-      console.log("JWT callback:", {
-        trigger,
-        hasUser: !!user,
-        tokenId: token.id,
-        tokenRole: token.role,
-      });
       return token;
     },
     async session({ session, token, trigger }) {

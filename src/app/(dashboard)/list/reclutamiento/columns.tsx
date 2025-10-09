@@ -126,7 +126,19 @@ export const vacantesColumns: ColumnDef<VacancyWithRelations>[] = [
     cell: ({ row }) => {
       return <RecruiterDropDown row={row} />;
     },
-    accessorFn: (row) => row.reclutador?.name,
+    accessorFn: (row) => row.reclutador?.id,
+    filterFn: (row, _columnId, filterValue) => {
+      if (
+        !filterValue ||
+        !Array.isArray(filterValue) ||
+        filterValue.length === 0
+      ) {
+        return true;
+      }
+      const reclutadorId = row.original.reclutador?.id;
+      if (!reclutadorId) return false;
+      return filterValue.includes(reclutadorId);
+    },
     enableGlobalFilter: true,
   },
   {
@@ -136,6 +148,18 @@ export const vacantesColumns: ColumnDef<VacancyWithRelations>[] = [
       return <TypeDropdown row={row} />;
     },
     accessorFn: (row) => row.tipo,
+    filterFn: (row, _columnId, filterValue) => {
+      if (
+        !filterValue ||
+        !Array.isArray(filterValue) ||
+        filterValue.length === 0
+      ) {
+        return true;
+      }
+      const tipo = row.original.tipo;
+      if (!tipo) return false;
+      return filterValue.includes(tipo);
+    },
     enableGlobalFilter: true,
   },
   {
@@ -144,7 +168,19 @@ export const vacantesColumns: ColumnDef<VacancyWithRelations>[] = [
     cell: ({ row }) => {
       return <ClientesDropDown row={row} />;
     },
-    accessorFn: (row) => row.cliente?.cuenta,
+    accessorFn: (row) => row.cliente?.id,
+    filterFn: (row, _columnId, filterValue) => {
+      if (
+        !filterValue ||
+        !Array.isArray(filterValue) ||
+        filterValue.length === 0
+      ) {
+        return true;
+      }
+      const clienteId = row.original.cliente?.id;
+      if (!clienteId) return false;
+      return filterValue.includes(clienteId);
+    },
     enableGlobalFilter: true,
   },
   {
@@ -154,6 +190,19 @@ export const vacantesColumns: ColumnDef<VacancyWithRelations>[] = [
       return <StatusDropdown row={row} />;
     },
     accessorFn: (row) => row.estado,
+    filterFn: (row, _columnId, filterValue) => {
+      if (
+        !filterValue ||
+        !Array.isArray(filterValue) ||
+        filterValue.length === 0
+      ) {
+        return true;
+      }
+      const estado = row.original.estado;
+      if (!estado) return false;
+      return filterValue.includes(estado);
+    },
+
     enableGlobalFilter: true,
   },
   {
@@ -341,6 +390,18 @@ export const vacantesColumns: ColumnDef<VacancyWithRelations>[] = [
     cell: () => null,
     header: () => null,
     accessorFn: (row) => row.reclutador?.Oficina,
+    filterFn: (row, _columnId, filterValue) => {
+      if (
+        !filterValue ||
+        !Array.isArray(filterValue) ||
+        filterValue.length === 0
+      ) {
+        return true;
+      }
+      const oficina = row.original.reclutador?.Oficina;
+      if (!oficina) return false;
+      return filterValue.includes(oficina);
+    },
     enableGlobalFilter: true,
   },
   {
