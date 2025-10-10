@@ -232,7 +232,6 @@ function TableFilters<TData, TValue>({
     table.setPageIndex(0);
   };
 
-  // Función específica para manejar cambios en clientes
   const handleClientToggle = (clientId: string, checked: boolean) => {
     const newClient = checked
       ? [...currentClient, clientId]
@@ -1430,24 +1429,6 @@ export function RecruiterTable<TData, TValue>({
     [table]
   );
 
-  const handleClientChange = useCallback(
-    (value: string[]) => {
-      setCurrentClient(value);
-      const columna = table.getColumn("cliente");
-      if (value.length === 0) {
-        table.getColumn("cliente")?.setFilterValue(undefined);
-        console.log("columna", columna);
-      } else {
-        console.log({});
-        table.getColumn("cliente")?.setFilterValue(value);
-
-        console.log("columna", columna?.getFilterValue());
-      }
-      table.setPageIndex(0);
-    },
-    [table]
-  );
-
   const handleTipoChange = useCallback(
     (value: string[]) => {
       setCurrentTipo(value);
@@ -1455,19 +1436,6 @@ export function RecruiterTable<TData, TValue>({
         table.getColumn("tipo")?.setFilterValue(undefined);
       } else {
         table.getColumn("tipo")?.setFilterValue(value);
-      }
-      table.setPageIndex(0);
-    },
-    [table]
-  );
-
-  const handleRecruiterChange = useCallback(
-    (value: string[]) => {
-      setCurrentRecruiter(value);
-      if (value.length === 0) {
-        table.getColumn("reclutador")?.setFilterValue(undefined);
-      } else {
-        table.getColumn("reclutador")?.setFilterValue(value);
       }
       table.setPageIndex(0);
     },
@@ -1586,9 +1554,9 @@ export function RecruiterTable<TData, TValue>({
         currentStatus={currentStatus}
         setCurrentStatus={setCurrentStatus}
         currentClient={currentClient}
-        setCurrentClient={handleClientChange}
+        setCurrentClient={setCurrentClient}
         currentRecruiter={currentRecruiter}
-        setCurrentRecruiter={handleRecruiterChange}
+        setCurrentRecruiter={setCurrentRecruiter}
         currentTipo={currentTipo}
         setCurrentTipo={handleTipoChange}
         dateRange={dateRange}

@@ -188,17 +188,23 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
     header: ({ column }) => (
       <SortableHeader column={column} title="Reclutador" />
     ),
-    filterFn: (row, id, value) => {
-      if (!value || !Array.isArray(value) || value.length === 0) {
+    filterFn: (row, _columnId, filterValue) => {
+      if (
+        !filterValue ||
+        !Array.isArray(filterValue) ||
+        filterValue.length === 0
+      ) {
         return true;
       }
-      const cellValue = row.getValue(id);
-      return value.includes(cellValue);
+      const reclutadorId = row.original.reclutador?.id;
+      if (!reclutadorId) return false;
+      return filterValue.includes(reclutadorId);
     },
     cell: ({ row }) => {
       return <RecruiterDropDown row={row} />;
     },
-    accessorFn: (row) => row.reclutador.id,
+    accessorFn: (row) => row.reclutador?.id,
+    enableGlobalFilter: true,
   },
   {
     id: "cliente",
@@ -218,7 +224,20 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
         </Tooltip>
       );
     },
-    accessorFn: (row) => row.cliente.cuenta,
+    accessorFn: (row) => row.cliente?.id,
+    filterFn: (row, _columnId, filterValue) => {
+      if (
+        !filterValue ||
+        !Array.isArray(filterValue) ||
+        filterValue.length === 0
+      ) {
+        return true;
+      }
+      const clienteId = row.original.cliente?.id;
+      if (!clienteId) return false;
+      return filterValue.includes(clienteId);
+    },
+    enableGlobalFilter: true,
   },
   {
     accessorKey: "posicion",
@@ -408,7 +427,7 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
   },
   {
     id: "tipo",
-    accessorKey: "tipo",
+    accessorKey: "j",
     header: ({ column }) => <SortableHeader column={column} title="Tipo" />,
     cell: ({ row }) => {
       //return <TypeDropdown row={row} />;
@@ -445,7 +464,20 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
       );
     },
     accessorFn: (row) => row.tipo,
+    filterFn: (row, _columnId, filterValue) => {
+      if (
+        !filterValue ||
+        !Array.isArray(filterValue) ||
+        filterValue.length === 0
+      ) {
+        return true;
+      }
+      const tipo = row.original.tipo;
+      if (!tipo) return false;
+      return filterValue.includes(tipo);
+    },
   },
+
   {
     accessorKey: "candidatoContratado",
     header: "Contratado",
@@ -561,6 +593,19 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
       );
     },
     accessorFn: (row) => row.reclutador?.Oficina,
+    filterFn: (row, _columnId, filterValue) => {
+      if (
+        !filterValue ||
+        !Array.isArray(filterValue) ||
+        filterValue.length === 0
+      ) {
+        return true;
+      }
+      const oficina = row.original.reclutador?.Oficina;
+      if (!oficina) return false;
+      return filterValue.includes(oficina);
+    },
+    enableGlobalFilter: true,
     enableSorting: true,
     enableHiding: true,
   },
