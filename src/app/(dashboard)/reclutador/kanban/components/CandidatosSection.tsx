@@ -386,7 +386,6 @@ export const CandidatesSectionReclutador = ({
         return;
       }
 
-      console.log("fechaEntregaTerna desde el cliente", date);
       const response = await validarTerna(
         vacancyId,
         selectedCandidatesForTerna,

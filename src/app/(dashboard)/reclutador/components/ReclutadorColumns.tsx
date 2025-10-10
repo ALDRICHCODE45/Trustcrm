@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { differenceInDays, format } from "date-fns";
+import { differenceInDays, format, formatDate } from "date-fns";
 import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { DocumentsSection } from "./DocumentsSection";
@@ -30,6 +30,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { updateVacancy } from "@/actions/vacantes/actions";
 import { toast } from "sonner";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
+import { useCandidates } from "@/hooks/candidates/use-candidates";
+import { FechaEntregaTernaTooltip } from "./FechaEntregaTernaToolTip";
 
 // Componente para manejar el tiempo transcurrido con calendario
 const TiempoTranscurridoCell = ({ row }: { row: any }) => {
@@ -390,21 +392,13 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
       <SortableHeader column={column} title="Fecha Entrega" />
     ),
     cell: ({ row }) => {
+      const fechaEntrega = row.original.fechaEntrega;
       return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="outline" className="w-full">
-              {row.original.fechaEntrega
-                ? format(row.original.fechaEntrega, "EEE d/M/yy", {
-                    locale: es,
-                  })
-                : "N/A"}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Fecha Entrega</p>
-          </TooltipContent>
-        </Tooltip>
+        <Button variant={"outline"}>
+          {fechaEntrega
+            ? format(fechaEntrega, "EEE dd/MM/yy", { locale: es })
+            : "N/A"}
+        </Button>
       );
     },
   },
@@ -414,15 +408,7 @@ export const reclutadorColumns: ColumnDef<VacancyWithRelations>[] = [
       <SortableHeader column={column} title="Fecha Terna" />
     ),
     cell: ({ row }) => {
-      return (
-        <ChangeDateComponent
-          fecha={row.original.fechaEntregaTerna}
-          onFechaChange={(nuevaFecha) => {
-            // Aquí implementarías la lógica para actualizar la fecha en tu fuente de datos
-            console.log("Fecha actualizada:", nuevaFecha);
-          }}
-        />
-      );
+      return <FechaEntregaTernaTooltip vacancyId={row.original.id} />;
     },
   },
   {

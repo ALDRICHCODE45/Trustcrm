@@ -992,6 +992,48 @@ export const validateTernaToVacancy = async (
   }
 };
 
+export const getFirstTernaDeliveriedByVacancyId = async (vacancyId: string) => {
+  try {
+    if (!vacancyId) {
+      return {
+        ok: false,
+        message: "VacancyId es requerido",
+      };
+    }
+
+    const firstTernaDeliveried = await prisma.vacancy.findUnique({
+      where: {
+        id: vacancyId,
+      },
+      include: {
+        ternaHistory: {
+          orderBy: {
+            deliveredAt: "desc",
+          },
+          take: 1,
+        },
+      },
+    });
+    if (!firstTernaDeliveried) {
+      return {
+        ok: false,
+        message: "No se encontro la primera terna validada",
+      };
+    }
+    return {
+      ok: true,
+      message: "Primera terna validada encontrada satisfactoriamente",
+      terna: firstTernaDeliveried,
+    };
+  } catch (e) {
+    console.error("Error al obtener la primera terna validada", e);
+    return {
+      ok: false,
+      message: "Error al obtener la primera terna validada",
+    };
+  }
+};
+
 export const unvalidateTernaAction = async (vacancyId: string) => {
   try {
     const session = await auth();
