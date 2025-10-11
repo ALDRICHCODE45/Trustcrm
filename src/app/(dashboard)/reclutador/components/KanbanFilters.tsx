@@ -16,6 +16,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -374,7 +382,7 @@ export function KanbanFilters({
           </Popover>
         </div>
 
-        {/* Cliente con Checkbox - Siempre visible */}
+        {/* Cliente con Checkbox y Búsqueda - Siempre visible */}
         <div className={cn("space-y-2", isMinimalistView && "space-y-1")}>
           {!isMinimalistView && (
             <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -405,43 +413,57 @@ export function KanbanFilters({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-0" align="start">
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium">Clientes</h4>
-                  {filters.clienteIds.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleFilterChange("clienteIds", [])}
-                      className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      Limpiar
-                    </Button>
-                  )}
-                </div>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {clientes.map((cliente) => (
-                    <div
-                      key={cliente.id}
-                      className="flex items-center space-x-2"
-                    >
-                      <Checkbox
-                        id={cliente.id}
-                        checked={filters.clienteIds.includes(cliente.id)}
-                        onCheckedChange={(checked) =>
-                          handleClienteToggle(cliente.id, checked as boolean)
-                        }
-                      />
-                      <label
-                        htmlFor={cliente.id}
-                        className="text-sm cursor-pointer flex-1"
-                      >
-                        {cliente.cuenta || `Cliente ${cliente.id}`}
-                      </label>
+              <Command>
+                <CommandInput placeholder="Buscar cliente..." />
+                <CommandList>
+                  <CommandEmpty>No se encontró el cliente.</CommandEmpty>
+                  <CommandGroup>
+                    <div className="p-2 flex items-center justify-between border-b">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Clientes
+                      </span>
+                      {filters.clienteIds.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleFilterChange("clienteIds", [])}
+                          className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          Limpiar
+                        </Button>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
+                    {clientes.map((cliente) => (
+                      <CommandItem
+                        key={cliente.id}
+                        value={cliente.cuenta || cliente.id}
+                        onSelect={() => {
+                          handleClienteToggle(
+                            cliente.id,
+                            !filters.clienteIds.includes(cliente.id)
+                          );
+                        }}
+                        className="flex items-center space-x-2 cursor-pointer"
+                      >
+                        <Checkbox
+                          id={cliente.id}
+                          checked={filters.clienteIds.includes(cliente.id)}
+                          onCheckedChange={(checked) =>
+                            handleClienteToggle(cliente.id, checked as boolean)
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <label
+                          htmlFor={cliente.id}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {cliente.cuenta || `Cliente ${cliente.id}`}
+                        </label>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
             </PopoverContent>
           </Popover>
         </div>
