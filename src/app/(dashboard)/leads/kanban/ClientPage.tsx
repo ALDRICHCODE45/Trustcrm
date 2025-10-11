@@ -35,6 +35,7 @@ import {
   LeadWithRelations,
   FilterState as InfiniteFilterState,
 } from "@/hooks/use-infinite-leads";
+import { useRouter } from "next/navigation";
 
 interface PaginationInfo {
   page: number;
@@ -61,6 +62,7 @@ export default function KanbanLeadsBoard({
   generadores,
 }: Props) {
   const { width, height } = useWindowSize();
+  const router = useRouter();
 
   // Usar el hook de infinite leads
   const {
@@ -156,6 +158,7 @@ export default function KanbanLeadsBoard({
         formDataToSend.append("ubicacion", formData.ubicacion);
         formDataToSend.append("subSectorId", formData.subsector);
         formDataToSend.append("status", pendingLeadUpdate.newStatus);
+        formDataToSend.append("subOrigen", formData.subOrigen);
 
         // Buscar el subsector seleccionado para incluir el objeto completo
         const selectedSubSector = subSectores.find(
@@ -172,29 +175,46 @@ export default function KanbanLeadsBoard({
           ubicacion: formData.ubicacion,
           subSectorId: formData.subsector,
           SubSector: selectedSubSector || null,
+          SubOrigen: formData.subOrigen,
         });
 
         // Hacer una sola llamada que actualice todo
-        const preClientPromise = editLeadByIdAndCreatePreClient(
-          formDataToSend,
-          pendingLeadUpdate.leadId
-        );
+        try {
+          toast.promise(
+            editLeadByIdAndCreatePreClient(
+              formDataToSend,
+              pendingLeadUpdate.leadId
+            ),
+            {
+              loading: "Guardando cambios...",
+              success: () => {
+                // Confirmar que el lead se movió a la nueva columna
+                router.refresh();
+                return `Lead actualizado a Contacto Cálido`;
+              },
+              error: () => {
+                // Revertir el cambio si hay un error
+                updateLeadInState(pendingLeadUpdate.leadId, {
+                  status: pendingLeadUpdate.leadToUpdate.status,
+                  numero_empleados:
+                    pendingLeadUpdate.leadToUpdate.numero_empleados,
+                  ubicacion: pendingLeadUpdate.leadToUpdate.ubicacion,
+                  subSectorId: pendingLeadUpdate.leadToUpdate.subSectorId,
+                  SubSector: pendingLeadUpdate.leadToUpdate.SubSector,
+                  SubOrigen: pendingLeadUpdate.leadToUpdate.SubOrigen,
+                });
+                return `Error al actualizar`;
+              },
+            }
+          );
 
-        toast.promise(preClientPromise, {
-          loading: "Guardando cambios...",
-          success: () =>
-            `Lead actualizado a Contacto Cálido con información adicional`,
-          error: () => {
-            // Revertir el cambio si hay un error
-            updateLeadInState(pendingLeadUpdate.leadId, {
-              status: pendingLeadUpdate.leadToUpdate.status,
-            });
-            return `Error al actualizar`;
-          },
-        });
-
-        setShowContactoCalidoDialog(false);
-        setPendingLeadUpdate(null);
+          // Cerrar el diálogo solo después de una actualización exitosa
+          setShowContactoCalidoDialog(false);
+          setPendingLeadUpdate(null);
+        } catch (error) {
+          // El error ya fue manejado por el toast.promise
+          console.error("Error al actualizar lead:", error);
+        }
       }
     },
     [pendingLeadUpdate, subSectores, updateLeadInState]

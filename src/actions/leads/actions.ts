@@ -76,8 +76,13 @@ export const editLeadByIdAndCreatePreClient = async (
 
   const numeroEmpleados = formData.get("numero_empleados") as string;
   const ubicacion = formData.get("ubicacion") as string;
+  const subOrigenContent = formData.get("subOrigen") as string;
   const subSectorId = formData.get("subSectorId") as string;
   const status = formData.get("status") as string;
+
+  if (subOrigenContent.trim().length === 0) {
+    throw new Error("subOrigen no debe estar vacio");
+  }
 
   try {
     //Buscamos el lead
@@ -91,8 +96,6 @@ export const editLeadByIdAndCreatePreClient = async (
       },
     });
 
-    console.log({ formData, existingLead });
-
     if (!existingLead) {
       throw Error("Lead does not exists");
     }
@@ -105,6 +108,7 @@ export const editLeadByIdAndCreatePreClient = async (
         ubicacion: ubicacion || existingLead.ubicacion,
         subSectorId: subSectorId || existingLead.subSectorId,
         status: (status as LeadStatus) || existingLead.status,
+        SubOrigen: subOrigenContent || existingLead.SubOrigen,
       },
     });
 

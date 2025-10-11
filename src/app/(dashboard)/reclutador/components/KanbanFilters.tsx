@@ -342,7 +342,7 @@ export function KanbanFilters({
                         htmlFor={reclutador.id}
                         className="text-sm cursor-pointer flex-1"
                       >
-                        {reclutador.name}
+                        {reclutador.name.split(" ").at(0)}
                       </label>
                     </div>
                   ))}

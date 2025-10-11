@@ -187,6 +187,9 @@ model Lead {
   SubSector      SubSector?          @relation(fields: [subSectorId], references: [id])
   subSectorId    String?
   Client         Client[]
+
+  //subOrigen -> solo un string que lo define el GL
+  SubOrigen String?
 }
 
 //modelo de contacto para todos los modulos
