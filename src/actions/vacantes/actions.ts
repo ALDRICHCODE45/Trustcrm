@@ -1138,14 +1138,16 @@ export const getTernaHistory = async (vacancyId: string) => {
 
 interface Args {
   vacancyId: string;
-  salarioFinal: string;
-  fechaProximaEntrada: string;
+  salarioFinal?: string;
+  fechaProximaEntrada?: string;
+  newState: VacancyEstado;
 }
 
 export const updateSalarioFinalAndFechaProximaEntrada = async ({
   fechaProximaEntrada,
   salarioFinal,
   vacancyId,
+  newState,
 }: Args) => {
   try {
     //buscar la vacante
@@ -1168,10 +1170,12 @@ export const updateSalarioFinalAndFechaProximaEntrada = async ({
         id: vacancyId,
       },
       data: {
-        salarioFinal,
-        fecha_proxima_entrada: fechaProximaEntrada,
+        salarioFinal: salarioFinal || vacancy.salarioFinal || null,
+        fecha_proxima_entrada:
+          fechaProximaEntrada || vacancy.fecha_proxima_entrada || null,
       },
     });
+    await updateVacancyStatus(vacancyId, newState);
 
     return {
       ok: true,

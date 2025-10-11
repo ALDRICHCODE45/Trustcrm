@@ -72,6 +72,7 @@ import { cn } from "@/core/lib/utils";
 import QuickStatsDialog from "./QuickStatsDialog";
 import CreateVacanteForm from "../../list/reclutamiento/components/CreateVacanteForm";
 import { useRouter } from "next/navigation";
+import { PlacementDialog } from "./PlacementDialog";
 
 // Types
 interface ColumnProps {
@@ -911,6 +912,12 @@ export const KanbanBoardPage = ({
     string | null
   >(null);
 
+  //Dialog para pedir solo el salario final
+  const [showPlacementDialog, setShowPlacementDialog] = useState(false);
+  const [placementVacanteId, setPlacementVacanteId] = useState<string | null>(
+    null
+  );
+
   const [allVacantes, setAllVacantes] =
     useState<VacancyWithRelations[]>(initialVacantes);
   const [filteredVacantes, setFilteredVacantes] =
@@ -1134,17 +1141,41 @@ export const KanbanBoardPage = ({
       try {
         setIsUpdating(true);
 
+        // Estados desde los cuales se requiere información adicional para PrePlacement
+        const mapToShowPreplacementDialog: VacancyEstado[] = [
+          VacancyEstado.QuickMeeting,
+          VacancyEstado.Hunting,
+          VacancyEstado.Entrevistas,
+        ];
+
+        // Estados desde los cuales se requiere información adicional para Placement
+        const mapToShowPlacementDialog: VacancyEstado[] = [
+          VacancyEstado.PrePlacement,
+        ];
+
         //validar si el nuevo status es Preplacement
         //Para pedir el salario final y la fecha de proxima entrada
         if (
-          (targetColumn.id === VacancyEstado.PrePlacement ||
-            targetColumn.id === VacancyEstado.Placement) &&
-          !activeVacante.salarioFinal &&
-          !activeVacante.fecha_proxima_entrada
+          targetColumn.id === VacancyEstado.PrePlacement &&
+          mapToShowPreplacementDialog.includes(activeVacante.estado)
         ) {
           //abrir dialogo para pedir el salario final y la fecha de proxima entrada
           setPreplacementVacanteId(activeVacante.id);
           setShowPreplacementDialog(true);
+          setIsUpdating(false);
+          return;
+        }
+
+        //validar si el nuevo status es Placement
+        //Para pedir el salario final
+        if (
+          targetColumn.id === VacancyEstado.Placement &&
+          mapToShowPlacementDialog.includes(activeVacante.estado)
+        ) {
+          //abrir dialogo para pedir el salario final
+          setPlacementVacanteId(activeVacante.id);
+          setShowPlacementDialog(true);
+          setIsUpdating(false);
           return;
         }
 
@@ -1221,6 +1252,40 @@ export const KanbanBoardPage = ({
         // Movimiento entre columnas a través de una tarjeta
         try {
           setIsUpdating(true);
+
+          // Estados desde los cuales se requiere información adicional para PrePlacement
+          const mapToShowPreplacementDialog: VacancyEstado[] = [
+            VacancyEstado.QuickMeeting,
+            VacancyEstado.Hunting,
+            VacancyEstado.Entrevistas,
+          ];
+
+          // Estados desde los cuales se requiere información adicional para Placement
+          const mapToShowPlacementDialog: VacancyEstado[] = [
+            VacancyEstado.PrePlacement,
+          ];
+
+          // Validar si el nuevo status es PrePlacement
+          if (
+            overVacante.estado === VacancyEstado.PrePlacement &&
+            mapToShowPreplacementDialog.includes(activeVacante.estado)
+          ) {
+            setPreplacementVacanteId(activeVacante.id);
+            setShowPreplacementDialog(true);
+            setIsUpdating(false);
+            return;
+          }
+
+          // Validar si el nuevo status es Placement
+          if (
+            overVacante.estado === VacancyEstado.Placement &&
+            mapToShowPlacementDialog.includes(activeVacante.estado)
+          ) {
+            setPlacementVacanteId(activeVacante.id);
+            setShowPlacementDialog(true);
+            setIsUpdating(false);
+            return;
+          }
 
           const result = await updateVacancyStatus(
             activeId,
@@ -1573,6 +1638,15 @@ export const KanbanBoardPage = ({
           </DragOverlay>
         </DndContext>
       </div>
+      {placementVacanteId && (
+        <PlacementDialog
+          open={showPlacementDialog}
+          setOpen={setShowPlacementDialog}
+          activeVacanteId={placementVacanteId}
+          refreshVacancies={refreshVacancies}
+        />
+      )}
+
       {preplacementVacanteId && (
         <PreplacementDialog
           open={showPreplacementDialog}
