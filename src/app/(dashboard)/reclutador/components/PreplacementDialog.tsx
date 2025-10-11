@@ -1,6 +1,7 @@
 import { updateSalarioFinalAndFechaProximaEntrada } from "@/actions/vacantes/actions";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogClose,
@@ -21,7 +22,21 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+  SelectContent,
+} from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -30,8 +45,12 @@ const formSchema = z.object({
   salarioFinal: z.string().min(2, {
     message: "El salario final es requerido",
   }),
-  fechaProximaEntrada: z.string().min(2, {
+  fechaProximaEntrada: z.string({ required_error: "Ingresa un valor" }).min(2, {
     message: "Fecha de proxima entrada es requerida",
+  }),
+  monto: z.enum(["brutos", "netos"], {
+    required_error: "Selecciona si el salario es bruto o neto",
+    invalid_type_error: "Valor inválido, selecciona bruto o neto",
   }),
 });
 
@@ -53,11 +72,11 @@ export const PreplacementDialog = ({
     defaultValues: {
       fechaProximaEntrada: "",
       salarioFinal: "",
+      monto: "brutos",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("valores", { values });
     if (!activeVacanteId) {
       toast.custom((t) => (
         <ToastCustomMessage
@@ -76,7 +95,7 @@ export const PreplacementDialog = ({
     try {
       const result = await updateSalarioFinalAndFechaProximaEntrada({
         vacancyId: activeVacanteId,
-        salarioFinal: values.salarioFinal,
+        salarioFinal: `${values.salarioFinal} ${values.monto} `,
         fechaProximaEntrada: values.fechaProximaEntrada,
       });
       if (!result.ok) {
@@ -139,31 +158,91 @@ export const PreplacementDialog = ({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="grid gap-4">
-              <FormField
-                control={form.control}
-                name="salarioFinal"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Salario final</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="Ej: 10000" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="flex justify-between items-center gap-2">
+                <FormField
+                  control={form.control}
+                  name="salarioFinal"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>Salario final</FormLabel>
+                      <FormControl>
+                        <Input type="text" placeholder="Ej: 10000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="monto"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>Monto</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona tipo" />
+                          </SelectTrigger>
+                          <SelectContent className="z-[99999]">
+                            <SelectItem value="brutos">Brutos</SelectItem>
+                            <SelectItem value="netos">Netos</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="fechaProximaEntrada"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fecha de proxima entrada</FormLabel>
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Fecha de próxima entrada</FormLabel>
                     <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="Ej: 2025-01-01"
-                        {...field}
-                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            className={`
+                              w-full justify-start text-left font-normal
+                              ${!field.value ? "text-muted-foreground" : ""}
+                            `}
+                          >
+                            {field.value ? field.value : "Select date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0 z-[9999]" align="start">
+                          <Calendar
+                            className="z-9999"
+                            mode="single"
+                            captionLayout="dropdown"
+                            selected={
+                              field.value
+                                ? typeof field.value === "string"
+                                  ? new Date(field.value)
+                                  : field.value
+                                : undefined
+                            }
+                            onSelect={(date) => {
+                              field.onChange(
+                                date
+                                  ? format(
+                                      date.toISOString(),
+                                      "eee d 'de' MMM yyyy",
+                                      { locale: es }
+                                    )
+                                  : ""
+                              );
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
