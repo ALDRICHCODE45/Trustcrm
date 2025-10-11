@@ -71,6 +71,7 @@ import { PreplacementDialog } from "./PreplacementDialog";
 import { cn } from "@/core/lib/utils";
 import QuickStatsDialog from "./QuickStatsDialog";
 import CreateVacanteForm from "../../list/reclutamiento/components/CreateVacanteForm";
+import { useRouter } from "next/navigation";
 
 // Types
 interface ColumnProps {
@@ -903,6 +904,7 @@ export const KanbanBoardPage = ({
   refreshVacancies,
   onVacancyCreated,
 }: KanbanBoardPageProps) => {
+  const router = useRouter();
   //Dialogo para pedir el salario final y la fecha de proxima entrada
   const [showPreplacementDialog, setShowPreplacementDialog] = useState(false);
   const [preplacementVacanteId, setPreplacementVacanteId] = useState<
@@ -1075,7 +1077,7 @@ export const KanbanBoardPage = ({
   // Función para manejar la creación de vacantes
   const handleVacancyCreated = async () => {
     if (onVacancyCreated) {
-      await onVacancyCreated();
+      onVacancyCreated();
     }
     refreshVacancies();
   };
@@ -1171,6 +1173,7 @@ export const KanbanBoardPage = ({
               }}
             />
           ));
+          router.refresh();
         } else {
           // Verificar si es un error de validación con razón detallada
           if (result.reason) {

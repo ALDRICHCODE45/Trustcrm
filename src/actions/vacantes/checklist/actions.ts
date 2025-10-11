@@ -7,8 +7,10 @@ import {
   Role,
   SpecialNotificationPriority,
   SpecialNotificationType,
+  VacancyEstado,
 } from "@prisma/client";
 import { createSpecialNotification } from "@/actions/notifications/special-notifications";
+import { updateVacancyStatus } from "../actions";
 
 interface addCandidateFeedbackProps {
   feedback: string;
@@ -215,6 +217,40 @@ export const editCandidateFeedback = async (
   }
 };
 
+//funcion HELPER que comprueba si ya esta validado el perfil muestra y
+// el checklist para actualizar automaticamente a hunting
+
+const checkValidationsToAutomateUpdateVacancy = async (
+  vacancyId: string,
+  newState: VacancyEstado
+) => {
+  if (!vacancyId || !newState)
+    throw new Error(
+      "VacancyId y/o newState son requeridos para actualiza automaticamente la vacante"
+    );
+
+  try {
+    const vacancy = await prisma.vacancy.findUnique({
+      where: {
+        id: vacancyId,
+      },
+    });
+
+    if (!vacancy) {
+      throw new Error("Vacante no encontrada para realizar update automatico");
+    }
+    const canUpdate =
+      vacancy.IsChecklistValidated && vacancy.IsPerfilMuestraValidated;
+
+    if (!canUpdate) return;
+    console.log("paso el canUpdate", { canUpdate });
+
+    await updateVacancyStatus(vacancyId, newState);
+  } catch (e) {
+    throw new Error("Error al acutalizar automaticamente la vacante");
+  }
+};
+
 //Validar checklist
 export const ValidateChecklistAction = async (vacancyId: string) => {
   try {
@@ -242,6 +278,13 @@ export const ValidateChecklistAction = async (vacancyId: string) => {
         IsChecklistValidated: true,
       },
     });
+
+    //si todo sale bien, revisar si se puede actualizar automaticamente
+    await checkValidationsToAutomateUpdateVacancy(
+      vacancyId,
+      VacancyEstado.Hunting
+    );
+
     //crear una notificacion para el reclutador
     await prisma.notification.create({
       data: {
@@ -294,6 +337,12 @@ export const ValidatePerfilMuestraAction = async (vacancyId: string) => {
       where: { id: vacancyId },
       data: { IsPerfilMuestraValidated: true },
     });
+
+    //si todo sale bien, revisar si se puede actualizar automaticamente
+    await checkValidationsToAutomateUpdateVacancy(
+      vacancyId,
+      VacancyEstado.Hunting
+    );
 
     revalidatePath(`/reclutador/kanban`);
     revalidatePath(`/list/reclutamiento`);
