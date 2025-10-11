@@ -85,6 +85,11 @@ const data: {
           url: "/reclutador/kanban",
           roles: [Role.reclutador, Role.Admin],
         },
+        {
+          title: "Reportes",
+          url: "/reclutador/reportes",
+          roles: [Role.reclutador, Role.Admin],
+        },
       ],
     },
     {

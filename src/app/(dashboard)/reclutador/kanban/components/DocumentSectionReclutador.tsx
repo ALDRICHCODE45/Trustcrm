@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { VacancyWithRelations } from "../../components/ReclutadorColumns";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { useDocuments } from "@/hooks/documents/use-documents";
