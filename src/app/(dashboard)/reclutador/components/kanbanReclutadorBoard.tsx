@@ -932,8 +932,8 @@ export const KanbanBoardPage = ({
   const [filters, setFilters] = useState<FilterState>({
     searchTerm: "",
     reclutadorIds: [], // Cambiado de reclutadorId: null
-    clienteId: null,
-    tipo: null,
+    clienteIds: [], // Cambiado de clienteId: null a clienteIds: []
+    tipos: [], // Cambiado de tipo: null a tipos: []
     fechaAsignacion: { from: null, to: null },
     año: null,
     mes: null,
@@ -987,14 +987,16 @@ export const KanbanBoardPage = ({
       );
     }
 
-    // Filtro por cliente
-    if (filterState.clienteId) {
-      filtered = filtered.filter((v) => v.clienteId === filterState.clienteId);
+    // Filtro por clientes (cambiado para soportar múltiples)
+    if (filterState.clienteIds.length > 0) {
+      filtered = filtered.filter((v) =>
+        filterState.clienteIds.includes(v.clienteId)
+      );
     }
 
-    // Filtro por tipo
-    if (filterState.tipo) {
-      filtered = filtered.filter((v) => v.tipo === filterState.tipo);
+    // Filtro por tipos (cambiado para soportar múltiples)
+    if (filterState.tipos.length > 0) {
+      filtered = filtered.filter((v) => filterState.tipos.includes(v.tipo));
     }
 
     // Filtro por rango de fechas de asignación
@@ -1420,8 +1422,8 @@ export const KanbanBoardPage = ({
   const isAnyFilterApplied =
     filters.searchTerm ||
     filters.reclutadorIds.length > 0 || // Cambiado para array
-    filters.clienteId ||
-    filters.tipo ||
+    filters.clienteIds.length > 0 || // Cambiado para array
+    filters.tipos.length > 0 || // Cambiado para array
     filters.fechaAsignacion.from ||
     filters.fechaAsignacion.to ||
     filters.año ||
@@ -1592,8 +1594,8 @@ export const KanbanBoardPage = ({
                         handleFilterChange({
                           searchTerm: "",
                           reclutadorIds: [], // Cambiado a array vacío
-                          clienteId: null,
-                          tipo: null,
+                          clienteIds: [], // Cambiado a array vacío
+                          tipos: [], // Cambiado a array vacío
                           fechaAsignacion: { from: null, to: null },
                           año: null,
                           mes: null,
