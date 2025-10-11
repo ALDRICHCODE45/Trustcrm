@@ -41,7 +41,7 @@ export const CreateJobDescriptionDialog = ({
   const [fileState, fileActions] = useFileUpload({
     maxFiles: 1,
     maxSize: 30 * 1024 * 1024, // 30MB
-    accept: ".pdf,.doc,.docx",
+    accept: ".pdf",
     multiple: false,
   });
 
@@ -94,9 +94,9 @@ export const CreateJobDescriptionDialog = ({
           {/* Área de drag & drop */}
           <div
             className={cn(
-              "border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer",
+              "border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 cursor-pointer",
               fileState.isDragging
-                ? "border-primary bg-primary/5"
+                ? "border-primary bg-primary/10 scale-[1.02]"
                 : "border-gray-300 hover:border-gray-400",
               fileState.files.length > 0 && "border-green-300 bg-green-50/50"
             )}
@@ -107,18 +107,43 @@ export const CreateJobDescriptionDialog = ({
             onClick={fileActions.openFileDialog}
           >
             <div className="flex flex-col items-center gap-3">
-              <div className="p-3 rounded-full bg-gray-100">
-                <Upload className="h-6 w-6 text-gray-600" />
+              <div
+                className={cn(
+                  "p-3 rounded-full transition-all duration-200",
+                  fileState.isDragging
+                    ? "bg-primary/20 scale-110"
+                    : "bg-gray-100"
+                )}
+              >
+                <Upload
+                  className={cn(
+                    "h-6 w-6 transition-all duration-200",
+                    fileState.isDragging ? "text-primary" : "text-gray-600"
+                  )}
+                />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">
-                  Arrastra tu archivo aquí o{" "}
-                  <span className="text-primary">
-                    haz clic para seleccionar
-                  </span>
+                <p
+                  className={cn(
+                    "text-sm font-medium transition-all duration-200",
+                    fileState.isDragging
+                      ? "text-primary font-semibold"
+                      : "text-gray-900"
+                  )}
+                >
+                  {fileState.isDragging ? (
+                    "Suelta el archivo aquí"
+                  ) : (
+                    <>
+                      Arrastra tu archivo aquí o{" "}
+                      <span className="text-primary">
+                        haz clic para seleccionar
+                      </span>
+                    </>
+                  )}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  PDF, DOC, DOCX hasta 10MB
+                  PDF, DOC, DOCX hasta 30MB
                 </p>
               </div>
             </div>

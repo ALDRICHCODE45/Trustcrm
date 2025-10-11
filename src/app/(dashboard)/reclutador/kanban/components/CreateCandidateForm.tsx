@@ -64,7 +64,7 @@ export const CreateCandidateForm = ({
   const [fileUploadState, fileUploadActions] = useFileUpload({
     maxFiles: 1,
     maxSize: 5 * 1024 * 1024, // 5MB
-    accept: ".pdf,.docx,.doc,.txt",
+    accept: ".pdf",
     multiple: false,
   });
 
@@ -363,14 +363,32 @@ export const CreateCandidateForm = ({
           <Label htmlFor="cv-upload-create">Curriculum Vitae (CV)</Label>
           {fileUploadState.files.length === 0 ? (
             <div
-              className="border-input bg-background hover:bg-accent flex w-full cursor-pointer flex-col items-center justify-center rounded-md border border-dashed p-6 transition-colors"
+              className={`border-input bg-background hover:bg-accent flex w-full cursor-pointer flex-col items-center justify-center rounded-md border border-dashed p-6 transition-all duration-200 ${
+                fileUploadState.isDragging
+                  ? "border-primary bg-primary/10 scale-[1.02]"
+                  : ""
+              }`}
               onClick={() =>
                 document.getElementById("cv-upload-create")?.click()
               }
+              onDragEnter={fileUploadActions.handleDragEnter}
+              onDragLeave={fileUploadActions.handleDragLeave}
+              onDragOver={fileUploadActions.handleDragOver}
+              onDrop={fileUploadActions.handleDrop}
             >
-              <UploadIcon className="text-muted-foreground mb-2 h-6 w-6" />
-              <div className="text-muted-foreground text-sm">
-                Arrastra y suelta o haz clic para subir
+              <UploadIcon
+                className={`text-muted-foreground mb-2 h-6 w-6 transition-all duration-200 ${
+                  fileUploadState.isDragging ? "text-primary scale-110" : ""
+                }`}
+              />
+              <div
+                className={`text-muted-foreground text-sm ${
+                  fileUploadState.isDragging ? "text-primary font-medium" : ""
+                }`}
+              >
+                {fileUploadState.isDragging
+                  ? "Suelta el archivo aquí"
+                  : "Arrastra y suelta o haz clic para subir"}
               </div>
               <div className="text-muted-foreground/80 text-xs mt-1">
                 PDF, DOCX o TXT (máx. 5MB)
