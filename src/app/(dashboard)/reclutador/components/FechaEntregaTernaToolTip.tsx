@@ -65,10 +65,12 @@ export const FechaEntregaTernaTooltip = ({ vacancyId }: Props) => {
 
         if (ternaEntregada?.deliveredAt) {
           // Si existe la terna entregada, calcular días entre asignación y entrega
-          dias = differenceInDays(
-            new Date(ternaEntregada.deliveredAt),
-            new Date(fechaAsignacion)
-          );
+          // Sumamos 1 para incluir el día de asignación en el conteo
+          dias =
+            differenceInDays(
+              new Date(ternaEntregada.deliveredAt),
+              new Date(fechaAsignacion)
+            ) + 1;
           setHasDeliveredTerna(true);
           tooltip = format(
             new Date(ternaEntregada.deliveredAt),
@@ -79,7 +81,8 @@ export const FechaEntregaTernaTooltip = ({ vacancyId }: Props) => {
           );
         } else {
           // Si no existe la terna, calcular días desde asignación hasta hoy
-          dias = differenceInDays(new Date(), new Date(fechaAsignacion));
+          // Sumamos 1 para incluir el día de asignación en el conteo
+          dias = differenceInDays(new Date(), new Date(fechaAsignacion)) + 1;
           tooltip = "Terna no entregada";
         }
 
