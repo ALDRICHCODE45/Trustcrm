@@ -1139,7 +1139,7 @@ export const getTernaHistory = async (vacancyId: string) => {
 interface Args {
   vacancyId: string;
   salarioFinal?: string;
-  fechaProximaEntrada?: string;
+  fechaProximaEntrada?: Date;
   newState: VacancyEstado;
 }
 

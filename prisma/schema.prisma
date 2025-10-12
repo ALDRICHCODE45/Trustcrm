@@ -292,7 +292,7 @@ model Vacancy {
   ternaFinal            Person[]         @relation("VacancyTernaFinal")
   //datos para pasar a preplacement o placement
   salarioFinal          String?
-  fecha_proxima_entrada String?
+  fecha_proxima_entrada DateTime?
 
   // Campo para pausar el conteo de tiempo en estados finales
   fechaPausaConteo DateTime?
@@ -587,6 +587,7 @@ enum SpecialNotificationType {
   VACANCY_STATUS_CHANGED
   CLIENT_ASSIGNED
   URGENT_TASK_ASSIGNED
+  CANDIDATE_ENTRY_REMINDER
 }
 
 enum SpecialNotificationStatus {

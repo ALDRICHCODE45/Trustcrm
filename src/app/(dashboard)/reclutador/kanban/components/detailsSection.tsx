@@ -20,7 +20,7 @@ import {
   Users,
 } from "lucide-react";
 import { Role, VacancyEstado } from "@prisma/client";
-import { format } from "date-fns";
+import { format, formatDate } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   calculateDaysFromAssignment,
@@ -783,7 +783,11 @@ export const DetailsSectionReclutador = ({
                     </p>
                     <p className="text-muted-foreground text-sm flex justify-center gap-2 items-center">
                       {vacancyDetails.salarioFinal} -{" "}
-                      {vacancyDetails.fecha_proxima_entrada}
+                      {format(
+                        vacancyDetails.fecha_proxima_entrada!,
+                        "EEE d 'de' MMMM 'de' yyyy",
+                        { locale: es }
+                      )}
                     </p>
                     <p></p>
                   </div>

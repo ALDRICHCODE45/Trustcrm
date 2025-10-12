@@ -51,8 +51,9 @@ const formSchema = z.object({
     .regex(/^\d+$/, {
       message: "Solo se permiten números",
     }),
-  fechaProximaEntrada: z.string({ required_error: "Ingresa un valor" }).min(2, {
-    message: "La fecha de próxima entrada es requerida",
+  fechaProximaEntrada: z.date({
+    required_error: "Selecciona una fecha",
+    invalid_type_error: "Fecha inválida",
   }),
   monto: z.enum(["brutos", "netos"], {
     required_error: "Selecciona si el salario es bruto o neto",
@@ -76,7 +77,7 @@ export const PreplacementDialog = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fechaProximaEntrada: "",
+      fechaProximaEntrada: undefined,
       salarioFinal: "",
       monto: "brutos",
     },
@@ -213,28 +214,20 @@ export const PreplacementDialog = ({
                               ${!field.value ? "text-muted-foreground" : ""}
                             `}
                           >
-                            {field.value ? field.value : "Selecciona la fecha"}
+                            {field.value
+                              ? format(field.value, "eee d 'de' MMM yyyy", {
+                                  locale: es,
+                                })
+                              : "Selecciona la fecha"}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="p-0 z-[99999]" align="start">
                           <Calendar
                             mode="single"
                             captionLayout="dropdown"
-                            selected={
-                              field.value
-                                ? typeof field.value === "string"
-                                  ? new Date(field.value)
-                                  : field.value
-                                : undefined
-                            }
+                            selected={field.value}
                             onSelect={(date) => {
-                              field.onChange(
-                                date
-                                  ? format(date, "eee d 'de' MMM yyyy", {
-                                      locale: es,
-                                    })
-                                  : ""
-                              );
+                              field.onChange(date);
                             }}
                             locale={es}
                           />

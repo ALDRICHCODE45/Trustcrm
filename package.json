@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "check-tasks": "ts-node src/scripts/check-overdue-tasks.ts"
+    "check-tasks": "ts-node src/scripts/check-overdue-tasks.ts",
+    "migrate-fecha-entrada": "bun prisma/migrate-fecha-entrada.ts",
+    "check-entry-dates": "bun src/scripts/check-entry-dates.ts",
+    "test-entry-notifications": "bun src/scripts/test-entry-notifications.ts"
   },
   "prisma": {
     "seed": "bun prisma/seed.ts"
