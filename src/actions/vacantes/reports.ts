@@ -43,7 +43,7 @@ export interface VacancyReportFilters {
 }
 
 export async function getVacancyReports(
-  filters: VacancyReportFilters
+  filters: VacancyReportFilters,
 ): Promise<VacancyReportData[]> {
   try {
     const { reclutadorId, fechaInicio, fechaFin } = filters;
@@ -223,7 +223,7 @@ export async function getVacancyReports(
 
       const total = Object.values(estadisticas).reduce(
         (sum, count) => sum + count,
-        0
+        0,
       );
 
       reportData.push({
@@ -297,7 +297,7 @@ export async function getVacancyReportSummary(filters: VacancyReportFilters) {
         totalPerdida: 0,
         totalStandBy: 0,
         totalGeneral: 0,
-      }
+      },
     );
 
     return summary;

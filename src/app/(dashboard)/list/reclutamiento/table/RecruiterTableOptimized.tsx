@@ -1,5 +1,11 @@
 "use client";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useTransition,
+} from "react";
 import {
   ColumnDef,
   flexRender,
@@ -7,9 +13,7 @@ import {
   useReactTable,
   getPaginationRowModel,
   SortingState,
-  getSortedRowModel,
   ColumnFiltersState,
-  getFilteredRowModel,
   VisibilityState,
   FilterFn,
   ColumnOrderState,
@@ -33,14 +37,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectItem,
-  SelectTrigger,
-  SelectContent,
-  SelectValue,
-  SelectGroup,
-} from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
@@ -80,7 +76,7 @@ import CreateVacanteForm from "../components/CreateVacanteForm";
 import { Client, Oficina, User, VacancyTipo } from "@prisma/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import QuickStatsDialog from "@/app/(dashboard)/reclutador/components/QuickStatsDialog";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
@@ -150,6 +146,8 @@ export interface DataTableProps<TData, TValue> {
     name: string;
     role: string;
   };
+  totalCount?: number;
+  initialPageIndex?: number;
 }
 
 // Componente de filtros integrado
@@ -197,6 +195,37 @@ function TableFilters<TData, TValue>({
   setShowTopActions,
 }: TableFiltersProps<TData, TValue>) {
   const [isExporting, setIsExporting] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
+  // Helper para actualizar URL con filtros
+  const updateFilters = useCallback(
+    (updates: Record<string, string | string[] | undefined>) => {
+      const params = new URLSearchParams(searchParams?.toString());
+      params.set("page", "0"); // Reset a la primera página
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (
+          value === undefined ||
+          value === "" ||
+          (Array.isArray(value) && value.length === 0)
+        ) {
+          params.delete(key);
+        } else if (Array.isArray(value)) {
+          params.set(key, value.join(","));
+        } else {
+          params.set(key, value);
+        }
+      });
+
+      startTransition(() => {
+        router.push(`${pathname}?${params.toString()}`);
+      });
+    },
+    [pathname, router, searchParams, startTransition]
+  );
 
   const statusOptions = [
     { value: "QuickMeeting", label: "Quick Meeting" },
@@ -233,12 +262,7 @@ function TableFilters<TData, TValue>({
       : currentRecruiter.filter((id) => id !== reclutadorId);
 
     setCurrentRecruiter(newRecruiter);
-    if (newRecruiter.length === 0) {
-      table.getColumn("reclutador")?.setFilterValue(undefined);
-    } else {
-      table.getColumn("reclutador")?.setFilterValue(newRecruiter);
-    }
-    table.setPageIndex(0);
+    updateFilters({ reclutadores: newRecruiter });
   };
 
   const handleClientToggle = (clientId: string, checked: boolean) => {
@@ -247,12 +271,7 @@ function TableFilters<TData, TValue>({
       : currentClient.filter((id) => id !== clientId);
 
     setCurrentClient(newClient);
-    if (newClient.length === 0) {
-      table.getColumn("cliente")?.setFilterValue(undefined);
-    } else {
-      table.getColumn("cliente")?.setFilterValue(newClient);
-    }
-    table.setPageIndex(0);
+    updateFilters({ clientes: newClient });
   };
 
   // Función específica para manejar cambios en estados
@@ -262,12 +281,7 @@ function TableFilters<TData, TValue>({
       : currentStatus.filter((s) => s !== statusValue);
 
     setCurrentStatus(newStatus);
-    if (newStatus.length === 0) {
-      table.getColumn("estado")?.setFilterValue(undefined);
-    } else {
-      table.getColumn("estado")?.setFilterValue(newStatus);
-    }
-    table.setPageIndex(0);
+    updateFilters({ estados: newStatus });
   };
 
   // Función específica para manejar cambios en oficinas
@@ -277,12 +291,7 @@ function TableFilters<TData, TValue>({
       : currentOficina.filter((o) => o !== oficinaValue);
 
     setCurrentOficina(newOficina);
-    if (newOficina.length === 0) {
-      table.getColumn("oficina")?.setFilterValue(undefined);
-    } else {
-      table.getColumn("oficina")?.setFilterValue(newOficina);
-    }
-    table.setPageIndex(0);
+    updateFilters({ oficinas: newOficina });
   };
 
   // Función específica para manejar cambios en tipos
@@ -292,13 +301,58 @@ function TableFilters<TData, TValue>({
       : currentTipo.filter((t) => t !== tipoValue);
 
     setCurrentTipo(newTipo);
-    if (newTipo.length === 0) {
-      table.getColumn("tipo")?.setFilterValue(undefined);
-    } else {
-      table.getColumn("tipo")?.setFilterValue(newTipo);
-    }
-    table.setPageIndex(0);
+    updateFilters({ tipos: newTipo });
   };
+
+  // Hidratar estados de UI desde la URL al montar o cuando cambien los params
+  useEffect(() => {
+    const getArray = (key: string): string[] => {
+      const v = searchParams?.get(key);
+      return v ? v.split(",").filter(Boolean) : [];
+    };
+
+    const estadosParam = getArray("estados");
+    const clientesParam = getArray("clientes");
+    const reclutadoresParam = getArray("reclutadores");
+    const tiposParam = getArray("tipos");
+    const oficinasParam = getArray("oficinas");
+    const dateFromParam = searchParams?.get("dateFrom");
+    const dateToParam = searchParams?.get("dateTo");
+    const searchParam = searchParams?.get("search") || "";
+
+    // Estados simples
+    setCurrentStatus(estadosParam);
+    setCurrentClient(clientesParam);
+    setCurrentRecruiter(reclutadoresParam);
+    setCurrentTipo(tiposParam);
+
+    // Oficinas (convertir a enum)
+    const oficinasEnum: Oficina[] = oficinasParam
+      .map((o) => (Oficina as any)[o])
+      .filter(Boolean);
+    setCurrentOficina(oficinasEnum);
+
+    // Rango de fechas
+    if (dateFromParam || dateToParam) {
+      const from = dateFromParam ? new Date(dateFromParam) : undefined;
+      const to = dateToParam ? new Date(dateToParam) : undefined;
+      setDateRange({ from, to });
+    } else {
+      setDateRange(undefined);
+    }
+
+    // Sincronizar campo de búsqueda de posición en la UI
+    table.getColumn("posicion")?.setFilterValue(searchParam);
+  }, [
+    searchParams,
+    setCurrentStatus,
+    setCurrentClient,
+    setCurrentRecruiter,
+    setCurrentTipo,
+    setCurrentOficina,
+    setDateRange,
+    table,
+  ]);
 
   const resetFilters = useCallback(() => {
     setCurrentStatus([]);
@@ -307,13 +361,18 @@ function TableFilters<TData, TValue>({
     setCurrentTipo([]);
     setDateRange(undefined);
     setCurrentOficina([]);
-    table.getColumn("estado")?.setFilterValue(undefined);
-    table.getColumn("cliente")?.setFilterValue(undefined);
-    table.getColumn("reclutador")?.setFilterValue(undefined);
-    table.getColumn("tipo")?.setFilterValue(undefined);
-    table.getColumn("asignacion")?.setFilterValue(undefined);
-    table.getColumn("oficina")?.setFilterValue(undefined);
-    onGlobalFilterChange?.("");
+
+    // Limpiar todos los filtros de la URL
+    updateFilters({
+      estados: undefined,
+      clientes: undefined,
+      reclutadores: undefined,
+      tipos: undefined,
+      oficinas: undefined,
+      dateFrom: undefined,
+      dateTo: undefined,
+      search: undefined,
+    });
   }, [
     setCurrentStatus,
     setCurrentClient,
@@ -321,21 +380,24 @@ function TableFilters<TData, TValue>({
     setCurrentTipo,
     setDateRange,
     setCurrentOficina,
-    table,
-    onGlobalFilterChange,
+    updateFilters,
   ]);
 
   const handleDateRangeChange = useCallback(
     (range: DateRange | undefined) => {
       setDateRange(range);
+
       if (!range || (!range.from && !range.to)) {
-        table.getColumn("asignacion")?.setFilterValue(undefined);
+        updateFilters({ dateFrom: undefined, dateTo: undefined });
         return;
       }
-      table.getColumn("asignacion")?.setFilterValue(range);
-      table.setPageIndex(0);
+
+      updateFilters({
+        dateFrom: range.from?.toISOString(),
+        dateTo: range.to?.toISOString(),
+      });
     },
-    [setDateRange, table]
+    [setDateRange, updateFilters]
   );
 
   const clearFilters = [
@@ -1031,21 +1093,20 @@ function ColumnSelector<TData>({ table }: ColumnSelectorProps<TData>) {
 // Componente de paginación
 interface PaginationProps<TData> {
   table: ReturnType<typeof useReactTable<TData>>;
-  pageSize: number;
-  onPageSizeChange: (value: string) => void;
 }
 
-function TablePagination<TData>({
-  table,
-  pageSize,
-  onPageSizeChange,
-}: PaginationProps<TData>) {
+function TablePagination<TData>({ table }: PaginationProps<TData>) {
   const { pageIndex, pageSize: currentPageSize } = table.getState().pagination;
   const totalPages = table.getPageCount();
-  const totalRows = table.getFilteredRowModel().rows.length;
+  // Cuando hay paginación manual, usar rowCount si está disponible
+  const manual = (table.options as any).manualPagination;
+  const rowCount = (table.options as any).rowCount as number | undefined;
+  const totalRows =
+    manual && typeof rowCount === "number"
+      ? rowCount
+      : table.getFilteredRowModel().rows.length;
   const selectedRows = table.getFilteredSelectedRowModel().rows.length;
 
-  // Usar el pageSize actual de la tabla, no el prop
   const actualPageSize = currentPageSize;
 
   // Calcular la última página de forma segura
@@ -1076,30 +1137,8 @@ function TablePagination<TData>({
             </div>
           </div>
 
-          {/* Selector de filas por página y navegación */}
+          {/* Navegación de páginas */}
           <div className="flex items-center gap-4">
-            {/* Selector de filas por página */}
-            <div className="flex items-center gap-2">
-              <Label htmlFor="page-size" className="text-sm">
-                Filas por página:
-              </Label>
-              <Select
-                value={actualPageSize.toString()}
-                onValueChange={onPageSizeChange}
-              >
-                <SelectTrigger id="page-size" className="w-[80px]">
-                  <SelectValue placeholder={actualPageSize.toString()} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Navegación de páginas */}
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -1350,6 +1389,8 @@ export function RecruiterTable<TData, TValue>({
   reclutadores,
   clientes,
   user_logged,
+  totalCount,
+  initialPageIndex,
 }: DataTableProps<TData, TValue>) {
   // Estados
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -1364,35 +1405,38 @@ export function RecruiterTable<TData, TValue>({
   const [currentTipo, setCurrentTipo] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [currentOficina, setCurrentOficina] = useState<Oficina[]>([]);
-  const [tableData, setTableData] = useState<TData[]>(data);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([]);
-  const [currentPage, _setCurrentPage] = useState(0);
   const [showTopActions, setShowTopActions] = useState(true);
-
-  // Memoizar los datos de la tabla para evitar re-renderizaciones innecesarias
-  const memoizedData = useMemo(() => tableData, [tableData]);
+  const [isPending, startTransition] = useTransition();
 
   const [pagination, setPagination] = useState({
-    pageIndex: currentPage,
+    pageIndex: initialPageIndex ?? 0,
     pageSize: defaultPageSize,
   });
 
-  // Configuración de la tabla
+  // Configuración de la tabla con manualización para server-side
   const table = useReactTable({
-    data: memoizedData,
+    data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
     onColumnOrderChange: setColumnOrder,
     onPaginationChange: setPagination,
+    // Paginación manual (servidor)
+    manualPagination: true,
+    pageCount: totalCount
+      ? Math.max(1, Math.ceil(totalCount / (pagination.pageSize || 1)))
+      : 1,
+    rowCount: totalCount,
+    // Desactivar filtrado/sorting en cliente
+    manualFiltering: true,
+    manualSorting: true,
     filterFns: {
       filterDateRange: dateRangeFilterFn,
     },
@@ -1407,13 +1451,18 @@ export function RecruiterTable<TData, TValue>({
     },
   });
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  // Efecto para actualizar los datos cuando cambia la prop data
-  useEffect(() => {
-    setTableData(data);
-    // Resetear la página a la primera cuando se actualizan los datos
-    table.setPageIndex(0);
-  }, [data, table]);
+  // Navegación optimizada con useTransition
+  const navigateWithTransition = useCallback(
+    (params: URLSearchParams) => {
+      startTransition(() => {
+        router.push(`${pathname}?${params.toString()}`);
+      });
+    },
+    [pathname, router, startTransition]
+  );
 
   // Función para actualizar los datos
   const refreshData = useCallback(async () => {
@@ -1441,17 +1490,38 @@ export function RecruiterTable<TData, TValue>({
     (value: string) => {
       const newSize = parseInt(value, 10);
       setPageSize(newSize);
-      table.setPageSize(newSize);
+      const params = new URLSearchParams(searchParams?.toString());
+      params.set("page", "0");
+      params.set("pageSize", String(newSize));
+      navigateWithTransition(params);
     },
-    [table]
+    [searchParams, navigateWithTransition]
   );
+
+  // Debounce para búsquedas
+  const [searchDebounce, setSearchDebounce] = useState<NodeJS.Timeout>();
 
   const handleGlobalFilterChange = useCallback(
     (value: string) => {
       setGlobalFilter(value);
-      table.setPageIndex(0);
+
+      // Limpiar timeout anterior
+      if (searchDebounce) {
+        clearTimeout(searchDebounce);
+      }
+
+      // Crear nuevo timeout para búsqueda
+      const timeout = setTimeout(() => {
+        table.setPageIndex(0);
+        const params = new URLSearchParams(searchParams?.toString());
+        params.set("page", "0");
+        params.set("search", value);
+        navigateWithTransition(params);
+      }, 500); // 500ms de debounce
+
+      setSearchDebounce(timeout);
     },
-    [table]
+    [table, searchParams, navigateWithTransition, searchDebounce]
   );
 
   const handleTipoChange = useCallback(
@@ -1479,6 +1549,48 @@ export function RecruiterTable<TData, TValue>({
     },
     [table]
   );
+
+  // Sincronizar cambios de paginación con la URL con useTransition
+  useEffect(() => {
+    const currentPageParam = Number(searchParams?.get("page") ?? 0);
+    const currentSizeParam = Number(
+      searchParams?.get("pageSize") ?? defaultPageSize
+    );
+
+    const pageChanged = pagination.pageIndex !== currentPageParam;
+    const sizeChanged = pagination.pageSize !== currentSizeParam;
+
+    if (pageChanged || sizeChanged) {
+      const params = new URLSearchParams(searchParams?.toString());
+      params.set("page", String(pagination.pageIndex));
+      params.set("pageSize", String(pagination.pageSize));
+      navigateWithTransition(params);
+    }
+  }, [
+    pagination.pageIndex,
+    pagination.pageSize,
+    searchParams,
+    defaultPageSize,
+    navigateWithTransition,
+  ]);
+
+  // Sincronizar cambios de sorting con la URL
+  useEffect(() => {
+    if (sorting.length > 0) {
+      const sortConfig = sorting[0];
+      const params = new URLSearchParams(searchParams?.toString());
+      params.set("sortBy", sortConfig.id);
+      params.set("sortOrder", sortConfig.desc ? "desc" : "asc");
+      params.set("page", "0");
+      navigateWithTransition(params);
+    } else {
+      const params = new URLSearchParams(searchParams?.toString());
+      params.delete("sortBy");
+      params.delete("sortOrder");
+      navigateWithTransition(params);
+    }
+  }, [sorting, searchParams, navigateWithTransition]);
+
   const handleOficinaChange = useCallback(
     (value: Oficina[]) => {
       setCurrentOficina(value);
@@ -1597,11 +1709,7 @@ export function RecruiterTable<TData, TValue>({
       <DataGrid table={table} columns={columns} />
 
       {/* Componente de paginación optimizado */}
-      <TablePagination
-        table={table}
-        pageSize={pageSize}
-        onPageSizeChange={handlePageSizeChange}
-      />
+      <TablePagination table={table} />
     </div>
   );
 }
