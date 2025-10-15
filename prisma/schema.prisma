@@ -187,6 +187,9 @@ model Lead {
   SubSector      SubSector?          @relation(fields: [subSectorId], references: [id])
   subSectorId    String?
   Client         Client[]
+
+  //subOrigen -> solo un string que lo define el GL
+  SubOrigen String?
 }
 
 //modelo de contacto para todos los modulos
@@ -289,7 +292,7 @@ model Vacancy {
   ternaFinal            Person[]         @relation("VacancyTernaFinal")
   //datos para pasar a preplacement o placement
   salarioFinal          String?
-  fecha_proxima_entrada String?
+  fecha_proxima_entrada DateTime?
 
   // Campo para pausar el conteo de tiempo en estados finales
   fechaPausaConteo DateTime?
@@ -584,6 +587,7 @@ enum SpecialNotificationType {
   VACANCY_STATUS_CHANGED
   CLIENT_ASSIGNED
   URGENT_TASK_ASSIGNED
+  CANDIDATE_ENTRY_REMINDER
 }
 
 enum SpecialNotificationStatus {

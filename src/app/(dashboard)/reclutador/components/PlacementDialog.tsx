@@ -1,7 +1,6 @@
 import { updateSalarioFinalAndFechaProximaEntrada } from "@/actions/vacantes/actions";
 import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogClose,
@@ -10,23 +9,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Select,
   SelectTrigger,
@@ -36,8 +28,6 @@ import {
 } from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { VacancyEstado } from "@prisma/client";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -51,33 +41,28 @@ const formSchema = z.object({
     .regex(/^\d+$/, {
       message: "Solo se permiten números",
     }),
-  fechaProximaEntrada: z.date({
-    required_error: "Selecciona una fecha",
-    invalid_type_error: "Fecha inválida",
-  }),
   monto: z.enum(["brutos", "netos"], {
     required_error: "Selecciona si el salario es bruto o neto",
     invalid_type_error: "Valor inválido, selecciona bruto o neto",
   }),
 });
 
-interface PreplacementDialogProps {
+interface PlacementDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   activeVacanteId: string;
   refreshVacancies: () => void;
 }
 
-export const PreplacementDialog = ({
+export const PlacementDialog = ({
   open,
   setOpen,
   activeVacanteId,
   refreshVacancies,
-}: PreplacementDialogProps) => {
+}: PlacementDialogProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fechaProximaEntrada: undefined,
       salarioFinal: "",
       monto: "brutos",
     },
@@ -103,29 +88,24 @@ export const PreplacementDialog = ({
         updateSalarioFinalAndFechaProximaEntrada({
           vacancyId: activeVacanteId,
           salarioFinal: `${values.salarioFinal} ${values.monto}`,
-          fechaProximaEntrada: values.fechaProximaEntrada,
-          newState: VacancyEstado.PrePlacement,
+          newState: VacancyEstado.Placement,
         }),
         {
           loading: "Guardando cambios...",
           success: (result) => {
             if (!result.ok) {
               throw new Error(
-                result.message ||
-                  "Error al actualizar el salario final y la fecha de próxima entrada"
+                result.message || "Error al actualizar el salario final"
               );
             }
             // Cerrar el diálogo y resetear el formulario solo si fue exitoso
             form.reset();
             refreshVacancies();
             setOpen(false);
-            return "Datos actualizados correctamente. Refresca la pagina para actualizar el estado.";
+            return "Datos actualizados correctamente. La vacante se ha movido a Placement.";
           },
           error: (error) => {
-            return (
-              error.message ||
-              "Error al actualizar el salario final y la fecha de próxima entrada"
-            );
+            return error.message || "Error al actualizar el salario final";
           },
         }
       );
@@ -141,8 +121,7 @@ export const PreplacementDialog = ({
         <DialogHeader>
           <DialogTitle>Completa los datos pendientes</DialogTitle>
           <DialogDescription>
-            Ingresa el salario final y la fecha de próxima entrada para mover la
-            vacante a Pre-Placement.
+            Ingresa el salario final para mover la vacante a Placement.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -198,46 +177,6 @@ export const PreplacementDialog = ({
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="fechaProximaEntrada"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Fecha de próxima entrada *</FormLabel>
-                    <FormControl>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant={"outline"}
-                            className={`
-                              w-full justify-start text-left font-normal
-                              ${!field.value ? "text-muted-foreground" : ""}
-                            `}
-                          >
-                            {field.value
-                              ? format(field.value, "eee d 'de' MMM yyyy", {
-                                  locale: es,
-                                })
-                              : "Selecciona la fecha"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="p-0 z-[99999]" align="start">
-                          <Calendar
-                            mode="single"
-                            captionLayout="dropdown"
-                            selected={field.value}
-                            onSelect={(date) => {
-                              field.onChange(date);
-                            }}
-                            locale={es}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
             <DialogFooter>
               <DialogClose asChild>

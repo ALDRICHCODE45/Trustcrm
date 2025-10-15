@@ -71,6 +71,8 @@ import { PreplacementDialog } from "./PreplacementDialog";
 import { cn } from "@/core/lib/utils";
 import QuickStatsDialog from "./QuickStatsDialog";
 import CreateVacanteForm from "../../list/reclutamiento/components/CreateVacanteForm";
+import { useRouter } from "next/navigation";
+import { PlacementDialog } from "./PlacementDialog";
 
 // Types
 interface ColumnProps {
@@ -903,11 +905,18 @@ export const KanbanBoardPage = ({
   refreshVacancies,
   onVacancyCreated,
 }: KanbanBoardPageProps) => {
+  const router = useRouter();
   //Dialogo para pedir el salario final y la fecha de proxima entrada
   const [showPreplacementDialog, setShowPreplacementDialog] = useState(false);
   const [preplacementVacanteId, setPreplacementVacanteId] = useState<
     string | null
   >(null);
+
+  //Dialog para pedir solo el salario final
+  const [showPlacementDialog, setShowPlacementDialog] = useState(false);
+  const [placementVacanteId, setPlacementVacanteId] = useState<string | null>(
+    null
+  );
 
   const [allVacantes, setAllVacantes] =
     useState<VacancyWithRelations[]>(initialVacantes);
@@ -923,8 +932,8 @@ export const KanbanBoardPage = ({
   const [filters, setFilters] = useState<FilterState>({
     searchTerm: "",
     reclutadorIds: [], // Cambiado de reclutadorId: null
-    clienteId: null,
-    tipo: null,
+    clienteIds: [], // Cambiado de clienteId: null a clienteIds: []
+    tipos: [], // Cambiado de tipo: null a tipos: []
     fechaAsignacion: { from: null, to: null },
     año: null,
     mes: null,
@@ -978,14 +987,16 @@ export const KanbanBoardPage = ({
       );
     }
 
-    // Filtro por cliente
-    if (filterState.clienteId) {
-      filtered = filtered.filter((v) => v.clienteId === filterState.clienteId);
+    // Filtro por clientes (cambiado para soportar múltiples)
+    if (filterState.clienteIds.length > 0) {
+      filtered = filtered.filter((v) =>
+        filterState.clienteIds.includes(v.clienteId)
+      );
     }
 
-    // Filtro por tipo
-    if (filterState.tipo) {
-      filtered = filtered.filter((v) => v.tipo === filterState.tipo);
+    // Filtro por tipos (cambiado para soportar múltiples)
+    if (filterState.tipos.length > 0) {
+      filtered = filtered.filter((v) => filterState.tipos.includes(v.tipo));
     }
 
     // Filtro por rango de fechas de asignación
@@ -1075,7 +1086,7 @@ export const KanbanBoardPage = ({
   // Función para manejar la creación de vacantes
   const handleVacancyCreated = async () => {
     if (onVacancyCreated) {
-      await onVacancyCreated();
+      onVacancyCreated();
     }
     refreshVacancies();
   };
@@ -1132,17 +1143,41 @@ export const KanbanBoardPage = ({
       try {
         setIsUpdating(true);
 
+        // Estados desde los cuales se requiere información adicional para PrePlacement
+        const mapToShowPreplacementDialog: VacancyEstado[] = [
+          VacancyEstado.QuickMeeting,
+          VacancyEstado.Hunting,
+          VacancyEstado.Entrevistas,
+        ];
+
+        // Estados desde los cuales se requiere información adicional para Placement
+        const mapToShowPlacementDialog: VacancyEstado[] = [
+          VacancyEstado.PrePlacement,
+        ];
+
         //validar si el nuevo status es Preplacement
         //Para pedir el salario final y la fecha de proxima entrada
         if (
-          (targetColumn.id === VacancyEstado.PrePlacement ||
-            targetColumn.id === VacancyEstado.Placement) &&
-          !activeVacante.salarioFinal &&
-          !activeVacante.fecha_proxima_entrada
+          targetColumn.id === VacancyEstado.PrePlacement &&
+          mapToShowPreplacementDialog.includes(activeVacante.estado)
         ) {
           //abrir dialogo para pedir el salario final y la fecha de proxima entrada
           setPreplacementVacanteId(activeVacante.id);
           setShowPreplacementDialog(true);
+          setIsUpdating(false);
+          return;
+        }
+
+        //validar si el nuevo status es Placement
+        //Para pedir el salario final
+        if (
+          targetColumn.id === VacancyEstado.Placement &&
+          mapToShowPlacementDialog.includes(activeVacante.estado)
+        ) {
+          //abrir dialogo para pedir el salario final
+          setPlacementVacanteId(activeVacante.id);
+          setShowPlacementDialog(true);
+          setIsUpdating(false);
           return;
         }
 
@@ -1171,6 +1206,7 @@ export const KanbanBoardPage = ({
               }}
             />
           ));
+          router.refresh();
         } else {
           // Verificar si es un error de validación con razón detallada
           if (result.reason) {
@@ -1218,6 +1254,40 @@ export const KanbanBoardPage = ({
         // Movimiento entre columnas a través de una tarjeta
         try {
           setIsUpdating(true);
+
+          // Estados desde los cuales se requiere información adicional para PrePlacement
+          const mapToShowPreplacementDialog: VacancyEstado[] = [
+            VacancyEstado.QuickMeeting,
+            VacancyEstado.Hunting,
+            VacancyEstado.Entrevistas,
+          ];
+
+          // Estados desde los cuales se requiere información adicional para Placement
+          const mapToShowPlacementDialog: VacancyEstado[] = [
+            VacancyEstado.PrePlacement,
+          ];
+
+          // Validar si el nuevo status es PrePlacement
+          if (
+            overVacante.estado === VacancyEstado.PrePlacement &&
+            mapToShowPreplacementDialog.includes(activeVacante.estado)
+          ) {
+            setPreplacementVacanteId(activeVacante.id);
+            setShowPreplacementDialog(true);
+            setIsUpdating(false);
+            return;
+          }
+
+          // Validar si el nuevo status es Placement
+          if (
+            overVacante.estado === VacancyEstado.Placement &&
+            mapToShowPlacementDialog.includes(activeVacante.estado)
+          ) {
+            setPlacementVacanteId(activeVacante.id);
+            setShowPlacementDialog(true);
+            setIsUpdating(false);
+            return;
+          }
 
           const result = await updateVacancyStatus(
             activeId,
@@ -1352,8 +1422,8 @@ export const KanbanBoardPage = ({
   const isAnyFilterApplied =
     filters.searchTerm ||
     filters.reclutadorIds.length > 0 || // Cambiado para array
-    filters.clienteId ||
-    filters.tipo ||
+    filters.clienteIds.length > 0 || // Cambiado para array
+    filters.tipos.length > 0 || // Cambiado para array
     filters.fechaAsignacion.from ||
     filters.fechaAsignacion.to ||
     filters.año ||
@@ -1524,8 +1594,8 @@ export const KanbanBoardPage = ({
                         handleFilterChange({
                           searchTerm: "",
                           reclutadorIds: [], // Cambiado a array vacío
-                          clienteId: null,
-                          tipo: null,
+                          clienteIds: [], // Cambiado a array vacío
+                          tipos: [], // Cambiado a array vacío
                           fechaAsignacion: { from: null, to: null },
                           año: null,
                           mes: null,
@@ -1570,6 +1640,15 @@ export const KanbanBoardPage = ({
           </DragOverlay>
         </DndContext>
       </div>
+      {placementVacanteId && (
+        <PlacementDialog
+          open={showPlacementDialog}
+          setOpen={setShowPlacementDialog}
+          activeVacanteId={placementVacanteId}
+          refreshVacancies={refreshVacancies}
+        />
+      )}
+
       {preplacementVacanteId && (
         <PreplacementDialog
           open={showPreplacementDialog}

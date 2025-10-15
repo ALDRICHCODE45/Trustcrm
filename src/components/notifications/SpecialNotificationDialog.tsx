@@ -8,12 +8,22 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { AlertTriangle, CheckCircle, Loader2, BellRing } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle,
+  Loader2,
+  BellRing,
+  PartyPopper,
+  ArrowRight,
+} from "lucide-react";
 import { SpecialNotificationWithRelations } from "@/hooks/useSpecialNotifications";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { VacanteTabs } from "@/app/(dashboard)/reclutador/components/kanbanReclutadorBoard";
 import { VacancyWithRelations } from "@/app/(dashboard)/reclutador/components/ReclutadorColumns";
 import { useUsers } from "@/hooks/users/use-users";
+import { updateVacancyStatus } from "@/actions/vacantes/actions";
+import { VacancyEstado } from "@prisma/client";
+import { toast } from "sonner";
 
 interface SpecialNotificationDialogProps {
   notification: SpecialNotificationWithRelations | null;
@@ -33,6 +43,7 @@ export const SpecialNotificationDialog = ({
   isUpdating,
 }: SpecialNotificationDialogProps) => {
   const [vacancyIsOpen, setVacancyIsOpen] = useState(false);
+  const [isMovingToPlacement, setIsMovingToPlacement] = useState(false);
   const { fetchLoggedUser, loggedUser } = useUsers();
 
   useEffect(() => {
@@ -43,6 +54,55 @@ export const SpecialNotificationDialog = ({
     if (!notification) return;
     await onMarkAsShown(notification.id);
     onClose();
+  };
+
+  const handleMoveToPlacement = async () => {
+    if (!notification?.vacancy) return;
+
+    setIsMovingToPlacement(true);
+    try {
+      const result = await updateVacancyStatus(
+        notification.vacancy.id,
+        VacancyEstado.Placement
+      );
+
+      if (result.ok) {
+        toast.success("✅ Vacante movida a Placement exitosamente");
+        await onMarkAsShown(notification.id);
+        onClose();
+      } else {
+        toast.error(`❌ Error: ${result.message}`);
+      }
+    } catch (error) {
+      toast.error("❌ Error al mover la vacante a Placement");
+    } finally {
+      setIsMovingToPlacement(false);
+    }
+  };
+
+  const handleSendGoodLuckMessage = () => {
+    if (!notification?.vacancy) return;
+
+    // Crear un mensaje de buena suerte predefinido
+    const candidateName =
+      notification.vacancy.candidatoContratado?.name || "el candidato";
+    const position = notification.vacancy.posicion;
+    const clientName = notification.vacancy.cliente?.cuenta || "la empresa";
+
+    const goodLuckMessage = `¡Felicidades ${candidateName}! Hoy es tu primer día como ${position} en ${clientName}. Te deseamos mucho éxito en esta nueva etapa profesional. ¡Estamos seguros de que harás un excelente trabajo! 🎉✨`;
+
+    // Copiar al clipboard
+    navigator.clipboard
+      .writeText(goodLuckMessage)
+      .then(() => {
+        toast.success("📋 Mensaje de felicitación copiado al portapapeles");
+      })
+      .catch(() => {
+        toast.error("❌ Error al copiar el mensaje");
+      });
+
+    // Abrir la vacante para que puedan pegar el mensaje
+    setVacancyIsOpen(true);
   };
 
   if (!notification) {
@@ -146,30 +206,115 @@ export const SpecialNotificationDialog = ({
               </>
             )}
 
+          {/* Nuevo caso: CANDIDATE_ENTRY_REMINDER */}
+          {notification.type === "CANDIDATE_ENTRY_REMINDER" &&
+            notification.vacancy && (
+              <>
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 my-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      <PartyPopper className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2">
+                        🎉 ¡Es el gran día!
+                      </h4>
+                      <div className="space-y-3 text-sm text-green-800 dark:text-green-200">
+                        <p className="font-medium">{notification.message}</p>
+                        <div className="bg-green-100 dark:bg-green-900/50 rounded-md p-3 border-l-4 border-green-500">
+                          <p className="font-semibold text-green-900 dark:text-green-100 mb-2">
+                            📋 Acciones recomendadas:
+                          </p>
+                          <ul className="list-none space-y-1">
+                            <li className="flex items-center gap-2">
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              <span>Mover la vacante a estado Placement</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              <span>
+                                Enviar mensaje de felicitación al candidato
+                              </span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              <span>
+                                Actualizar el seguimiento en comentarios
+                              </span>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botones de acción específicos */}
+                <div className="space-y-2">
+                  <Button
+                    className="w-full font-semibold"
+                    onClick={handleMoveToPlacement}
+                    disabled={isMovingToPlacement}
+                  >
+                    {isMovingToPlacement ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Moviendo a Placement...
+                      </>
+                    ) : (
+                      <>
+                        <ArrowRight className="mr-2 h-4 w-4" />
+                        Mover a Placement
+                      </>
+                    )}
+                  </Button>
+
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    onClick={handleSendGoodLuckMessage}
+                  >
+                    <PartyPopper className="mr-2 h-4 w-4" />
+                    Copiar mensaje de felicitación
+                  </Button>
+
+                  <Button
+                    className="w-full"
+                    variant="ghost"
+                    onClick={() => setVacancyIsOpen(true)}
+                  >
+                    Ver detalles de la vacante
+                  </Button>
+                </div>
+              </>
+            )}
+
           <Separator />
 
           {/* Acciones */}
-          <div className="w-full flex justify-center">
-            <Button
-              onClick={handleAccept}
-              disabled={isUpdating}
-              className="w-full font-semibold py-3"
-              size="lg"
-              variant="outline"
-            >
-              {isUpdating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Procesando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Enterado
-                </>
-              )}
-            </Button>
-          </div>
+          {notification.type !== "CANDIDATE_ENTRY_REMINDER" && (
+            <div className="w-full flex justify-center">
+              <Button
+                onClick={handleAccept}
+                disabled={isUpdating}
+                className="w-full font-semibold py-3"
+                size="lg"
+                variant="outline"
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Enterado
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
       {vacancyIsOpen && loggedUser && (

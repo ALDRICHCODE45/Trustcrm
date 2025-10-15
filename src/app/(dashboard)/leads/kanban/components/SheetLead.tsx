@@ -2,8 +2,10 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   CalendarIcon,
+  Layers2,
   LinkIcon,
   Loader2,
+  MapPin,
   Plus,
   SquarePen,
   TrashIcon,
@@ -245,12 +247,29 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
 
   return (
     <>
-      <SheetContent className="sm:max-w-md">
+      <SheetContent className="sm:max-w-md overflow-y-auto">
         <div className="flex flex-col h-full">
           {/* Sección de cabecera con título y descripción */}
           <SheetHeader className="border-b pb-4">
-            <SheetTitle className="text-xl font-bold">
-              {lead?.empresa || "Información del Lead"}
+            <SheetTitle className="text-xl font-bold flex items-center gap-4">
+              <h2>{lead?.empresa || "Información del Lead"}</h2>
+              <div>
+                {lead.link && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link href={linkVerify} target="_blank">
+                        <LinkIcon
+                          size={17}
+                          className="underline cursor-pointer items-center text-center "
+                        />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <span>{linkVerify}</span>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
             </SheetTitle>
             <div className="flex items-center gap-3 mt-2">
               <Badge className={getStatusColor(lead?.status)} variant="outline">
@@ -318,11 +337,18 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
 
               <div className="flex justify-between">
                 <h3 className="text-sm font-medium">Ubicacion</h3>
-                <Badge variant="outline">
-                  <p className="text-muted-foreground">
-                    {lead?.ubicacion || "No especificado"}
-                  </p>
-                </Badge>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Button variant={"outline"} size={"icon"}>
+                      <MapPin />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-muted-foreground">
+                      {lead?.ubicacion || "No especificado"}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
 
               <div className="flex justify-between">
@@ -335,38 +361,29 @@ export function LeadSheet({ lead, updateLeadInState }: Props) {
               </div>
 
               <div className="flex justify-between">
-                <h3 className="text-sm font-medium">Subsector</h3>
+                <h3 className="text-sm font-medium">Sub sector</h3>
                 <Badge variant="outline">
                   <p className="text-muted-foreground">
                     {lead?.SubSector?.nombre || "No especificado"}
                   </p>
                 </Badge>
               </div>
-            </div>
 
-            {lead?.link && (
-              <div className="w-full flex justify-between items-center">
-                <div className="mt-3">
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Enlace
-                  </h3>
-                </div>
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm font-medium text-center">Sub origen</h3>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link href={linkVerify} target="_blank">
-                      <LinkIcon
-                        size={17}
-                        className="underline cursor-pointer items-center text-center mr-3 text-blue-500"
-                      />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <span>{linkVerify}</span>
-                  </TooltipContent>
-                </Tooltip>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size={"icon"} className="mr-3">
+                      <Layers2 size={16} />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px]">
+                    <span>{lead?.SubOrigen || "No Especificado"}</span>
+                  </PopoverContent>
+                </Popover>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Tabs para la información adicional */}

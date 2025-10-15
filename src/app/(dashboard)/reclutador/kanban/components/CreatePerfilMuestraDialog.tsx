@@ -38,7 +38,7 @@ export function CreatePerfilMuestraDialog({
   const [fileUploadState, fileUploadActions] = useFileUpload({
     maxFiles: 1,
     maxSize: 20 * 1024 * 1024, // 20MB
-    accept: ".pdf,.docx,.doc,.txt,.xlsx,.xls,.pptx,.ppt",
+    accept: ".pdf",
     multiple: false,
   });
 
@@ -178,14 +178,36 @@ export function CreatePerfilMuestraDialog({
               <Label htmlFor="perfil-upload">Archivo del perfil muestra</Label>
               {fileUploadState.files.length === 0 ? (
                 <div
-                  className="border-input bg-background hover:bg-accent flex w-full cursor-pointer flex-col items-center justify-center rounded-md border border-dashed p-6 transition-colors"
+                  className={`border-input bg-background hover:bg-accent flex w-full cursor-pointer flex-col items-center justify-center rounded-md border border-dashed p-6 transition-all duration-200 ${
+                    fileUploadState.isDragging
+                      ? "border-purple-500 bg-purple-500/10 scale-[1.02]"
+                      : ""
+                  }`}
                   onClick={() =>
                     document.getElementById("perfil-upload")?.click()
                   }
+                  onDragEnter={fileUploadActions.handleDragEnter}
+                  onDragLeave={fileUploadActions.handleDragLeave}
+                  onDragOver={fileUploadActions.handleDragOver}
+                  onDrop={fileUploadActions.handleDrop}
                 >
-                  <UploadIcon className="text-muted-foreground mb-2 h-6 w-6" />
-                  <div className="text-muted-foreground text-sm">
-                    Arrastra y suelta o haz clic para subir
+                  <UploadIcon
+                    className={`text-muted-foreground mb-2 h-6 w-6 transition-all duration-200 ${
+                      fileUploadState.isDragging
+                        ? "text-purple-500 scale-110"
+                        : ""
+                    }`}
+                  />
+                  <div
+                    className={`text-muted-foreground text-sm ${
+                      fileUploadState.isDragging
+                        ? "text-purple-500 font-medium"
+                        : ""
+                    }`}
+                  >
+                    {fileUploadState.isDragging
+                      ? "Suelta el archivo aquí"
+                      : "Arrastra y suelta o haz clic para subir"}
                   </div>
                   <div className="text-muted-foreground/80 text-xs mt-1">
                     PDF, DOCX, TXT, XLSX, PPTX (máx. 20MB)

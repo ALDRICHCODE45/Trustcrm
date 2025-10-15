@@ -992,6 +992,48 @@ export const validateTernaToVacancy = async (
   }
 };
 
+export const getFirstTernaDeliveriedByVacancyId = async (vacancyId: string) => {
+  try {
+    if (!vacancyId) {
+      return {
+        ok: false,
+        message: "VacancyId es requerido",
+      };
+    }
+
+    const firstTernaDeliveried = await prisma.vacancy.findUnique({
+      where: {
+        id: vacancyId,
+      },
+      include: {
+        ternaHistory: {
+          orderBy: {
+            deliveredAt: "desc",
+          },
+          take: 1,
+        },
+      },
+    });
+    if (!firstTernaDeliveried) {
+      return {
+        ok: false,
+        message: "No se encontro la primera terna validada",
+      };
+    }
+    return {
+      ok: true,
+      message: "Primera terna validada encontrada satisfactoriamente",
+      terna: firstTernaDeliveried,
+    };
+  } catch (e) {
+    console.error("Error al obtener la primera terna validada", e);
+    return {
+      ok: false,
+      message: "Error al obtener la primera terna validada",
+    };
+  }
+};
+
 export const unvalidateTernaAction = async (vacancyId: string) => {
   try {
     const session = await auth();
@@ -1096,14 +1138,16 @@ export const getTernaHistory = async (vacancyId: string) => {
 
 interface Args {
   vacancyId: string;
-  salarioFinal: string;
-  fechaProximaEntrada: string;
+  salarioFinal?: string;
+  fechaProximaEntrada?: Date;
+  newState: VacancyEstado;
 }
 
 export const updateSalarioFinalAndFechaProximaEntrada = async ({
   fechaProximaEntrada,
   salarioFinal,
   vacancyId,
+  newState,
 }: Args) => {
   try {
     //buscar la vacante
@@ -1126,10 +1170,12 @@ export const updateSalarioFinalAndFechaProximaEntrada = async ({
         id: vacancyId,
       },
       data: {
-        salarioFinal,
-        fecha_proxima_entrada: fechaProximaEntrada,
+        salarioFinal: salarioFinal || vacancy.salarioFinal || null,
+        fecha_proxima_entrada:
+          fechaProximaEntrada || vacancy.fecha_proxima_entrada || null,
       },
     });
+    await updateVacancyStatus(vacancyId, newState);
 
     return {
       ok: true,

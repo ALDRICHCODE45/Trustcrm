@@ -15,6 +15,7 @@ import {
   getTernaHistory,
   deleteHistoryTernaAction,
   getVacancyDetails,
+  getFirstTernaDeliveriedByVacancyId,
 } from "@/actions/vacantes/actions";
 import { PersonWithRelations } from "@/app/(dashboard)/list/reclutamiento/components/FinalTernaSheet";
 import { CreateCandidateFormData } from "@/zod/createCandidateSchema";
@@ -63,126 +64,135 @@ export const useCandidates = (vacancyId?: string) => {
    * Crea un nuevo candidato y actualiza la lista local
    * @param candidateData - Datos del candidato a crear
    */
-  const addCandidate = async (
-    candidateData: CreateCandidateFormData & {
-      cvFile?: File | FileMetadata | undefined;
-    }
-  ) => {
-    if (!vacancyId) throw new Error("ID de vacante requerido");
-
-    try {
-      const response = await createCandidate(candidateData, vacancyId);
-
-      if (!response.ok) {
-        throw new Error(response.message || "Error al crear el candidato");
+  const addCandidate = useCallback(
+    async (
+      candidateData: CreateCandidateFormData & {
+        cvFile?: File | FileMetadata | undefined;
       }
+    ) => {
+      if (!vacancyId) throw new Error("ID de vacante requerido");
 
-      // obtener los candidatos actualizados
-      await fetchCandidates();
-      return response;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error al crear el candidato";
-      throw new Error(errorMessage);
-    }
-  };
+      try {
+        const response = await createCandidate(candidateData, vacancyId);
+
+        if (!response.ok) {
+          throw new Error(response.message || "Error al crear el candidato");
+        }
+
+        // obtener los candidatos actualizados
+        await fetchCandidates();
+        return response;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Error al crear el candidato";
+        throw new Error(errorMessage);
+      }
+    },
+    [vacancyId, fetchCandidates]
+  );
 
   /**
    * Actualiza un candidato existente
    * @param candidateId - ID del candidato a actualizar
    * @param candidateData - Nuevos datos del candidato
    */
-  const updateCandidateAction = async (
-    candidateId: string,
-    candidateData: CreateCandidateFormData
-  ) => {
-    try {
-      const response = await updateCandidate(candidateId, candidateData);
+  const updateCandidateAction = useCallback(
+    async (candidateId: string, candidateData: CreateCandidateFormData) => {
+      try {
+        const response = await updateCandidate(candidateId, candidateData);
 
-      if (!response.ok) {
-        throw new Error(response.message || "Error al actualizar candidato");
+        if (!response.ok) {
+          throw new Error(response.message || "Error al actualizar candidato");
+        }
+
+        // Update the candidate in the local state
+        if (response.person) {
+          setCandidates((prevCandidates) =>
+            prevCandidates.map((c) =>
+              c.id === candidateId ? { ...c, ...response.person } : c
+            )
+          );
+        }
+
+        // obtener los candidatos actualizados
+        await fetchCandidates();
+
+        return response;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Error al actualizar candidato";
+        throw new Error(errorMessage);
       }
-
-      // Update the candidate in the local state
-      if (response.person) {
-        setCandidates((prevCandidates) =>
-          prevCandidates.map((c) =>
-            c.id === candidateId ? { ...c, ...response.person } : c
-          )
-        );
-      }
-
-      // obtener los candidatos actualizados
-      await fetchCandidates();
-
-      return response;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error al actualizar candidato";
-      throw new Error(errorMessage);
-    }
-  };
+    },
+    [fetchCandidates]
+  );
 
   /**
    * Elimina un candidato y actualiza la lista local
    * @param candidateId - ID del candidato a eliminar
    */
-  const deleteCandidateAction = async (candidateId: string) => {
-    try {
-      const response = await deleteCandidate(candidateId);
+  const deleteCandidateAction = useCallback(
+    async (candidateId: string) => {
+      try {
+        const response = await deleteCandidate(candidateId);
 
-      if (!response.ok) {
-        throw new Error(response.message || "Error al eliminar candidato");
+        if (!response.ok) {
+          throw new Error(response.message || "Error al eliminar candidato");
+        }
+
+        // Remove the candidate from the local state
+        setCandidates((prevCandidates) =>
+          prevCandidates.filter((c) => c.id !== candidateId)
+        );
+
+        // obtener los candidatos actualizados
+        await fetchCandidates();
+
+        return response;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Error al eliminar candidato";
+        throw new Error(errorMessage);
       }
-
-      // Remove the candidate from the local state
-      setCandidates((prevCandidates) =>
-        prevCandidates.filter((c) => c.id !== candidateId)
-      );
-
-      // obtener los candidatos actualizados
-      await fetchCandidates();
-
-      return response;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error al eliminar candidato";
-      throw new Error(errorMessage);
-    }
-  };
+    },
+    [fetchCandidates]
+  );
 
   /**
    * Selecciona un candidato como contratado para la vacante
    * @param candidateId - ID del candidato a seleccionar
    */
-  const selectCandidate = async (candidateId: string) => {
-    if (!vacancyId) throw new Error("ID de vacante requerido");
+  const selectCandidate = useCallback(
+    async (candidateId: string) => {
+      if (!vacancyId) throw new Error("ID de vacante requerido");
 
-    try {
-      setIsSelecting(true);
-      const response = await seleccionarCandidato(candidateId, vacancyId);
+      try {
+        setIsSelecting(true);
+        const response = await seleccionarCandidato(candidateId, vacancyId);
 
-      if (!response.ok) {
-        throw new Error(response.message || "Error al seleccionar candidato");
+        if (!response.ok) {
+          throw new Error(response.message || "Error al seleccionar candidato");
+        }
+
+        // obtener los candidatos actualizados
+        await fetchCandidates();
+
+        return response;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Error al seleccionar candidato";
+        throw new Error(errorMessage);
+      } finally {
+        setIsSelecting(false);
       }
-
-      // obtener los candidatos actualizados
-      await fetchCandidates();
-
-      return response;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error al seleccionar candidato";
-      throw new Error(errorMessage);
-    } finally {
-      setIsSelecting(false);
-    }
-  };
+    },
+    [vacancyId, fetchCandidates]
+  );
 
   /**
    * Deselecciona el candidato contratado de la vacante
    */
-  const deselectCandidate = async () => {
+  const deselectCandidate = useCallback(async () => {
     if (!vacancyId) throw new Error("ID de vacante requerido");
 
     try {
@@ -204,9 +214,9 @@ export const useCandidates = (vacancyId?: string) => {
     } finally {
       setIsSelecting(false);
     }
-  };
+  }, [vacancyId, fetchCandidates]);
 
-  const validateCandidate = async (candidateId: string) => {
+  const validateCandidate = useCallback(async (candidateId: string) => {
     try {
       const response = await validateCandidateAction(candidateId);
       if (!response.ok) {
@@ -218,9 +228,9 @@ export const useCandidates = (vacancyId?: string) => {
         err instanceof Error ? err.message : "Error al validar candidato";
       throw new Error(errorMessage);
     }
-  };
+  }, []);
 
-  const desValidateCandidate = async (candidateId: string) => {
+  const desValidateCandidate = useCallback(async (candidateId: string) => {
     try {
       const response = await unValidateCandidate(candidateId);
       if (!response.ok) {
@@ -232,41 +242,61 @@ export const useCandidates = (vacancyId?: string) => {
         err instanceof Error ? err.message : "Error al desvalidar candidato";
       throw new Error(errorMessage);
     }
-  };
+  }, []);
 
-  const validarTerna = async (
-    vacancyId: string,
-    selectedCandidateIds: string[],
-    fechaEntregaTerna?: Date | undefined
-  ) => {
+  //funcion para obtener la primera terna entregada.
+  const getFirstTernaDeliveried = useCallback(async () => {
+    if (!vacancyId) throw new Error("VacancyId requerido");
+
     try {
-      const response = await validateTernaToVacancy(
-        vacancyId,
-        selectedCandidateIds,
-        fechaEntregaTerna
-      );
-      if (!response.ok) {
-        throw new Error(response.message || "Error al validar la terna");
-      }
-
-      const vacancy = await getVacancyDetails(vacancyId);
-      if (!vacancy.ok) {
-        throw new Error("Error al obtener los detalles de la vacante");
-      }
-
-      await createReclutadorConfirmValidation(
-        `Hola Reclutador!! La terna de tu vacante ${vacancy.vacancy?.posicion} ha sido correctamente validada!! `,
+      const { ok, terna, message } = await getFirstTernaDeliveriedByVacancyId(
         vacancyId
       );
+      if (!ok) {
+        throw new Error(message || "Error al obtener la primera terna");
+      }
 
-      return response;
-
+      return terna;
     } catch (e) {
-      throw new Error("Error al validar la terna");
+      throw new Error("Error al obtener la primera terna validada");
     }
-  };
+  }, [vacancyId]);
 
-  const unvalidateTerna = async (vacancyId: string) => {
+  const validarTerna = useCallback(
+    async (
+      vacancyId: string,
+      selectedCandidateIds: string[],
+      fechaEntregaTerna?: Date | undefined
+    ) => {
+      try {
+        const response = await validateTernaToVacancy(
+          vacancyId,
+          selectedCandidateIds,
+          fechaEntregaTerna
+        );
+        if (!response.ok) {
+          throw new Error(response.message || "Error al validar la terna");
+        }
+
+        const vacancy = await getVacancyDetails(vacancyId);
+        if (!vacancy.ok) {
+          throw new Error("Error al obtener los detalles de la vacante");
+        }
+
+        await createReclutadorConfirmValidation(
+          `Hola Reclutador!! La terna de tu vacante ${vacancy.vacancy?.posicion} ha sido correctamente validada!! `,
+          vacancyId
+        );
+
+        return response;
+      } catch (e) {
+        throw new Error("Error al validar la terna");
+      }
+    },
+    []
+  );
+
+  const unvalidateTerna = useCallback(async (vacancyId: string) => {
     try {
       const response = await unvalidateTernaAction(vacancyId);
       if (!response.ok) {
@@ -276,9 +306,9 @@ export const useCandidates = (vacancyId?: string) => {
     } catch (e) {
       throw new Error("Error al desvalidar la terna");
     }
-  };
+  }, []);
 
-  const fetchTernaHistory = async (vacancyId: string) => {
+  const fetchTernaHistory = useCallback(async (vacancyId: string) => {
     try {
       const response = await getTernaHistory(vacancyId);
       if (!response.ok) {
@@ -290,9 +320,9 @@ export const useCandidates = (vacancyId?: string) => {
     } catch (e) {
       throw new Error("Error al obtener el historial de ternas");
     }
-  };
+  }, []);
 
-  const deleteHistoryTerna = async (ternaId: string) => {
+  const deleteHistoryTerna = useCallback(async (ternaId: string) => {
     try {
       const response = await deleteHistoryTernaAction(ternaId);
       if (!response.ok) {
@@ -302,7 +332,7 @@ export const useCandidates = (vacancyId?: string) => {
     } catch (e) {
       throw new Error("Error al eliminar la terna");
     }
-  };
+  }, []);
 
   // Auto-fetch candidates when vacancyId changes
   useEffect(() => {
@@ -317,6 +347,7 @@ export const useCandidates = (vacancyId?: string) => {
     isSelecting,
 
     // Actions
+    getFirstTernaDeliveried,
     fetchCandidates,
     addCandidate,
     updateCandidateAction,

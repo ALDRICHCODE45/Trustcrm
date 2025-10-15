@@ -4,17 +4,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -25,6 +22,9 @@ import {
 import { LeadWithRelations } from "../page";
 import { SubSector } from "@prisma/client";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { ToastCustomMessage } from "@/components/ToastCustomMessage";
 
 interface ContactoCalidoDialogProps {
   open: boolean;
@@ -39,6 +39,7 @@ export interface ContactoCalidoFormData {
   numeroEmpleados: string;
   ubicacion: string;
   subsector: string;
+  subOrigen: string;
 }
 
 export function ContactoCalidoDialog({
@@ -49,10 +50,12 @@ export function ContactoCalidoDialog({
   onCancel,
   subSectores,
 }: ContactoCalidoDialogProps) {
+  const router = useRouter();
   const [formData, setFormData] = useState<ContactoCalidoFormData>({
     numeroEmpleados: "",
     ubicacion: "",
     subsector: "",
+    subOrigen: "",
   });
 
   const [errors, setErrors] = useState<Partial<ContactoCalidoFormData>>({});
@@ -81,6 +84,10 @@ export function ContactoCalidoDialog({
       newErrors.subsector = "Este campo es obligatorio";
     }
 
+    if (!formData.subOrigen.trim()) {
+      newErrors.subOrigen = "Este campo es obligatorio";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -95,9 +102,20 @@ export function ContactoCalidoDialog({
         numeroEmpleados: "",
         ubicacion: "",
         subsector: "",
+        subOrigen: "",
       });
       setErrors({});
     }
+
+    toast.custom((t) => (
+      <ToastCustomMessage
+        message="Por favor refresca la pagina para visualizar los ultimos cambios"
+        onClick={() => toast.dismiss(t)}
+        title="Lead actualizado"
+        type="info"
+      />
+    ));
+    router.refresh();
   };
 
   const handleCancel = () => {
@@ -107,6 +125,7 @@ export function ContactoCalidoDialog({
       numeroEmpleados: "",
       ubicacion: "",
       subsector: "",
+      subOrigen: "",
     });
     setErrors({});
   };
@@ -200,27 +219,45 @@ export function ContactoCalidoDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="subsector">Subsector *</Label>
-                <Select
-                  value={formData.subsector}
-                  onValueChange={(value) =>
-                    handleInputChange("subsector", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona el subsector específico" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[9999]">
-                    {subSectores.map((subSector) => (
-                      <SelectItem key={subSector.id} value={subSector.id}>
-                        {subSector.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.subsector && (
-                  <p className="text-sm text-red-500">{errors.subsector}</p>
-                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="subsector">Subsector *</Label>
+                    <Select
+                      value={formData.subsector}
+                      onValueChange={(value) =>
+                        handleInputChange("subsector", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona el subsector específico" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[9999]">
+                        {subSectores.map((subSector) => (
+                          <SelectItem key={subSector.id} value={subSector.id}>
+                            {subSector.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.subsector && (
+                      <p className="text-sm text-red-500">{errors.subsector}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="subOrigen">Sub origen*</Label>
+                    <Input
+                      id="subOrigen"
+                      placeholder="https://linkedin..."
+                      value={formData.subOrigen}
+                      onChange={(e) =>
+                        handleInputChange("subOrigen", e.target.value)
+                      }
+                    />
+                    {errors.subOrigen && (
+                      <p className="text-sm text-red-500">{errors.subOrigen}</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </form>
           </div>

@@ -16,6 +16,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -37,8 +45,8 @@ import { VacancyWithRelations } from "./ReclutadorColumns";
 export interface FilterState {
   searchTerm: string;
   reclutadorIds: string[]; // Cambiado de string | null a string[]
-  clienteId: string | null;
-  tipo: VacancyTipo | null;
+  clienteIds: string[]; // Cambiado de string | null a string[]
+  tipos: VacancyTipo[]; // Cambiado de VacancyTipo | null a VacancyTipo[]
   fechaAsignacion: { from: Date | null; to: Date | null };
   año: number | null;
   mes: number | null;
@@ -63,8 +71,8 @@ export function KanbanFilters({
   const [filters, setFilters] = useState<FilterState>({
     searchTerm: "",
     reclutadorIds: [], // Cambiado a array vacío
-    clienteId: null,
-    tipo: null,
+    clienteIds: [], // Cambiado a array vacío
+    tipos: [], // Cambiado a array vacío
     fechaAsignacion: { from: null, to: null },
     año: null,
     mes: null,
@@ -109,12 +117,30 @@ export function KanbanFilters({
     handleFilterChange("reclutadorIds", newReclutadorIds);
   };
 
+  // Función específica para manejar cambios en clientes
+  const handleClienteToggle = (clienteId: string, checked: boolean) => {
+    const newClienteIds = checked
+      ? [...filters.clienteIds, clienteId]
+      : filters.clienteIds.filter((id) => id !== clienteId);
+
+    handleFilterChange("clienteIds", newClienteIds);
+  };
+
+  // Función específica para manejar cambios en tipos
+  const handleTipoToggle = (tipo: VacancyTipo, checked: boolean) => {
+    const newTipos = checked
+      ? [...filters.tipos, tipo]
+      : filters.tipos.filter((t) => t !== tipo);
+
+    handleFilterChange("tipos", newTipos);
+  };
+
   const clearFilters = () => {
     const clearedFilters: FilterState = {
       searchTerm: "",
       reclutadorIds: [], // Cambiado a array vacío
-      clienteId: null,
-      tipo: null,
+      clienteIds: [], // Cambiado a array vacío
+      tipos: [], // Cambiado a array vacío
       fechaAsignacion: { from: null, to: null },
       año: null,
       mes: null,
@@ -139,8 +165,12 @@ export function KanbanFilters({
       };
       setFilters(newFilters);
       onFilterChange(newFilters);
-    } else if (filterKey === "reclutadorIds") {
-      const newFilters = { ...filters, reclutadorIds: [] };
+    } else if (
+      filterKey === "reclutadorIds" ||
+      filterKey === "clienteIds" ||
+      filterKey === "tipos"
+    ) {
+      const newFilters = { ...filters, [filterKey]: [] };
       setFilters(newFilters);
       onFilterChange(newFilters);
     } else {
@@ -153,8 +183,8 @@ export function KanbanFilters({
   const hasActiveFilters =
     filters.searchTerm ||
     filters.reclutadorIds.length > 0 || // Cambiado para array
-    filters.clienteId ||
-    filters.tipo ||
+    filters.clienteIds.length > 0 || // Cambiado para array
+    filters.tipos.length > 0 || // Cambiado para array
     filters.fechaAsignacion.from ||
     filters.fechaAsignacion.to ||
     filters.año ||
@@ -165,8 +195,8 @@ export function KanbanFilters({
   const activeFiltersCount = [
     filters.searchTerm,
     filters.reclutadorIds.length > 0 ? true : false, // Cambiado para array
-    filters.clienteId,
-    filters.tipo,
+    filters.clienteIds.length > 0 ? true : false, // Cambiado para array
+    filters.tipos.length > 0 ? true : false, // Cambiado para array
     filters.fechaAsignacion.from || filters.fechaAsignacion.to,
     filters.año,
     filters.mes,
@@ -352,7 +382,7 @@ export function KanbanFilters({
           </Popover>
         </div>
 
-        {/* Cliente - Siempre visible */}
+        {/* Cliente con Checkbox y Búsqueda - Siempre visible */}
         <div className={cn("space-y-2", isMinimalistView && "space-y-1")}>
           {!isMinimalistView && (
             <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -360,56 +390,183 @@ export function KanbanFilters({
               Cliente
             </label>
           )}
-          <Select
-            value={filters.clienteId || "todos"}
-            onValueChange={(value) =>
-              handleFilterChange("clienteId", value === "todos" ? null : value)
-            }
-          >
-            <SelectTrigger className={cn(isMinimalistView && "h-8 text-sm")}>
-              <SelectValue
-                placeholder={
-                  isMinimalistView ? "Cliente" : "Seleccionar cliente"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos los clientes</SelectItem>
-              {clientes.map((cliente) => (
-                <SelectItem key={cliente.id} value={cliente.id}>
-                  {cliente.cuenta || `Cliente ${cliente.id}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  filters.clienteIds.length === 0 && "text-muted-foreground",
+                  isMinimalistView && "h-8 text-sm"
+                )}
+              >
+                <Building className="mr-2 h-4 w-4" />
+                {filters.clienteIds.length === 0
+                  ? isMinimalistView
+                    ? "Cliente"
+                    : "Seleccionar clientes"
+                  : filters.clienteIds.length === 1
+                  ? clientes.find((c) => c.id === filters.clienteIds[0])
+                      ?.cuenta || "Cliente"
+                  : `${filters.clienteIds.length} clientes`}
+                <ChevronDown className="ml-auto h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Buscar cliente..." />
+                <CommandList>
+                  <CommandEmpty>No se encontró el cliente.</CommandEmpty>
+                  <CommandGroup>
+                    <div className="p-2 flex items-center justify-between border-b">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Clientes
+                      </span>
+                      {filters.clienteIds.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleFilterChange("clienteIds", [])}
+                          className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          Limpiar
+                        </Button>
+                      )}
+                    </div>
+                    {clientes.map((cliente) => (
+                      <CommandItem
+                        key={cliente.id}
+                        value={cliente.cuenta || cliente.id}
+                        onSelect={() => {
+                          handleClienteToggle(
+                            cliente.id,
+                            !filters.clienteIds.includes(cliente.id)
+                          );
+                        }}
+                        className="flex items-center space-x-2 cursor-pointer"
+                      >
+                        <Checkbox
+                          id={cliente.id}
+                          checked={filters.clienteIds.includes(cliente.id)}
+                          onCheckedChange={(checked) =>
+                            handleClienteToggle(cliente.id, checked as boolean)
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <label
+                          htmlFor={cliente.id}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {cliente.cuenta || `Cliente ${cliente.id}`}
+                        </label>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
-        {/* Tipo - Solo en vista completa */}
+        {/* Tipo con Checkbox - Solo en vista completa */}
         {!isMinimalistView && (
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Tag className="h-4 w-4" />
               Tipo
             </label>
-            <Select
-              value={filters.tipo || "todos"}
-              onValueChange={(value) =>
-                handleFilterChange(
-                  "tipo",
-                  value === "todos" ? null : (value as VacancyTipo)
-                )
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos los tipos</SelectItem>
-                <SelectItem value={VacancyTipo.Nueva}>Nueva</SelectItem>
-                <SelectItem value={VacancyTipo.Recompra}>Recompra</SelectItem>
-                <SelectItem value={VacancyTipo.Garantia}>Garantía</SelectItem>
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    filters.tipos.length === 0 && "text-muted-foreground"
+                  )}
+                >
+                  <Tag className="mr-2 h-4 w-4" />
+                  {filters.tipos.length === 0
+                    ? "Seleccionar tipos"
+                    : filters.tipos.length === 1
+                    ? filters.tipos[0]
+                    : `${filters.tipos.length} tipos`}
+                  <ChevronDown className="ml-auto h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-0" align="start">
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Tipos</h4>
+                    {filters.tipos.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleFilterChange("tipos", [])}
+                        className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Limpiar
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tipo-nueva"
+                        checked={filters.tipos.includes(VacancyTipo.Nueva)}
+                        onCheckedChange={(checked) =>
+                          handleTipoToggle(
+                            VacancyTipo.Nueva,
+                            checked as boolean
+                          )
+                        }
+                      />
+                      <label
+                        htmlFor="tipo-nueva"
+                        className="text-sm cursor-pointer flex-1"
+                      >
+                        Nueva
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tipo-recompra"
+                        checked={filters.tipos.includes(VacancyTipo.Recompra)}
+                        onCheckedChange={(checked) =>
+                          handleTipoToggle(
+                            VacancyTipo.Recompra,
+                            checked as boolean
+                          )
+                        }
+                      />
+                      <label
+                        htmlFor="tipo-recompra"
+                        className="text-sm cursor-pointer flex-1"
+                      >
+                        Recompra
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tipo-garantia"
+                        checked={filters.tipos.includes(VacancyTipo.Garantia)}
+                        onCheckedChange={(checked) =>
+                          handleTipoToggle(
+                            VacancyTipo.Garantia,
+                            checked as boolean
+                          )
+                        }
+                      />
+                      <label
+                        htmlFor="tipo-garantia"
+                        className="text-sm cursor-pointer flex-1"
+                      >
+                        Garantía
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         )}
       </div>
@@ -635,25 +792,32 @@ export function KanbanFilters({
             </Badge>
           )}
 
-          {filters.clienteId && (
+          {filters.clienteIds.length > 0 && (
             <Badge variant="outline" className="flex items-center gap-1">
               <span>
-                Cliente:{" "}
-                {clientes.find((c) => c.id === filters.clienteId)?.cuenta}
+                Cliente{filters.clienteIds.length > 1 ? "s" : ""}:{" "}
+                {filters.clienteIds.length === 1
+                  ? clientes.find((c) => c.id === filters.clienteIds[0])?.cuenta
+                  : `${filters.clienteIds.length} seleccionados`}
               </span>
               <X
                 className="h-3 w-3 cursor-pointer hover:text-red-500"
-                onClick={() => clearSingleFilter("clienteId")}
+                onClick={() => clearSingleFilter("clienteIds")}
               />
             </Badge>
           )}
 
-          {filters.tipo && (
+          {filters.tipos.length > 0 && (
             <Badge variant="outline" className="flex items-center gap-1">
-              <span>Tipo: {filters.tipo}</span>
+              <span>
+                Tipo{filters.tipos.length > 1 ? "s" : ""}:{" "}
+                {filters.tipos.length === 1
+                  ? filters.tipos[0]
+                  : `${filters.tipos.length} seleccionados`}
+              </span>
               <X
                 className="h-3 w-3 cursor-pointer hover:text-red-500"
-                onClick={() => clearSingleFilter("tipo")}
+                onClick={() => clearSingleFilter("tipos")}
               />
             </Badge>
           )}
