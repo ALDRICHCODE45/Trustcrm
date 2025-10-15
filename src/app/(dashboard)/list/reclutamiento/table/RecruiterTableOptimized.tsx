@@ -198,6 +198,7 @@ function TableFilters<TData, TValue>({
     { value: "Perdida", label: "Perdida" },
     { value: "Placement", label: "Placement" },
     { value: "PrePlacement", label: "Pre Placement" },
+    { value: "StandBy", label: "Stand By" },
   ];
 
   const oficinaOptions = [
@@ -807,7 +808,7 @@ function TableFilters<TData, TValue>({
                           htmlFor={reclutador.id}
                           className="text-sm cursor-pointer flex-1"
                         >
-                          {reclutador.name.split(" ").at(0)}
+                          {reclutador.name.split(" ").slice(0, 2).join(" ")}
                         </label>
                       </div>
                     ))}
