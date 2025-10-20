@@ -1556,6 +1556,26 @@ export function RecruiterTable<TData, TValue>({
     }
   }, [searchParams, defaultPageSize]);
 
+  // Cuando la UI cambia la paginación, actualizar la URL si difiere
+  useEffect(() => {
+    const currentPageParam = Number(searchParams?.get("page") ?? 0);
+    const currentSizeParam = Number(
+      searchParams?.get("pageSize") ?? defaultPageSize
+    );
+
+    if (
+      pagination.pageIndex === currentPageParam &&
+      pagination.pageSize === currentSizeParam
+    ) {
+      return; // No hay cambios que propagar
+    }
+
+    const params = new URLSearchParams(searchParams?.toString());
+    params.set("page", String(pagination.pageIndex));
+    params.set("pageSize", String(pagination.pageSize));
+    navigateWithTransition(params);
+  }, [pagination.pageIndex, pagination.pageSize]);
+
   // Sincronizar búsqueda desde la URL
   useEffect(() => {
     const searchParam = searchParams?.get("search") || "";
