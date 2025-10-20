@@ -318,7 +318,6 @@ function TableFilters<TData, TValue>({
     const oficinasParam = getArray("oficinas");
     const dateFromParam = searchParams?.get("dateFrom");
     const dateToParam = searchParams?.get("dateTo");
-    const searchParam = searchParams?.get("search") || "";
 
     // Estados simples
     setCurrentStatus(estadosParam);
@@ -340,9 +339,6 @@ function TableFilters<TData, TValue>({
     } else {
       setDateRange(undefined);
     }
-
-    // Sincronizar campo de búsqueda de posición en la UI
-    table.getColumn("posicion")?.setFilterValue(searchParam);
   }, [
     searchParams,
     setCurrentStatus,
@@ -351,7 +347,6 @@ function TableFilters<TData, TValue>({
     setCurrentTipo,
     setCurrentOficina,
     setDateRange,
-    table,
   ]);
 
   const resetFilters = useCallback(() => {
@@ -491,7 +486,9 @@ function TableFilters<TData, TValue>({
             variant="outline"
             className={`ml-2 ${isCompact ? "text-xs px-2 py-0" : ""}`}
           >
-            {table.getFilteredRowModel().rows.length} resultados
+            {(table.options as any).rowCount ??
+              table.getFilteredRowModel().rows.length}{" "}
+            resultados
           </Badge>
           {isCompact && (
             <Button
@@ -614,6 +611,7 @@ function TableFilters<TData, TValue>({
                         onClick={() => {
                           setCurrentStatus([]);
                           table.getColumn("estado")?.setFilterValue(undefined);
+                          updateFilters({ estados: undefined });
                         }}
                         className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
                       >
@@ -690,6 +688,7 @@ function TableFilters<TData, TValue>({
                         onClick={() => {
                           setCurrentOficina([]);
                           table.getColumn("oficina")?.setFilterValue(undefined);
+                          updateFilters({ oficinas: undefined });
                         }}
                         className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
                       >
@@ -778,6 +777,7 @@ function TableFilters<TData, TValue>({
                               table
                                 .getColumn("cliente")
                                 ?.setFilterValue(undefined);
+                              updateFilters({ clientes: undefined });
                             }}
                             className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
                           >
@@ -866,6 +866,7 @@ function TableFilters<TData, TValue>({
                           table
                             .getColumn("reclutador")
                             ?.setFilterValue(undefined);
+                          updateFilters({ reclutadores: undefined });
                         }}
                         className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
                       >
@@ -943,6 +944,7 @@ function TableFilters<TData, TValue>({
                         onClick={() => {
                           setCurrentTipo([]);
                           table.getColumn("tipo")?.setFilterValue(undefined);
+                          updateFilters({ tipos: undefined });
                         }}
                         className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
                       >
@@ -1512,97 +1514,88 @@ export function RecruiterTable<TData, TValue>({
 
       // Crear nuevo timeout para búsqueda
       const timeout = setTimeout(() => {
-        table.setPageIndex(0);
         const params = new URLSearchParams(searchParams?.toString());
         params.set("page", "0");
-        params.set("search", value);
+        if (value.trim()) {
+          params.set("search", value);
+        } else {
+          params.delete("search");
+        }
         navigateWithTransition(params);
       }, 500); // 500ms de debounce
 
       setSearchDebounce(timeout);
     },
-    [table, searchParams, navigateWithTransition, searchDebounce]
+    [searchParams, navigateWithTransition, searchDebounce]
   );
 
-  const handleTipoChange = useCallback(
-    (value: string[]) => {
-      setCurrentTipo(value);
-      if (value.length === 0) {
-        table.getColumn("tipo")?.setFilterValue(undefined);
-      } else {
-        table.getColumn("tipo")?.setFilterValue(value);
-      }
-      table.setPageIndex(0);
-    },
-    [table]
-  );
+  const handleTipoChange = useCallback((value: string[]) => {
+    setCurrentTipo(value);
+  }, []);
 
-  const handleDateRangeChange = useCallback(
-    (range: DateRange | undefined) => {
-      setDateRange(range);
-      if (!range || (!range.from && !range.to)) {
-        table.getColumn("asignacion")?.setFilterValue(undefined);
-        return;
-      }
-      table.getColumn("asignacion")?.setFilterValue(range);
-      table.setPageIndex(0);
-    },
-    [table]
-  );
+  const handleDateRangeChange = useCallback((range: DateRange | undefined) => {
+    setDateRange(range);
+  }, []);
 
-  // Sincronizar cambios de paginación con la URL con useTransition
+  // Sincronizar el estado de paginación desde la URL (cuando la URL cambia)
   useEffect(() => {
     const currentPageParam = Number(searchParams?.get("page") ?? 0);
     const currentSizeParam = Number(
       searchParams?.get("pageSize") ?? defaultPageSize
     );
 
-    const pageChanged = pagination.pageIndex !== currentPageParam;
-    const sizeChanged = pagination.pageSize !== currentSizeParam;
-
-    if (pageChanged || sizeChanged) {
-      const params = new URLSearchParams(searchParams?.toString());
-      params.set("page", String(pagination.pageIndex));
-      params.set("pageSize", String(pagination.pageSize));
-      navigateWithTransition(params);
+    // Sincronizar desde URL al estado si son diferentes
+    if (
+      pagination.pageIndex !== currentPageParam ||
+      pagination.pageSize !== currentSizeParam
+    ) {
+      setPagination({
+        pageIndex: currentPageParam,
+        pageSize: currentSizeParam,
+      });
     }
-  }, [
-    pagination.pageIndex,
-    pagination.pageSize,
-    searchParams,
-    defaultPageSize,
-    navigateWithTransition,
-  ]);
+  }, [searchParams, defaultPageSize]);
+
+  // Sincronizar búsqueda desde la URL
+  useEffect(() => {
+    const searchParam = searchParams?.get("search") || "";
+    if (globalFilter !== searchParam) {
+      setGlobalFilter(searchParam);
+    }
+  }, [searchParams]);
 
   // Sincronizar cambios de sorting con la URL
   useEffect(() => {
+    const params = new URLSearchParams(searchParams?.toString());
+
     if (sorting.length > 0) {
       const sortConfig = sorting[0];
-      const params = new URLSearchParams(searchParams?.toString());
-      params.set("sortBy", sortConfig.id);
-      params.set("sortOrder", sortConfig.desc ? "desc" : "asc");
-      params.set("page", "0");
-      navigateWithTransition(params);
-    } else {
-      const params = new URLSearchParams(searchParams?.toString());
-      params.delete("sortBy");
-      params.delete("sortOrder");
-      navigateWithTransition(params);
-    }
-  }, [sorting, searchParams, navigateWithTransition]);
+      const currentSortBy = params.get("sortBy");
+      const currentSortOrder = params.get("sortOrder");
 
-  const handleOficinaChange = useCallback(
-    (value: Oficina[]) => {
-      setCurrentOficina(value);
-      if (value.length === 0) {
-        table.getColumn("oficina")?.setFilterValue(undefined);
-      } else {
-        table.getColumn("oficina")?.setFilterValue(value);
+      // Solo actualizar si hay cambios
+      if (
+        currentSortBy !== sortConfig.id ||
+        currentSortOrder !== (sortConfig.desc ? "desc" : "asc")
+      ) {
+        params.set("sortBy", sortConfig.id);
+        params.set("sortOrder", sortConfig.desc ? "desc" : "asc");
+        params.set("page", "0");
+        navigateWithTransition(params);
       }
-      table.setPageIndex(0);
-    },
-    [table]
-  );
+    } else {
+      const currentSortBy = params.get("sortBy");
+      if (currentSortBy) {
+        params.delete("sortBy");
+        params.delete("sortOrder");
+        navigateWithTransition(params);
+      }
+    }
+  }, [sorting]);
+
+  const handleOficinaChange = useCallback((value: Oficina[]) => {
+    setCurrentOficina(value);
+  }, []);
 
   return (
     <div className="w-full max-w-[93vw] space-y-4">
@@ -1635,7 +1628,9 @@ export function RecruiterTable<TData, TValue>({
                     className="flex items-center gap-2"
                   >
                     <span className="text-xs font-medium">
-                      {table.getFilteredRowModel().rows.length} vacantes
+                      {(table.options as any).rowCount ??
+                        table.getFilteredRowModel().rows.length}{" "}
+                      vacantes
                     </span>
                   </Badge>
                 </div>
@@ -1644,15 +1639,9 @@ export function RecruiterTable<TData, TValue>({
                   <SearchIcon className="h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Buscar por nombre de posición..."
-                    value={
-                      (table
-                        .getColumn("posicion")
-                        ?.getFilterValue() as string) ?? ""
-                    }
+                    value={globalFilter}
                     onChange={(event) =>
-                      table
-                        .getColumn("posicion")
-                        ?.setFilterValue(event.target.value)
+                      handleGlobalFilterChange(event.target.value)
                     }
                     className="w-full sm:w-80 "
                   />
