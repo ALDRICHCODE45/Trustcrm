@@ -11,7 +11,7 @@ import { VacancyWithRelations } from "../../components/ReclutadorColumns";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { MailCheck, Plus, Trash2, Save, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Save, AlertCircle } from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
 import {
   completeChecklistAndNotify,
@@ -104,7 +104,7 @@ export const VacancyDetailsChecklist = ({
     try {
       // Actualizar cada requisito existente
       const updatePromises = data.requisitosExistentes.map((req) =>
-        updateChecklist(req.dbId, req.valor.trim())
+        updateChecklist(req.dbId, req.valor.trim()),
       );
 
       const responses = await Promise.all(updatePromises);
@@ -331,7 +331,7 @@ export const VacancyDetailsChecklist = ({
 
   return (
     <>
-      <SheetContent className="z-[9999] min-w-[25vw]">
+      <SheetContent className="z-[9999] min-w-[25vw] overflow-scroll">
         <SheetHeader className="pb-4">
           <SheetTitle className="text-lg font-bold">Checklist</SheetTitle>
           <SheetDescription className="text-md text-muted-foreground">
@@ -371,7 +371,7 @@ export const VacancyDetailsChecklist = ({
                     <Input
                       id={`existente-${index}`}
                       {...existingControl.register(
-                        `requisitosExistentes.${index}.valor`
+                        `requisitosExistentes.${index}.valor`,
                       )}
                       placeholder="Requisito existente"
                       type="text"
@@ -380,7 +380,7 @@ export const VacancyDetailsChecklist = ({
                     <input
                       type="hidden"
                       {...existingControl.register(
-                        `requisitosExistentes.${index}.dbId`
+                        `requisitosExistentes.${index}.dbId`,
                       )}
                     />
                   </div>
