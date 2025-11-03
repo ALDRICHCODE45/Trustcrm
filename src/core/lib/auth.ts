@@ -9,6 +9,7 @@ class InvalidLoginError extends CredentialsSignin {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     Credentials({
       credentials: {
