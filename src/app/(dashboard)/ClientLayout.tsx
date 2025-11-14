@@ -111,7 +111,7 @@ export function ClientLayout({ children, user }: ClientLayoutProps) {
           <Separator orientation="vertical" className="h-6" />
           <div className="flex items-center">
             <Image
-              src="/trust-logo.webp"
+              src="/PfIcon.png"
               alt="Trust Logo"
               className=" rounded-full object-cover"
               width={45}

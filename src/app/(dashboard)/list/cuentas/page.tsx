@@ -10,7 +10,7 @@ import { Metadata } from "next";
 interface pageProps {}
 
 export const metadata: Metadata = {
-  title: "Trust | Cuentas",
+  title: "People Flow | Cuentas",
 };
 
 /**

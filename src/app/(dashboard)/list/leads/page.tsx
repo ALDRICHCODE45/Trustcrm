@@ -9,7 +9,7 @@ import { LeadsPageClient } from "../../leads/LeadsPageClient";
 interface pageProps {}
 
 export const metadata: Metadata = {
-  title: "Trust | Leads",
+  title: "People | Leads",
 };
 
 const fetchData = async (): Promise<{

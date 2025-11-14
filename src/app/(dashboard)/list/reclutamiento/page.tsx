@@ -16,7 +16,7 @@ import { redirect } from "next/navigation";
 export interface pageProps {}
 
 export const metadata: Metadata = {
-  title: "Trust | Reclutamiento",
+  title: "People Flow | Reclutamiento",
 };
 
 const fetchVacancies = async (): Promise<VacancyWithRelations[]> => {

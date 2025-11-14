@@ -2,10 +2,10 @@ import { auth } from "@/core/lib/auth";
 import SignInPage from "@features/Auth/pages/SignInPage";
 import { redirect } from "next/navigation";
 import Image from "next/image";
-import logoTrust from "../../../public/logotrust.png";
+import logoTrust from "../../../public/logopf.webp";
 
 export const metadata = {
-  title: "Trust | Login",
+  title: "People Flow | Login",
   description: "Login to your account",
 };
 
