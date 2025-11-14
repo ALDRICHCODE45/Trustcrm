@@ -111,13 +111,23 @@ const fetchVacancies = async ({
 
     // Filtro por rango de fechas
     if (dateFrom || dateTo) {
-      where.fechaAsignacion = {};
+      const fechaAsignacionFilter: Prisma.DateTimeFilter = {};
+
       if (dateFrom) {
-        where.fechaAsignacion.gte = new Date(dateFrom);
+        const fromDate = new Date(dateFrom);
+        // Asegurar que sea inicio del día (00:00:00.000)
+        fromDate.setHours(0, 0, 0, 0);
+        fechaAsignacionFilter.gte = fromDate;
       }
+
       if (dateTo) {
-        where.fechaAsignacion.lte = new Date(dateTo);
+        const toDate = new Date(dateTo);
+        // Asegurar que sea fin del día (23:59:59.999)
+        toDate.setHours(23, 59, 59, 999);
+        fechaAsignacionFilter.lte = toDate;
       }
+
+      where.fechaAsignacion = fechaAsignacionFilter;
     }
 
     // Construir el ORDER BY dinámicamente
@@ -126,8 +136,14 @@ const fetchVacancies = async ({
     };
 
     if (sortBy) {
+      // Mapeo de IDs de columnas a nombres de campos en Prisma
+      const fieldMapping: Record<string, string> = {
+        asignacion: "fechaAsignacion", // El id de la columna "asignacion" mapea a "fechaAsignacion" en Prisma
+      };
+
+      const prismaField = fieldMapping[sortBy] || sortBy;
       orderBy = {
-        [sortBy]: sortOrder,
+        [prismaField]: sortOrder,
       };
     }
 
